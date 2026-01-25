@@ -1,7 +1,4 @@
-### Two-Phase Operations (Early Return)
-
-[Go Sample](https://github.com/temporalio/samples-go/tree/main/early-return)  
-[Java Sample](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/earlyreturn)
+### Update With Start (Early Return)
 
 #### Intent
 Return initialization results to the caller immediately while continuing asynchronous processing in the background.
@@ -48,6 +45,7 @@ func Workflow(ctx workflow.Context, txRequest TransactionRequest) (*Transaction,
     return tx, workflow.ExecuteActivity(activityCtx, CompleteTransaction, tx).Get(ctx, nil)
 }
 ```
+[Complete Go Sample](https://github.com/temporalio/samples-go/tree/main/early-return)
 
 **Java Implementation:**
 ```java
@@ -89,6 +87,7 @@ public class TransactionWorkflowImpl implements TransactionWorkflow {
     }
 }
 ```
+[Complete Java Sample](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/earlyreturn)
 
 **Key Differences:**
 - **Go**: Uses SetUpdateHandler with closure capturing variables
@@ -103,6 +102,137 @@ Use this pattern when:
 - The operation can be safely cancelled if initialization fails
 - You want to avoid blocking clients during long-running processing
 - The initialization result determines whether to proceed or abort
+
+#### Additional Use Cases
+
+**1. E-commerce Payment Processing**
+```go
+// Return payment authorization immediately while processing settlement
+func PaymentWorkflow(ctx workflow.Context, payment PaymentRequest) (*PaymentAuth, error) {
+    var auth *PaymentAuth
+    var authDone bool
+    
+    workflow.SetUpdateHandler(ctx, "GetAuthResult",
+        func(ctx workflow.Context) (*PaymentAuth, error) {
+            workflow.Await(ctx, func() bool { return authDone })
+            return auth, nil
+        },
+    )
+    
+    // Fast authorization check (local activity)
+    localCtx := workflow.WithLocalActivityOptions(ctx, workflow.LocalActivityOptions{
+        ScheduleToCloseTimeout: 3 * time.Second,
+    })
+    err := workflow.ExecuteLocalActivity(localCtx, AuthorizePayment, payment).Get(ctx, &auth)
+    authDone = true
+    
+    if err != nil {
+        return nil, workflow.ExecuteActivity(ctx, CancelPayment, payment).Get(ctx, nil)
+    }
+    
+    // Background settlement processing
+    return auth, workflow.ExecuteActivity(ctx, SettlePayment, auth).Get(ctx, nil)
+}
+```
+
+**2. User Onboarding & KYC Verification**
+- Quick identity validation returns user ID immediately
+- Background processes handle document verification, credit checks, and account setup
+- Client can proceed with basic user experience while onboarding completes
+
+**3. Resource Provisioning (Cloud/Infrastructure)**
+```java
+@Override
+public ProvisionResult provisionInfrastructure(ProvisionRequest request) {
+    boolean validationDone = false;
+    ResourceValidation validation = null;
+    
+    // Fast resource validation (quotas, permissions, etc.)
+    try {
+        validation = activities.validateResources(request);
+        validationDone = true;
+    } catch (Exception e) {
+        validationDone = true;
+        throw e;
+    }
+    
+    if (validation.hasErrors()) {
+        activities.cleanupResources(validation.getResourceIds());
+        return new ProvisionResult("", "Validation failed: " + validation.getErrors());
+    }
+    
+    // Long-running provisioning (VMs, databases, networking)
+    activities.provisionCompute(validation);
+    activities.configureNetworking(validation);
+    activities.setupMonitoring(validation);
+    
+    return new ProvisionResult(validation.getResourceId(), "Provisioned successfully");
+}
+
+@Override
+public ResourceValidation getValidationResult() {
+    Workflow.await(() -> validationDone);
+    return validation;
+}
+```
+
+**4. Document Processing & Approval Workflows**
+- Immediate receipt confirmation with document ID
+- Background OCR processing, content analysis, and routing to approvers
+- Users can track progress without waiting for full processing
+
+**5. AI/ML Model Training & Inference**
+```go
+func MLModelWorkflow(ctx workflow.Context, req TrainingRequest) (*ModelMetadata, error) {
+    var metadata *ModelMetadata
+    var setupDone bool
+    
+    workflow.SetUpdateHandler(ctx, "GetModelInfo",
+        func(ctx workflow.Context) (*ModelMetadata, error) {
+            workflow.Await(ctx, func() bool { return setupDone })
+            return metadata, nil
+        },
+    )
+    
+    // Quick setup: validate data, allocate resources, start training
+    localCtx := workflow.WithLocalActivityOptions(ctx, workflow.LocalActivityOptions{
+        ScheduleToCloseTimeout: 10 * time.Second,
+    })
+    err := workflow.ExecuteLocalActivity(localCtx, SetupTraining, req).Get(ctx, &metadata)
+    setupDone = true
+    
+    if err != nil {
+        return nil, err
+    }
+    
+    // Long-running training and evaluation
+    activityCtx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+        StartToCloseTimeout: 6 * time.Hour, // Long training time
+    })
+    
+    return metadata, workflow.ExecuteActivity(activityCtx, TrainAndEvaluateModel, metadata).Get(ctx, nil)
+}
+```
+
+**6. Order Processing with Inventory Check**
+- Fast inventory availability check returns order confirmation
+- Background fulfillment includes picking, packing, and shipping
+- Customer gets immediate order confirmation while processing continues
+
+**7. Multi-step Financial Transactions**
+- Quick fraud detection and initial authorization
+- Background compliance checks, risk assessment, and final settlement
+- Critical for high-frequency trading or payment processing
+
+**8. Content Publishing & Moderation**
+- Immediate publish with content ID after basic validation
+- Background content analysis, moderation, and optimization
+- Authors can share content immediately while safety checks continue
+
+**Performance Benefits:**
+- Latency reduction of 40-50% compared to synchronous processing
+- Can achieve up to 91% improvement when combined with Local Activities
+- Measured improvements from 850ms to 265ms in payment processing scenarios
 
 #### Pros
 - ✅ Immediate client feedback via Update-with-Start in single round trip

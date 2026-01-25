@@ -1,6 +1,6 @@
 # Temporal Design Patterns - Common Catalog
 
-Patterns implemented in both Go and Java SDK samples.
+Temporal has a set of durable execution primitives that can be composed into common, reusable, and proven patterns. Having these patterns in your toolbox helps you solve recurring problems in a battle-tested way.
 
 ## Distributed Transaction Patterns
 
@@ -8,7 +8,7 @@ Patterns implemented in both Go and Java SDK samples.
 
 Manages distributed transactions with compensating actions. Each step has a compensation that undoes its effects if subsequent steps fail.
 
-### [Two-Phase Operations (Early Return)](early-return.md)
+### [Early Return, a.k.a Update with Start](early-return.md)
 
 Synchronous initialization with asynchronous completion. Returns results immediately while processing continues in background.
 
@@ -16,11 +16,11 @@ Synchronous initialization with asynchronous completion. Returns results immedia
 
 ## Event-Driven Patterns
 
-### Signal-Based Communication
+### [Signal with Start](signal-with-start.md)
 
-External events influence running workflows through signal handlers.
+Lazily starts a workflow when signaling it. If the workflow is already running, it receives the signal; if not, it starts first and then receives the signal. This pattern is ideal for entity workflows that should only exist when needed.
 
-### Request-Response via Updates
+### [Request-Response via Updates](request-response-via-updates.md)
 
 Synchronous request-response with validation. Updates modify state and return results directly.
 
