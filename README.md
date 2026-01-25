@@ -1,5 +1,7 @@
 # Temporal Design Patterns - Common Catalog
 
+> **⚠️ Work In Progress**: This catalog is currently under active development. Content and structure may change.
+
 Temporal has a set of durable execution primitives that can be composed into common, reusable, and proven patterns. Having these patterns in your toolbox helps you solve recurring problems in a battle-tested way.
 
 ## Distributed Transaction Patterns
@@ -23,6 +25,10 @@ Lazily starts a workflow when signaling it. If the workflow is already running, 
 ### [Request-Response via Updates](request-response-via-updates.md)
 
 Synchronous request-response with validation. Updates modify state and return results directly.
+
+### [Updatable Timer](updatable-timer.md)
+
+Dynamically adjustable timers that respond to signals or updates. Allows extending, shortening, or canceling timers based on external events.
 
 ### Worker-Specific Task Queues
 
@@ -63,6 +69,10 @@ Attaches metadata for filtering and discovery. Memos store data; search attribut
 ### Async Activity Completion
 
 Activities complete outside worker process via external systems or human approval.
+
+### [Delayed Start](delayed-start.md)
+
+Creates workflows immediately but defers execution until a specified delay expires. Ideal for one-time scheduled operations and grace periods.
 
 ### Scheduled Workflows
 
