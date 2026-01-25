@@ -102,7 +102,7 @@ Graceful workflow and activity cancellation with cleanup.
 
 Executes multiple activities concurrently for maximum throughput.
 
-### Pick First (Race)
+### [Pick First (Race)](pick-first.md)
 
 Starts multiple activities in parallel and uses first result.
 
