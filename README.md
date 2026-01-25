@@ -30,10 +30,6 @@ Synchronous request-response with validation. Updates modify state and return re
 
 Dynamically adjustable timers that respond to signals or updates. Allows extending, shortening, or canceling timers based on external events.
 
-### Worker-Specific Task Queues
-
-Routes activities to specific workers using unique task queues for worker affinity.
-
 ### Nexus Cross-Namespace Operations
 
 Invokes operations across namespace boundaries with cancellation and context propagation.
@@ -42,13 +38,13 @@ Invokes operations across namespace boundaries with cancellation and context pro
 
 ## Stateful / Lifecycle Patterns
 
-### Continue-As-New
+### [Continue-As-New](continue-as-new.md)
 
 Prevents unbounded history growth by starting new execution with fresh history.
 
-### Child Workflows
+### [Child Workflows](child-workflows.md)
 
-Decomposes complex workflows into manageable sub-workflows.
+Decomposes complex workflows into smaller, reusable workflow units. Each child has independent workflow ID, history, and lifecycle with flexible parent-child coordination.
 
 ### Query for State Inspection
 
@@ -82,19 +78,11 @@ Executes workflows on recurring schedules.
 
 Recurring workflows using cron expressions.
 
-### Exclusive Choice (Conditional Routing)
-
-Routes execution based on dynamic input conditions.
-
 ---
 
 ## Long-Running and Operational Patterns
 
-### Timers
-
-Time-based workflow logic with delays and deadlines.
-
-### Polling External Services
+### [Polling External Services](polling.md)
 
 Strategies for polling external resources with varying frequencies.
 
@@ -121,6 +109,10 @@ Starts multiple activities in parallel and uses first result.
 ### Batch Processing
 
 Processes large datasets efficiently with various strategies.
+
+### [Worker-Specific Task Queues](worker-specific-taskqueue.md)
+
+Routes activities to specific workers using unique task queues for worker affinity.
 
 ### Worker Versioning
 
