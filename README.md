@@ -62,9 +62,9 @@ Attaches metadata for filtering and discovery. Memos store data; search attribut
 
 ## Business Process Patterns
 
-### Async Activity Completion
+### [Approval](approval.md)
 
-Activities complete outside worker process via external systems or human approval.
+Human-in-the-loop workflows that block until external approval decisions are made. Uses signals to capture approval data with metadata.
 
 ### [Delayed Start](delayed-start.md)
 
@@ -73,10 +73,6 @@ Creates workflows immediately but defers execution until a specified delay expir
 ### Scheduled Workflows
 
 Executes workflows on recurring schedules.
-
-### Cron Workflows
-
-Recurring workflows using cron expressions.
 
 ---
 
