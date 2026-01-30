@@ -86,7 +86,7 @@ Strategies for polling external resources with varying frequencies.
 
 Automatic retry with exponential backoff and non-retryable error types.
 
-### Heartbeats and Progress Tracking
+### [Long running Activity - tracking progress and handle cancellation with heartbeats](long-running-activity.md)
 
 Long-running activities report progress and enable resumption after failures.
 
@@ -94,7 +94,7 @@ Long-running activities report progress and enable resumption after failures.
 
 Graceful workflow and activity cancellation with cleanup.
 
-### Parallel Execution
+### [Parallel Execution](parallel-execution.md)
 
 Executes multiple activities concurrently for maximum throughput.
 
