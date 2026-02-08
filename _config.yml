@@ -1,0 +1,23 @@
+title: Temporal Patterns
+description: Common catalog of reusable patterns for Temporal workflows
+theme: just-the-docs
+
+url: https://taonic.github.io
+baseurl: /temporal-design-patterns
+
+search_enabled: true
+heading_anchors: true
+
+aux_links:
+  "View on GitHub":
+    - "https://github.com/taonic/temporal-design-patterns"
+
+nav_sort: title
+
+back_to_top: true
+back_to_top_text: "Back to top"
+
+footer_content: "Temporal Design Patterns Catalog"
+
+mermaid:
+  version: "10.9.0"

@@ -1,3 +1,10 @@
+---
+layout: default
+title: Signal with Start
+parent: Event-Driven Patterns
+nav_order: 1
+---
+
 # Signal with Start Pattern
 
 ## Overview
@@ -21,6 +28,27 @@ Without Signal with Start, clients must:
 ## Solution
 
 Temporal's Signal with Start API atomically starts a workflow (if not running) and delivers a signal in a single operation. The client doesn't need to know whether the workflow exists—the platform handles it automatically.
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant T as Temporal
+    participant W as Workflow
+
+    C->>T: SignalWithStart(workflowId, signal, args)
+    T->>T: Check if workflow exists
+    alt Workflow does not exist
+        T->>W: Start Workflow
+        activate W
+        T->>W: Deliver Signal
+        W->>W: Process Signal
+    end
+    alt Workflow already running
+        T->>W: Deliver Signal only (no start)
+        W->>W: Process Signal
+    end
+    deactivate W
+```
 
 ```java
 BatchRequest request = workflowClient.newSignalWithStartRequest();

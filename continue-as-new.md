@@ -1,3 +1,10 @@
+---
+layout: default
+title: Continue-As-New
+parent: Stateful / Lifecycle Patterns
+nav_order: 1
+---
+
 # Continue-As-New Pattern
 
 ## Overview

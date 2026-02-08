@@ -1,3 +1,10 @@
+---
+layout: default
+title: Delayed Start
+parent: Business Process Patterns
+nav_order: 2
+---
+
 # Delayed Start Pattern
 
 ## Overview

@@ -1,3 +1,10 @@
+---
+layout: default
+title: Worker-Specific Task Queues
+parent: Long-Running and Operational Patterns
+nav_order: 5
+---
+
 # Worker-Specific Task Queues Pattern
 
 ## Overview

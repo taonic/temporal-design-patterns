@@ -1,13 +1,39 @@
-### Update With Start (Early Return)
+---
+layout: default
+title: Early Return (Update with Start)
+parent: Distributed Transaction Patterns
+nav_order: 2
+---
 
-#### Intent
+# Early Return (Update with Start)
+
+## Intent
 Return initialization results to the caller immediately while continuing asynchronous processing in the background.
 
-#### Problem
+## Problem
 Clients need immediate feedback on whether an operation can proceed, but the full operation takes significant time to complete. Blocking the client for the entire operation duration creates poor user experience and ties up resources.
 
-#### Solution
+## Solution
 Uses Update-with-Start to split operations into two phases: a fast synchronous initialization phase that validates and returns results immediately, and a slower asynchronous completion phase that runs in the background. The workflow uses local activities for quick initialization, signals completion via update handlers, then either completes or cancels the operation based on initialization success.
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Workflow
+    participant Activity
+
+    Client->>+Workflow: Update-with-Start
+    activate Workflow
+    Workflow->>+Activity: Phase 1: Init (fast)
+    Activity-->>-Workflow: Result
+    Workflow-->>Client: Init Result (early return)
+    deactivate Workflow
+    
+    Note over Workflow: Workflow continues executing
+    Workflow->>+Activity: Phase 2: Complete (slow)
+    Activity-->>-Workflow: Done
+    deactivate Workflow
+```
 
 **Go Implementation:**
 ```go
@@ -95,7 +121,7 @@ public class TransactionWorkflowImpl implements TransactionWorkflow {
 - **Both**: Use Workflow.await() to block until initialization completes
 - **Both**: Return initialization result immediately while processing continues
 
-#### Applicability
+## Applicability
 Use this pattern when:
 - Clients need immediate feedback but operations take time to complete
 - Validation or initialization can be done quickly (< 5 seconds)
@@ -103,7 +129,7 @@ Use this pattern when:
 - You want to avoid blocking clients during long-running processing
 - The initialization result determines whether to proceed or abort
 
-#### Additional Use Cases
+## Additional Use Cases
 
 **1. E-commerce Payment Processing**
 ```go
@@ -234,21 +260,21 @@ func MLModelWorkflow(ctx workflow.Context, req TrainingRequest) (*ModelMetadata,
 - Can achieve up to 91% improvement when combined with Local Activities
 - Measured improvements from 850ms to 265ms in payment processing scenarios
 
-#### Pros
+## Pros
 - ✅ Immediate client feedback via Update-with-Start in single round trip
 - ✅ Non-blocking - clients don't wait for full operation completion
 - ✅ Local activities avoid extra server roundtrips during initialization
 - ✅ Clear separation between validation and execution phases
 - ✅ Automatic cancellation handling on initialization failure
 
-#### Cons
+###Cons
 - ❌ Requires careful timeout tuning for local activities
 - ❌ Clients must handle asynchronous completion separately
 - ❌ More complex than simple synchronous workflows
 - ❌ Initialization must complete within a single workflow task
 - ❌ Limited to operations that can be split into fast/slow phases
 
-#### Relations with Other Patterns
+## Relations with Other Patterns
 - Uses **Local Activities** for fast initialization without server roundtrips
 - Can combine with **Saga Pattern** to add compensation for failed completions
 - Often paired with **Signals** or **Queries** for clients to check completion status

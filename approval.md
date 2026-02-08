@@ -1,8 +1,17 @@
+---
+layout: default
+title: Approval
+parent: Business Process Patterns
+nav_order: 1
+---
+
 # Approval Pattern
 
 ## Overview
 
 The Approval pattern implements human-in-the-loop workflows where execution blocks until an external decision is made. It uses workflow signals with custom input data to unblock workflows, enabling approval processes, manual reviews, and decision gates in automated business processes.
+
+<video src="https://github.com/user-attachments/assets/545fae48-939e-4419-90fa-6e1a7f82098e" width="700" controls></video>
 
 ## Problem
 

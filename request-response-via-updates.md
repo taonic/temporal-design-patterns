@@ -1,3 +1,10 @@
+---
+layout: default
+title: Request-Response via Updates
+parent: Event-Driven Patterns
+nav_order: 2
+---
+
 # Request-Response via Updates
 
 ## Overview

@@ -1,3 +1,10 @@
+---
+layout: default
+title: Updatable Timer
+parent: Event-Driven Patterns
+nav_order: 3
+---
+
 # Updatable Timer Pattern
 
 ## Overview

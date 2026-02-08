@@ -1,3 +1,10 @@
+---
+layout: default
+title: Saga Pattern
+parent: Distributed Transaction Patterns
+nav_order: 1
+---
+
 # Saga Pattern
 
 [Go Sample](https://github.com/temporalio/samples-go/tree/main/saga)  
@@ -11,6 +18,30 @@ In distributed systems, you need to maintain data consistency across multiple se
 
 ## Solution
 Implement each step as a local transaction with a corresponding compensation transaction. If any step fails, execute compensation transactions in reverse order to undo the effects of all completed steps. Use Go's `defer` mechanism to automatically trigger compensations when errors occur, ensuring cleanup happens even if the workflow logic panics or returns early.
+
+```mermaid
+flowchart TD
+    Start([Start Saga]) --> Step1[Step 1: Execute]
+    Step1 -->|Success| Step2[Step 2: Execute]
+    Step1 -->|Failure| End([End: Failed])
+    
+    Step2 -->|Success| Step3[Step 3: Execute]
+    Step2 -->|Failure| Comp1[Compensate Step 1]
+    
+    Step3 -->|Success| Complete([End: Success])
+    Step3 -->|Failure| Comp2[Compensate Step 2]
+    
+    Comp1 --> End
+    Comp2 --> Comp1
+    
+    style Step1 fill:#90EE90
+    style Step2 fill:#90EE90
+    style Step3 fill:#90EE90
+    style Comp1 fill:#FFB6C6
+    style Comp2 fill:#FFB6C6
+    style Complete fill:#4169E1,color:#fff
+    style End fill:#DC143C,color:#fff
+```
 
 ## Structure
 
