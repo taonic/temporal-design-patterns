@@ -29,6 +29,30 @@ Without delayed start, you must:
 
 The Delayed Start uses `setStartDelay()` in WorkflowOptions to defer the first workflow task. The workflow execution is created immediately with a `firstWorkflowTaskBackoff` set to the delay duration, but no workflow code runs until the delay expires.
 
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Temporal
+    participant Workflow
+
+    Client->>Temporal: Start with setStartDelay(30s)
+    Temporal->>Temporal: Create execution
+    Note over Temporal: Execution visible<br/>but not running
+    Temporal-->>Client: Workflow ID
+    
+    Note over Temporal: Delay period (30s)...
+    
+    opt During delay
+        Client->>Temporal: Query/Signal
+        Temporal-->>Client: Response
+    end
+    
+    Note over Temporal: Delay expires
+    Temporal->>+Workflow: Schedule first task
+    Workflow->>Workflow: Execute
+    Workflow-->>-Temporal: Complete
+```
+
 ```java
 DelayedStartWorkflow workflow = client.newWorkflowStub(
     DelayedStartWorkflow.class,

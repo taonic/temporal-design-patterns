@@ -29,6 +29,35 @@ Without worker-specific routing, you face:
 
 Use a two-tier task queue architecture: a default shared task queue for initial activities, and dynamically-named host-specific task queues for activities that must run on the same worker. The first activity returns its host-specific task queue name, and subsequent activities use that queue.
 
+```mermaid
+sequenceDiagram
+    participant Workflow
+    participant Worker1
+    participant Worker2
+    participant Worker3
+
+    Note over Workflow: Default Task Queue: "FileProcessing"
+    Workflow->>Worker2: download() - any worker
+    activate Worker2
+    Worker2-->>Workflow: {hostQueue: "FileProcessing-host2", file: "/tmp/data"}
+    deactivate Worker2
+    
+    Note over Workflow: Switch to host-specific queue
+    Note over Workflow: Task Queue: "FileProcessing-host2"
+    
+    Workflow->>Worker2: process(file) - MUST be Worker2
+    activate Worker2
+    Worker2-->>Workflow: processed file
+    deactivate Worker2
+    
+    Workflow->>Worker2: upload(file) - MUST be Worker2
+    activate Worker2
+    Worker2-->>Workflow: done
+    deactivate Worker2
+    
+    Note over Worker1,Worker3: Workers 1 & 3 never see<br/>host-specific activities
+```
+
 ```java
 // First activity uses default task queue and returns host-specific queue
 TaskQueueFileNamePair downloaded = defaultTaskQueueActivities.download(source);

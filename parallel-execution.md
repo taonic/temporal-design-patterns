@@ -30,6 +30,32 @@ Without parallel execution, you must:
 
 Temporal's `Async.function()` and `Promise.allOf()` enable launching multiple activities or child workflows concurrently. Each operation returns a Promise that resolves when complete. Use `Promise.allOf()` to wait for all operations or `Promise.anyOf()` for the first completion.
 
+```mermaid
+sequenceDiagram
+    participant Workflow
+    participant Activity1
+    participant Activity2
+    participant Activity3
+
+    Workflow->>+Activity1: Async.function()
+    Workflow->>+Activity2: Async.function()
+    Workflow->>+Activity3: Async.function()
+    Note over Workflow: Returns immediately with Promises
+    
+    par Parallel Execution
+        Activity1->>Activity1: Execute
+        Activity2->>Activity2: Execute
+        Activity3->>Activity3: Execute
+    end
+    
+    Activity1-->>-Workflow: Result 1
+    Activity2-->>-Workflow: Result 2
+    Activity3-->>-Workflow: Result 3
+    
+    Workflow->>Workflow: Promise.allOf().get()
+    Note over Workflow: Collect all results
+```
+
 ## Implementation
 
 ### Basic Parallel Activities

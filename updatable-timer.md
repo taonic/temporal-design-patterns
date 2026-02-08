@@ -29,6 +29,29 @@ Without an updatable timer, you must:
 
 The Updatable Timer uses `Workflow.await()` with a time condition that can be modified via signals. When a signal updates the wake-up time, the await condition becomes true, the workflow recalculates the sleep duration, and blocks again with the new deadline.
 
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Workflow
+    participant Timer
+
+    Client->>Workflow: Start with deadline
+    activate Workflow
+    Workflow->>Timer: sleepUntil(deadline)
+    activate Timer
+    Note over Timer: Waiting...
+    
+    Client->>Workflow: Signal: extendDeadline(newTime)
+    Workflow->>Timer: Update wakeUpTime
+    Timer->>Timer: Recalculate duration
+    Note over Timer: Waiting with new deadline...
+    
+    Timer-->>Workflow: Timer expired
+    deactivate Timer
+    Workflow-->>Client: Complete
+    deactivate Workflow
+```
+
 ```java
 public class UpdatableTimer {
   private long wakeUpTime;

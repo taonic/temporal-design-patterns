@@ -38,6 +38,31 @@ Without child workflows, you must:
 
 Child Workflows are invoked from parent workflows using `Workflow.newChildWorkflowStub()`. They can be called synchronously (blocking until completion) or asynchronously (fire-and-forget). The `ParentClosePolicy` determines what happens to children when the parent completes.
 
+```mermaid
+sequenceDiagram
+    participant Parent
+    participant Child1
+    participant Child2
+
+    Parent->>+Child1: Start (sync)
+    activate Parent
+    Child1->>Child1: Execute
+    Child1-->>-Parent: Result
+    
+    Parent->>+Child2: Start (async)
+    Note over Parent,Child2: Parent continues immediately
+    Parent->>Parent: Do other work
+    Child2->>Child2: Execute independently
+    
+    alt Parent completes first
+        Parent->>Parent: Complete
+        deactivate Parent
+        Note over Child2: Policy: ABANDON<br/>Child continues
+        Child2->>Child2: Keep running
+        Child2-->>-Child2: Complete
+    end
+```
+
 ### Synchronous Child Workflow
 
 ```java

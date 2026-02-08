@@ -30,6 +30,28 @@ Without Continue-As-New, you must:
 
 Continue-As-New completes the current workflow execution and atomically starts a new one with the same Workflow ID. The new execution begins with a fresh event history while preserving logical continuity. State is passed as arguments to the new execution.
 
+```mermaid
+flowchart LR
+    Start([Start]) --> Exec1[Execution 1<br/>Process batch]
+    Exec1 --> Check1{History<br/>large?}
+    Check1 -->|Yes| CAN1[Continue-As-New]
+    Check1 -->|No| More1{More<br/>data?}
+    More1 -->|Yes| Exec1
+    More1 -->|No| End1([Complete])
+    
+    CAN1 -.->|Fresh history<br/>Same Workflow ID| Exec2[Execution 2<br/>Process batch]
+    Exec2 --> Check2{History<br/>large?}
+    Check2 -->|Yes| CAN2[Continue-As-New]
+    Check2 -->|No| More2{More<br/>data?}
+    More2 -->|Yes| Exec2
+    More2 -->|No| End2([Complete])
+    
+    CAN2 -.-> Etc[...]
+    
+    style CAN1 fill:#FFD700
+    style CAN2 fill:#FFD700
+```
+
 ```java
 @WorkflowInterface
 public interface DataProcessorWorkflow {

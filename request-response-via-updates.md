@@ -30,6 +30,24 @@ Without Updates, clients must:
 
 Temporal's Update API executes an update handler that can validate inputs, modify state, and return values synchronously. The update is recorded in workflow history before returning, providing strong consistency.
 
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Workflow
+    participant State
+
+    Client->>+Workflow: Update Request
+    Workflow->>Workflow: Validate Input
+    alt Validation Fails
+        Workflow-->>Client: Error Response
+    else Validation Succeeds
+        Workflow->>State: Modify State
+        State-->>Workflow: Updated
+        Workflow-->>Client: Typed Response
+    end
+    deactivate Workflow
+```
+
 ## Implementation
 
 ### Basic Update

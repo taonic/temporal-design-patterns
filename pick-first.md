@@ -29,6 +29,35 @@ Without pick first, you must:
 
 The Pick First pattern uses `workflow.NewSelector()` to wait for multiple futures simultaneously, captures the first result, then cancels remaining activities using a shared cancellation context.
 
+```mermaid
+sequenceDiagram
+    participant Workflow
+    participant Activity1
+    participant Activity2
+    participant Activity3
+
+    Workflow->>+Activity1: Start (shared ctx)
+    Workflow->>+Activity2: Start (shared ctx)
+    Workflow->>+Activity3: Start (shared ctx)
+    Note over Workflow: Selector waits for first
+    
+    par Race
+        Activity1->>Activity1: Execute (slow)
+        Activity2->>Activity2: Execute (fast)
+        Activity3->>Activity3: Execute (medium)
+    end
+    
+    Activity2-->>Workflow: Result (FIRST!)
+    Note over Workflow: Selector returns
+    Workflow->>Workflow: cancelHandler()
+    
+    Workflow->>Activity1: Cancel
+    Workflow->>Activity3: Cancel
+    Activity1-->>-Workflow: Cancelled
+    Activity3-->>-Workflow: Cancelled
+    deactivate Activity2
+```
+
 ```go
 func PickFirstWorkflow(ctx workflow.Context) (string, error) {
   selector := workflow.NewSelector(ctx)

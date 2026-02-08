@@ -33,6 +33,28 @@ Without proper approval patterns, you must:
 
 The Approval pattern uses `Workflow.await()` to block execution until a signal is received. Signals carry custom data (approval decision, approver details, comments) that the workflow captures and uses to determine next steps.
 
+```mermaid
+sequenceDiagram
+    participant Requester
+    participant Workflow
+    participant Approver
+
+    Requester->>+Workflow: Start approval request
+    activate Workflow
+    Workflow->>Workflow: Workflow.await(timeout)
+    Note over Workflow: Waiting for approval...
+    
+    alt Approval received
+        Approver->>Workflow: Signal: submitApproval(data)
+        Workflow->>Workflow: Process approval data
+        Workflow-->>Requester: Approved
+    else Timeout
+        Note over Workflow: Timeout expires
+        Workflow-->>Requester: Timeout/Rejected
+    end
+    deactivate Workflow
+```
+
 ```java
 public class ApprovalData {
   private String approver;

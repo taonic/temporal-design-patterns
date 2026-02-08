@@ -31,6 +31,31 @@ Without heartbeats, you must:
 
 Activity heartbeats use `Activity.getExecutionContext().heartbeat(details)` to periodically report progress. The heartbeat details are persisted and available to retry attempts, enabling resumption from the last checkpoint. Heartbeat timeouts detect stuck activities faster than execution timeouts.
 
+```mermaid
+sequenceDiagram
+    participant Workflow
+    participant Activity
+    participant Temporal
+
+    Workflow->>+Activity: Start (with heartbeat timeout)
+    loop Process items
+        Activity->>Activity: Process item
+        Activity->>Temporal: heartbeat(progress)
+        Note over Temporal: Store progress
+    end
+    
+    alt Activity completes
+        Activity-->>-Workflow: Result
+    else Worker crashes
+        Note over Activity: Heartbeat timeout expires
+        Temporal->>+Activity: Retry on new worker
+        Activity->>Temporal: getHeartbeatDetails()
+        Temporal-->>Activity: Last progress
+        Activity->>Activity: Resume from checkpoint
+        Activity-->>-Workflow: Result
+    end
+```
+
 ## Implementation
 
 ### Basic Progress Tracking

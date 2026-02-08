@@ -34,6 +34,27 @@ You can use Temporal to implement three distinct polling strategies, each optimi
 2. **Infrequent Polling (≥1 minute)**: Use activity retries with fixed backoff
 3. **Periodic Sequence**: Use child workflows for complex polling sequences
 
+```mermaid
+flowchart TD
+    Start([Polling Required]) --> Freq{Polling<br/>Frequency?}
+    
+    Freq -->|≤1 second| Fast[Frequent Polling]
+    Freq -->|≥1 minute| Slow[Infrequent Polling]
+    Freq -->|Complex| Complex[Periodic Sequence]
+    
+    Fast --> FastImpl[Activity with loop<br/>+ heartbeats]
+    Slow --> SlowImpl[Activity retries<br/>backoffCoefficient=1]
+    Complex --> ComplexImpl[Child workflow<br/>+ Continue-As-New]
+    
+    FastImpl --> FastPros["✓ Fast response<br/>✓ Simple<br/>✗ Higher resources"]
+    SlowImpl --> SlowPros["✓ Minimal history<br/>✓ Efficient<br/>✗ Min 1-min interval"]
+    ComplexImpl --> ComplexPros["✓ Flexible<br/>✓ Multi-step<br/>✗ More complex"]
+    
+    style Fast fill:#90EE90
+    style Slow fill:#87CEEB
+    style Complex fill:#FFB6C6
+```
+
 ## Implementation
 
 ### 1. Frequent Polling (Fast Response Required)
