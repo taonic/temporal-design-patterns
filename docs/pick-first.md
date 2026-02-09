@@ -1,9 +1,3 @@
----
-layout: default
-title: Pick First (Race)
-parent: Long-Running and Operational Patterns
-nav_order: 4
----
 
 # Pick First Pattern
 

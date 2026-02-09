@@ -1,9 +1,3 @@
----
-layout: default
-title: Long Running Activity
-parent: Long-Running and Operational Patterns
-nav_order: 2
----
 
 # Long Running Activity - Tracking Progress and Handling Cancellation with Heartbeats
 

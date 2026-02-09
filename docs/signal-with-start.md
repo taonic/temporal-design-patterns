@@ -1,9 +1,3 @@
----
-layout: default
-title: Signal with Start
-parent: Event-Driven Patterns
-nav_order: 1
----
 
 # Signal with Start Pattern
 

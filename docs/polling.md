@@ -1,9 +1,3 @@
----
-layout: default
-title: Polling External Services
-parent: Long-Running and Operational Patterns
-nav_order: 1
----
 
 # Polling External Services
 

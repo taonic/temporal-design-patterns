@@ -1,9 +1,3 @@
----
-layout: default
-title: Saga Pattern
-parent: Distributed Transaction Patterns
-nav_order: 1
----
 
 # Saga Pattern
 

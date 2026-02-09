@@ -1,9 +1,3 @@
----
-layout: default
-title: Approval
-parent: Business Process Patterns
-nav_order: 1
----
 
 # Approval Pattern
 

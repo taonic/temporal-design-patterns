@@ -1,9 +1,3 @@
----
-layout: default
-title: Parallel Execution
-parent: Long-Running and Operational Patterns
-nav_order: 3
----
 
 # Parallel Execution
 

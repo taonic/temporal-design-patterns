@@ -461,30 +461,3 @@ Edge case examples for testing and development:
 
 Useful for Temporal internal development, testing UI/CLI tools, and reproducing edge cases.
 
----
-
-## Pattern Selection Guide
-
-- **Need distributed transactions?** → Saga Pattern
-- **Need exclusive resource access?** → Mutex Pattern
-- **Need human approval?** → Async Activity Completion
-- **Need to poll external APIs?** → Polling Patterns (choose frequency based on requirements)
-- **Workflow history growing large?** → Continue-As-New
-- **Activities need same worker?** → Session Affinity
-- **Need parallel processing?** → Fan-Out/Fan-In or Parallel Branches
-- **Need fastest result from multiple sources?** → Pick First
-- **Need to expose workflow state?** → Query Pattern
-- **Need to modify workflow state externally?** → Update Pattern
-- **Long-running activities?** → Heartbeats + Retry Policies
-- **Need cross-namespace calls?** → Nexus
-- **Need workflow modularity?** → Child Workflows
-- **Need immediate response while processing continues?** → Early Return (Update-with-Start)
-- **Need to attach metadata for filtering?** → Memo (not indexed) or Search Attributes (indexed)
-- **Need conditional execution based on data?** → Exclusive/Multi Choice
-- **Need to validate state changes?** → Updates with Validators
-- **Need complex iterative computation?** → PSO Pattern (child workflows + continue-as-new)
-- **Need to wait on multiple events?** → Selectors
-- **Need low-latency workflow start?** → Eager Workflow Start
-- **Need to schedule future execution?** → Start Delay or Schedules
-- **Need activity dependencies/shared state?** → Greetings Pattern (struct methods)
-- **Need to test workflow changes?** → Replay Testing

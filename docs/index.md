@@ -1,9 +1,3 @@
----
-layout: home
-title: Home
-nav_order: 1
----
-
 # Temporal Design Patterns - Common Catalog
 
 > **⚠️ Work In Progress**: This catalog is currently under active development. Content and structure may change.
@@ -14,11 +8,11 @@ Temporal has a set of durable execution primitives that can be composed into com
 
 ## Distributed Transaction Patterns
 
-### [Saga Pattern](saga-pattern.html)
+### [Saga Pattern](saga-pattern.md)
 
 Manages distributed transactions with compensating actions. Each step has a compensation that undoes its effects if subsequent steps fail.
 
-### [Early Return, a.k.a Update with Start](early-return.html)
+### [Early Return, a.k.a Update with Start](early-return.md)
 
 Synchronous initialization with asynchronous completion. Returns results immediately while processing continues in background.
 
@@ -26,15 +20,15 @@ Synchronous initialization with asynchronous completion. Returns results immedia
 
 ## Event-Driven Patterns
 
-### [Signal with Start](signal-with-start.html)
+### [Signal with Start](signal-with-start.md)
 
 Lazily starts a workflow when signaling it. If the workflow is already running, it receives the signal; if not, it starts first and then receives the signal. This pattern is ideal for entity workflows that should only exist when needed.
 
-### [Request-Response via Updates](request-response-via-updates.html)
+### [Request-Response via Updates](request-response-via-updates.md)
 
 Synchronous request-response with validation. Updates modify state and return results directly.
 
-### [Updatable Timer](updatable-timer.html)
+### [Updatable Timer](updatable-timer.md)
 
 Dynamically adjustable timers that respond to signals or updates. Allows extending, shortening, or canceling timers based on external events.
 
@@ -46,11 +40,11 @@ Invokes operations across namespace boundaries with cancellation and context pro
 
 ## Stateful / Lifecycle Patterns
 
-### [Continue-As-New](continue-as-new.html)
+### [Continue-As-New](continue-as-new.md)
 
 Prevents unbounded history growth by starting new execution with fresh history.
 
-### [Child Workflows](child-workflows.html)
+### [Child Workflows](child-workflows.md)
 
 Decomposes complex workflows into smaller, reusable workflow units. Each child has independent workflow ID, history, and lifecycle with flexible parent-child coordination.
 
@@ -70,11 +64,11 @@ Attaches metadata for filtering and discovery. Memos store data; search attribut
 
 ## Business Process Patterns
 
-### [Approval](approval.html)
+### [Approval](approval.md)
 
 Human-in-the-loop workflows that block until external approval decisions are made. Uses signals to capture approval data with metadata.
 
-### [Delayed Start](delayed-start.html)
+### [Delayed Start](delayed-start.md)
 
 Creates workflows immediately but defers execution until a specified delay expires. Ideal for one-time scheduled operations and grace periods.
 
@@ -86,7 +80,7 @@ Executes workflows on recurring schedules.
 
 ## Long-Running and Operational Patterns
 
-### [Polling External Services](polling.html)
+### [Polling External Services](polling.md)
 
 Strategies for polling external resources with varying frequencies.
 
@@ -94,7 +88,7 @@ Strategies for polling external resources with varying frequencies.
 
 Automatic retry with exponential backoff and non-retryable error types.
 
-### [Long running Activity - tracking progress and handle cancellation with heartbeats](long-running-activity.html)
+### [Long running Activity - tracking progress and handle cancellation with heartbeats](long-running-activity.md)
 
 Long-running activities report progress and enable resumption after failures.
 
@@ -102,11 +96,11 @@ Long-running activities report progress and enable resumption after failures.
 
 Graceful workflow and activity cancellation with cleanup.
 
-### [Parallel Execution](parallel-execution.html)
+### [Parallel Execution](parallel-execution.md)
 
 Executes multiple activities concurrently for maximum throughput.
 
-### [Pick First (Race)](pick-first.html)
+### [Pick First (Race)](pick-first.md)
 
 Starts multiple activities in parallel and uses first result.
 
@@ -114,7 +108,7 @@ Starts multiple activities in parallel and uses first result.
 
 Processes large datasets efficiently with various strategies.
 
-### [Worker-Specific Task Queues](worker-specific-taskqueue.html)
+### [Worker-Specific Task Queues](worker-specific-taskqueue.md)
 
 Routes activities to specific workers using unique task queues for worker affinity.
 

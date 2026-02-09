@@ -1,9 +1,3 @@
----
-layout: default
-title: Early Return (Update with Start)
-parent: Distributed Transaction Patterns
-nav_order: 2
----
 
 # Early Return (Update with Start)
 

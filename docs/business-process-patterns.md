@@ -1,9 +1,3 @@
----
-layout: default
-title: Business Process Patterns
-nav_order: 5
-has_children: true
----
 
 # Business Process Patterns
 

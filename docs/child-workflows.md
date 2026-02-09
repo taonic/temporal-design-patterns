@@ -1,9 +1,3 @@
----
-layout: default
-title: Child Workflows
-parent: Stateful / Lifecycle Patterns
-nav_order: 2
----
 
 # Child Workflows Pattern
 
