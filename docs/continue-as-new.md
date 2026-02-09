@@ -42,8 +42,8 @@ flowchart LR
     
     CAN2 -.-> Etc[...]
     
-    style CAN1 fill:#FFD700
-    style CAN2 fill:#FFD700
+    style CAN1 fill:#FFD700,color:#000
+    style CAN2 fill:#FFD700,color:#000
 ```
 
 ```java

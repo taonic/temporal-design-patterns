@@ -28,11 +28,11 @@ flowchart TD
     Comp1 --> End
     Comp2 --> Comp1
     
-    style Step1 fill:#90EE90
-    style Step2 fill:#90EE90
-    style Step3 fill:#90EE90
-    style Comp1 fill:#FFB6C6
-    style Comp2 fill:#FFB6C6
+    style Step1 fill:#90EE90,color:#000
+    style Step2 fill:#90EE90,color:#000
+    style Step3 fill:#90EE90,color:#000
+    style Comp1 fill:#FFB6C6,color:#000
+    style Comp2 fill:#FFB6C6,color:#000
     style Complete fill:#4169E1,color:#fff
     style End fill:#DC143C,color:#fff
 ```

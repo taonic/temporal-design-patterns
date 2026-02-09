@@ -44,9 +44,9 @@ flowchart TD
     SlowImpl --> SlowPros["✓ Minimal history<br/>✓ Efficient<br/>✗ Min 1-min interval"]
     ComplexImpl --> ComplexPros["✓ Flexible<br/>✓ Multi-step<br/>✗ More complex"]
     
-    style Fast fill:#90EE90
-    style Slow fill:#87CEEB
-    style Complex fill:#FFB6C6
+    style Fast fill:#90EE90,color:#000
+    style Slow fill:#87CEEB,color:#000
+    style Complex fill:#FFB6C6,color:#000
 ```
 
 ## Implementation
