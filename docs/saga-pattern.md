@@ -1,8 +1,7 @@
 
 # Saga Pattern
 
-[Go Sample](https://github.com/temporalio/samples-go/tree/main/saga)  
-[Java Sample](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/hello/HelloSaga.java)
+[Go Sample](https://github.com/temporalio/samples-go/tree/main/saga) | [Java Sample](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/hello/HelloSaga.java) | [TypeScript Sample](https://github.com/temporalio/samples-typescript/tree/main/saga) | [Python Sample](https://github.com/temporalio/samples-python)
 
 ## Intent
 Manage distributed transactions across multiple services by coordinating a sequence of local transactions, each with a compensating action that can undo its effects if subsequent steps fail.
@@ -39,8 +38,8 @@ flowchart TD
 
 ## Structure
 
-**Go Implementation** (using `defer`):
-```go
+::: code-group
+```go [Go]
 func TransferMoney(ctx workflow.Context, details TransferDetails) error {
     // Step 1: Withdraw from source account
     err := workflow.ExecuteActivity(ctx, Withdraw, details).Get(ctx, nil)
@@ -74,8 +73,106 @@ func TransferMoney(ctx workflow.Context, details TransferDetails) error {
 }
 ```
 
-**Java Implementation** (using Saga API):
-```java
+```typescript [TypeScript]
+export async function openAccount(params: OpenAccount): Promise<void> {
+  const compensations: Compensation[] = [];
+
+  try {
+    // Step 1: Create account (fatal if fails)
+    await createAccount({ accountId: params.accountId });
+  } catch (err) {
+    throw err; // No compensations needed for first step
+  }
+
+  try {
+    // Step 2: Add address and register compensation
+    await addAddress({
+      accountId: params.accountId,
+      address: params.address,
+    });
+    compensations.unshift({
+      fn: () => clearPostalAddresses({ accountId: params.accountId }),
+    });
+
+    // Step 3: Add client and register compensation
+    await addClient({
+      accountId: params.accountId,
+      clientEmail: params.clientEmail,
+    });
+    compensations.unshift({
+      fn: () => removeClient({ accountId: params.accountId }),
+    });
+
+    // Step 4: Add bank account and register compensation
+    await addBankAccount({
+      accountId: params.accountId,
+      details: params.bankDetails,
+    });
+    compensations.unshift({
+      fn: () => disconnectBankAccounts({ accountId: params.accountId }),
+    });
+  } catch (err) {
+    // On error, run all compensations in reverse order
+    for (const comp of compensations) {
+      await comp.fn();
+    }
+    throw err;
+  }
+}
+```
+
+```python [Python]
+from temporalio import workflow
+
+@workflow.defn
+class TransferMoneyWorkflow:
+    @workflow.run
+    async def run(self, details: TransferDetails) -> None:
+        compensations = []
+        
+        try:
+            # Step 1: Withdraw from source account
+            await workflow.execute_activity(
+                withdraw,
+                details,
+                start_to_close_timeout=timedelta(seconds=10),
+            )
+            compensations.append(
+                lambda: workflow.execute_activity(
+                    withdraw_compensation,
+                    details,
+                    start_to_close_timeout=timedelta(seconds=10),
+                )
+            )
+            
+            # Step 2: Deposit to target account
+            await workflow.execute_activity(
+                deposit,
+                details,
+                start_to_close_timeout=timedelta(seconds=10),
+            )
+            compensations.append(
+                lambda: workflow.execute_activity(
+                    deposit_compensation,
+                    details,
+                    start_to_close_timeout=timedelta(seconds=10),
+                )
+            )
+            
+            # Step 3: Additional operation
+            await workflow.execute_activity(
+                step_with_error,
+                details,
+                start_to_close_timeout=timedelta(seconds=10),
+            )
+        except Exception as e:
+            # On error, run compensations in reverse order
+            for compensation in reversed(compensations):
+                await compensation()
+            raise
+```
+
+```java [Java]
 public class HelloSaga {
     @WorkflowInterface
     public interface GreetingWorkflow {
@@ -127,12 +224,15 @@ public class HelloSaga {
     }
 }
 ```
+:::
 
 **Key Differences:**
 - **Go**: Uses `defer` statements that execute in LIFO order when function returns
+- **Python**: Uses list with `reversed()` to iterate compensations in LIFO order on error
+- **TypeScript**: Uses array with `unshift()` to maintain LIFO order, manually iterates on error
 - **Java**: Uses explicit `Saga` object to track and trigger compensations
-- **Both**: Compensations run in reverse order of registration
-- **Both**: Compensations are idempotent and can handle partial failures
+- **All**: Compensations run in reverse order of registration
+- **All**: Compensations are idempotent and can handle partial failures
 
 ## Applicability
 Use the Saga pattern when:
