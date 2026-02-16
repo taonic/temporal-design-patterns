@@ -18,6 +18,34 @@ Synchronous initialization with asynchronous completion. Returns results immedia
 
 ---
 
+## Stateful / Lifecycle Patterns
+
+### [Entity Workflow](entity-workflow.md)
+
+Models long-lived business entities (users, accounts, devices) as individual workflows that persist for the entity's entire lifetime. Each entity gets its own workflow instance handling all state transitions through signals and updates.
+
+### [Continue-As-New](continue-as-new.md)
+
+Prevents unbounded history growth by starting new execution with fresh history.
+
+### [Child Workflows](child-workflows.md)
+
+Decomposes complex workflows into smaller, reusable workflow units. Each child has independent workflow ID, history, and lifecycle with flexible parent-child coordination.
+
+### Query for State Inspection
+
+Read-only operations that expose workflow state without modification.
+
+### Workflow Updates
+
+Synchronous state modification with validation and direct result return.
+
+### Memo and Search Attributes
+
+Attaches metadata for filtering and discovery. Memos store data; search attributes enable querying.
+
+---
+
 ## Event-Driven Patterns
 
 ### [Signal with Start](signal-with-start.md)

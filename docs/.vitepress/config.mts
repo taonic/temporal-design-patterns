@@ -20,20 +20,21 @@ export default withMermaid(defineConfig({
         ]
       },
       {
+        text: 'Stateful / Lifecycle Patterns',
+        items: [
+          { text: 'Overview', link: '/stateful-lifecycle-patterns' },
+          { text: 'Entity Workflow', link: '/entity-workflow' },
+          { text: 'Request-Response via Updates', link: '/request-response-via-updates' },
+          { text: 'Continue-As-New', link: '/continue-as-new' },
+          { text: 'Child Workflows', link: '/child-workflows' }
+        ]
+      },
+      {
         text: 'Event-Driven Patterns',
         items: [
           { text: 'Overview', link: '/event-driven-patterns' },
           { text: 'Signal with Start', link: '/signal-with-start' },
-          { text: 'Request-Response via Updates', link: '/request-response-via-updates' },
           { text: 'Updatable Timer', link: '/updatable-timer' }
-        ]
-      },
-      {
-        text: 'Stateful / Lifecycle Patterns',
-        items: [
-          { text: 'Overview', link: '/stateful-lifecycle-patterns' },
-          { text: 'Continue-As-New', link: '/continue-as-new' },
-          { text: 'Child Workflows', link: '/child-workflows' }
         ]
       },
       {

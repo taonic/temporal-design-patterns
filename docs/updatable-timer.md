@@ -1,9 +1,9 @@
 
-# Updatable Timer Pattern
+# Updatable / Debounced Timer Pattern
 
 ## Overview
 
-The Updatable Timer pattern implements a sleep operation that can be interrupted and dynamically adjusted via signals. It enables workflows to wait for deadlines that can be extended or shortened based on external events, making it ideal for approval processes, SLA management, and time-sensitive business operations.
+The Updatable / Debounced Timer pattern implements a sleep operation that can be interrupted and dynamically adjusted via signals. It enables workflows to wait for deadlines that can be extended or shortened based on external events, making it ideal for approval processes, SLA management, and time-sensitive business operations.
 
 ## Problem
 
@@ -13,7 +13,7 @@ In business processes, you often need workflows that:
 - React immediately when the deadline changes
 - Continue waiting with the new deadline without restarting
 
-Without an updatable timer, you must:
+Without an updatable / debounced timer, you must:
 - Use fixed timeouts that can't be adjusted
 - Cancel and restart workflows to change deadlines
 - Poll frequently to check for deadline changes
@@ -21,7 +21,7 @@ Without an updatable timer, you must:
 
 ## Solution
 
-The Updatable Timer uses `Workflow.await()` with a time condition that can be modified via signals. When a signal updates the wake-up time, the await condition becomes true, the workflow recalculates the sleep duration, and blocks again with the new deadline.
+The Updatable / Debounced Timer uses `Workflow.await()` with a time condition that can be modified via signals. When a signal updates the wake-up time, the await condition becomes true, the workflow recalculates the sleep duration, and blocks again with the new deadline.
 
 ```mermaid
 sequenceDiagram
@@ -209,7 +209,7 @@ public class ApprovalWorkflowImpl implements ApprovalWorkflow {
 
 | Approach | Dynamic Updates | Complexity | Use Case |
 |----------|----------------|------------|----------|
-| Updatable Timer | Yes | Medium | Adjustable deadlines |
+| Updatable / Debounced Timer | Yes | Medium | Adjustable deadlines |
 | Workflow.sleep() | No | Low | Fixed delays |
 | Cancellation Scope | Yes (cancel only) | Medium | Abort operations |
 | Polling Loop | Yes | High | Frequent checks |

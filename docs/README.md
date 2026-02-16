@@ -19,6 +19,10 @@ Synchronous initialization with asynchronous completion. Returns results immedia
 
 ## Stateful / Lifecycle Patterns
 
+### [Entity Workflow](entity-workflow.md)
+
+Models long-lived business entities (users, accounts, devices) as individual workflows that persist for the entity's entire lifetime. Each entity gets its own workflow instance handling all state transitions through signals and updates.
+
 ### [Continue-As-New](continue-as-new.md)
 
 Prevents unbounded history growth by starting new execution with fresh history.
