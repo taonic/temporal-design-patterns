@@ -44,112 +44,169 @@ sequenceDiagram
 
 ## Implementation
 
-### Basic Update
+::: code-group
 
-```java
-public class OrderManager {
-  public OrderStatus addOrder(String workflowId, OrderRequest request) {
-    OrderWorkflow workflow = 
-        client.newWorkflowStub(OrderWorkflow.class, workflowId);
-    
-    // Execute update and get synchronous response
-    OrderStatus status = workflow.addOrder(request);
-    
-    // Client receives status immediately
-    return status;
-  }
-}
-
+```java [Java]
 @WorkflowInterface
-public interface OrderWorkflow {
+public interface TaskWorkflow {
   @WorkflowMethod
-  void processOrders();
+  void run();
   
   @UpdateMethod
-  OrderStatus addOrder(OrderRequest request);
+  AssignmentResult assignTask(String taskName);
   
   @QueryMethod
-  List<Order> getOrders();
+  List<String> getTasks();
 }
 
-public class OrderWorkflowImpl implements OrderWorkflow {
-  private Map<String, Order> orders = new HashMap<>();
+public class TaskWorkflowImpl implements TaskWorkflow {
+  private static final int MAX_TASKS = 10;
+  private List<String> tasks = new ArrayList<>();
   
   @Override
-  public void processOrders() {
-    Workflow.await(() -> false); // Run forever
+  public void run() {
+    Workflow.await(() -> false);
   }
   
-  @Override
-  public OrderStatus addOrder(OrderRequest request) {
-    // Validate inputs
-    if (request.getAmount() <= 0) {
-      throw new IllegalArgumentException("Amount must be positive");
+  // Optional: Validator runs before update handler
+  @UpdateValidatorMethod(updateName = "assignTask")
+  protected void validateAssignTask(String taskName) {
+    if (tasks.size() >= MAX_TASKS) {
+      throw new IllegalStateException("Task limit reached");
     }
-    
-    if (orders.size() >= MAX_ORDERS) {
-      throw new IllegalStateException("Order limit reached");
-    }
-    
-    // Modify state
-    String orderId = generateOrderId();
-    orders.put(orderId, new Order(orderId, request));
-    
-    // Return immediately
-    return new OrderStatus(orderId, "ACCEPTED");
   }
   
   @Override
-  public List<Order> getOrders() {
-    return new ArrayList<>(orders.values());
+  public AssignmentResult assignTask(String taskName) {
+    String assignmentId = UUID.randomUUID().toString();
+    tasks.add(taskName);
+    
+    return new AssignmentResult(assignmentId, taskName, tasks.size());
   }
+  
+  @Override
+  public List<String> getTasks() {
+    return new ArrayList<>(tasks);
+  }
+}
+
+// Client usage
+public AssignmentResult assignTask(String workflowId, String taskName) {
+  TaskWorkflow workflow = client.newWorkflowStub(TaskWorkflow.class, workflowId);
+  return workflow.assignTask(taskName);
+}
+```
+
+```go [Go]
+type TaskWorkflow struct{}
+
+const MaxTasks = 10
+
+func (w *TaskWorkflow) Run(ctx workflow.Context) error {
+	tasks := []string{}
+
+	// Optional: Validator runs before update handler
+	err := workflow.SetUpdateHandlerWithOptions(
+		ctx,
+		"AssignTask",
+		func(ctx workflow.Context, taskName string) (AssignmentResult, error) {
+			assignmentID := uuid.New().String()
+			tasks = append(tasks, taskName)
+			return AssignmentResult{
+				AssignmentID: assignmentID,
+				TaskName:     taskName,
+				TotalTasks:   len(tasks),
+			}, nil
+		},
+		workflow.UpdateHandlerOptions{
+			Validator: func(ctx workflow.Context, taskName string) error {
+				if len(tasks) >= MaxTasks {
+					return fmt.Errorf("task limit reached")
+				}
+				return nil
+			},
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	err = workflow.SetQueryHandler(ctx, "GetTasks", func() ([]string, error) {
+		return tasks, nil
+	})
+	if err != nil {
+		return err
+	}
+
+	workflow.GetSignalChannel(ctx, "").Receive(ctx, nil)
+	return nil
+}
+
+// Client usage
+func assignTask(c client.Client, workflowID string, taskName string) (AssignmentResult, error) {
+	updateHandle, err := c.UpdateWorkflow(context.Background(), client.UpdateWorkflowOptions{
+		WorkflowID: workflowID,
+		UpdateName: "AssignTask",
+		Args:       []interface{}{taskName},
+	})
+	if err != nil {
+		return AssignmentResult{}, err
+	}
+
+	var result AssignmentResult
+	err = updateHandle.Get(context.Background(), &result)
+	return result, err
 }
 ```
 
-### Update with Validation
+```typescript [TypeScript]
+import * as wf from '@temporalio/workflow';
+import { v4 as uuid } from 'uuid';
 
-```java
-public class AccountWorkflowImpl implements AccountWorkflow {
-  private BigDecimal balance = BigDecimal.ZERO;
-  private List<Transaction> transactions = new ArrayList<>();
-  
-  @Override
-  public TransactionResult deposit(BigDecimal amount) {
-    // Validate
-    if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-      throw new IllegalArgumentException("Deposit amount must be positive");
+interface AssignmentResult {
+  assignmentId: string;
+  taskName: string;
+  totalTasks: number;
+}
+
+export const assignTaskUpdate = wf.defineUpdate<AssignmentResult, [string]>('assignTask');
+export const getTasksQuery = wf.defineQuery<string[]>('getTasks');
+
+const MAX_TASKS = 10;
+
+export async function taskWorkflow(): Promise<void> {
+  const tasks: string[] = [];
+
+  // Optional: Validator runs before update handler
+  wf.setHandler(
+    assignTaskUpdate,
+    (taskName: string): AssignmentResult => {
+      const assignmentId = uuid();
+      tasks.push(taskName);
+      return { assignmentId, taskName, totalTasks: tasks.length };
+    },
+    {
+      validator: (taskName: string): void => {
+        if (tasks.length >= MAX_TASKS) {
+          throw new Error('Task limit reached');
+        }
+      },
     }
-    
-    // Update state
-    balance = balance.add(amount);
-    String txId = UUID.randomUUID().toString();
-    transactions.add(new Transaction(txId, "DEPOSIT", amount));
-    
-    // Return result
-    return new TransactionResult(txId, balance);
-  }
-  
-  @Override
-  public TransactionResult withdraw(BigDecimal amount) {
-    // Validate
-    if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-      throw new IllegalArgumentException("Withdrawal amount must be positive");
-    }
-    
-    if (balance.compareTo(amount) < 0) {
-      throw new IllegalStateException("Insufficient funds");
-    }
-    
-    // Update state
-    balance = balance.subtract(amount);
-    String txId = UUID.randomUUID().toString();
-    transactions.add(new Transaction(txId, "WITHDRAWAL", amount));
-    
-    // Return result
-    return new TransactionResult(txId, balance);
-  }
+  );
+
+  wf.setHandler(getTasksQuery, (): string[] => tasks);
+
+  await wf.condition(() => false);
+}
+
+// Client usage
+async function assignTask(workflowId: string, taskName: string): Promise<AssignmentResult> {
+  const handle = client.workflow.getHandle(workflowId);
+  return await handle.executeUpdate(assignTaskUpdate, { args: [taskName] });
 }
 ```
+
+:::
 
 ## Key Components
 
@@ -188,6 +245,13 @@ public class AccountWorkflowImpl implements AccountWorkflow {
 - **Blocking**: Update handler blocks workflow task execution
 - **Resource Usage**: Update handlers consume workflow task execution time
 - **Complexity**: More complex than signals for simple notifications
+
+## Limitations
+
+- **Payload Size**: Update arguments and return values are limited by the workflow history event size (typically 2MB per event)
+- **History Growth**: Each update adds events to workflow history, contributing to the 50K event limit
+- **Concurrent Updates**: Maximum of 10 in-flight updates per workflow execution
+- **Total Updates**: Maximum of 2,000 total updates in workflow history
 
 ## Comparison with Alternatives
 
