@@ -1,7 +1,7 @@
 
 # Early Return (Update with Start)
 
-## Intent
+## Overview
 Return initialization results to the caller immediately while continuing asynchronous processing in the background.
 
 ## Problem
@@ -29,8 +29,9 @@ sequenceDiagram
     deactivate Workflow
 ```
 
-**Go Implementation:**
-```go
+::: code-group
+```go [Go]
+// Workflow Implementation
 func Workflow(ctx workflow.Context, txRequest TransactionRequest) (*Transaction, error) {
     var tx *Transaction
     var initDone bool
@@ -64,11 +65,96 @@ func Workflow(ctx workflow.Context, txRequest TransactionRequest) (*Transaction,
     // Complete on initialization success
     return tx, workflow.ExecuteActivity(activityCtx, CompleteTransaction, tx).Get(ctx, nil)
 }
-```
-[Complete Go Sample](https://github.com/temporalio/samples-go/tree/main/early-return)
 
-**Java Implementation:**
-```java
+// Client Usage
+updateHandle, err := client.UpdateWithStartWorkflow(ctx, 
+    client.UpdateWithStartWorkflowOptions{
+        UpdateOptions: client.UpdateWorkflowOptions{
+            WorkflowID:   "transaction-123",
+            UpdateName:   UpdateName,
+        },
+        StartWorkflowOptions: client.StartWorkflowOptions{
+            ID:        "transaction-123",
+            TaskQueue: "transactions",
+        },
+    },
+    "Workflow",
+    txRequest,
+)
+
+// Get initialization result immediately
+var tx Transaction
+err = updateHandle.Get(ctx, &tx)
+if err != nil {
+    return err
+}
+
+// Use transaction ID immediately while workflow continues
+fmt.Printf("Transaction initialized: %s\n", tx.ID)
+```
+
+```typescript [TypeScript]
+// Workflow Implementation
+import { defineUpdate, setHandler, condition } from '@temporalio/workflow';
+import * as activities from './activities';
+
+const { initTransaction, completeTransaction, cancelTransaction } = 
+  proxyLocalActivities<typeof activities>({
+    startToCloseTimeout: '5s',
+  });
+
+export const returnInitResultUpdate = defineUpdate<Transaction>('returnInitResult');
+
+export async function transactionWorkflow(txRequest: TransactionRequest): Promise<Transaction> {
+  let tx: Transaction | undefined;
+  let initDone = false;
+  let initError: Error | undefined;
+
+  // Register update handler that waits for initialization
+  setHandler(returnInitResultUpdate, async () => {
+    await condition(() => initDone);
+    if (initError) {
+      throw initError;
+    }
+    return tx!;
+  });
+
+  // Phase 1: Fast synchronous initialization (local activity)
+  try {
+    tx = await initTransaction(txRequest);
+  } catch (err) {
+    initError = err as Error;
+  } finally {
+    initDone = true; // Signal update handler
+  }
+
+  // Phase 2: Slow asynchronous completion
+  if (initError) {
+    await cancelTransaction(tx!);
+    throw initError;
+  }
+
+  await completeTransaction(tx);
+  return tx;
+}
+
+// Client Usage
+const handle = await client.workflow.startWithUpdate(transactionWorkflow, {
+  workflowId: 'transaction-123',
+  taskQueue: 'transactions',
+  update: returnInitResultUpdate,
+  args: [txRequest],
+});
+
+// Get initialization result immediately
+const tx = await handle.updateResult();
+
+// Use transaction ID immediately while workflow continues
+console.log(`Transaction initialized: ${tx.id}`);
+```
+
+```java [Java]
+// Workflow Implementation
 public class TransactionWorkflowImpl implements TransactionWorkflow {
     private boolean initDone = false;
     private Transaction tx;
@@ -106,14 +192,37 @@ public class TransactionWorkflowImpl implements TransactionWorkflow {
         return new TxResult(tx.getId(), "Initialization successful");
     }
 }
-```
-[Complete Java Sample](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/earlyreturn)
 
-**Key Differences:**
-- **Go**: Uses SetUpdateHandler with closure capturing variables
-- **Java**: Uses separate update method (returnInitResult) with instance variables
-- **Both**: Use Workflow.await() to block until initialization completes
-- **Both**: Return initialization result immediately while processing continues
+// Client Usage
+WorkflowUpdateHandle<TxResult> updateHandle = 
+    client.updateWithStart(
+        "returnInitResult",
+        WorkflowUpdateStage.COMPLETED,
+        TxResult.class,
+        WorkflowOptions.newBuilder()
+            .setWorkflowId("transaction-123")
+            .setTaskQueue("transactions")
+            .build(),
+        "processTransaction",
+        txRequest
+    );
+
+// Get initialization result immediately
+TxResult result = updateHandle.getResultAsync().get();
+
+// Use transaction ID immediately while workflow continues
+System.out.println("Transaction initialized: " + result.getId());
+```
+:::
+
+**Sample Repositories:**
+[Go Sample](https://github.com/temporalio/samples-go/tree/main/early-return) | [TypeScript Sample](https://github.com/temporalio/samples-typescript/tree/main/early-return) | [Java Sample](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/earlyreturn)
+
+**Key Points:**
+- **Update-with-Start**: Single API call starts workflow and returns initialization result
+- **Workflow**: Uses update handler with condition/await to block until initialization completes
+- **Client**: Gets immediate result while workflow continues executing in background
+- **All SDKs**: Same pattern with language-specific syntax differences
 
 ## Applicability
 Use this pattern when:
@@ -161,90 +270,27 @@ func PaymentWorkflow(ctx workflow.Context, payment PaymentRequest) (*PaymentAuth
 - Client can proceed with basic user experience while onboarding completes
 
 **3. Resource Provisioning (Cloud/Infrastructure)**
-```java
-@Override
-public ProvisionResult provisionInfrastructure(ProvisionRequest request) {
-    boolean validationDone = false;
-    ResourceValidation validation = null;
-    
-    // Fast resource validation (quotas, permissions, etc.)
-    try {
-        validation = activities.validateResources(request);
-        validationDone = true;
-    } catch (Exception e) {
-        validationDone = true;
-        throw e;
-    }
-    
-    if (validation.hasErrors()) {
-        activities.cleanupResources(validation.getResourceIds());
-        return new ProvisionResult("", "Validation failed: " + validation.getErrors());
-    }
-    
-    // Long-running provisioning (VMs, databases, networking)
-    activities.provisionCompute(validation);
-    activities.configureNetworking(validation);
-    activities.setupMonitoring(validation);
-    
-    return new ProvisionResult(validation.getResourceId(), "Provisioned successfully");
-}
-
-@Override
-public ResourceValidation getValidationResult() {
-    Workflow.await(() -> validationDone);
-    return validation;
-}
-```
+- Fast resource validation checks quotas, permissions, and availability
+- Returns validation result with resource IDs immediately
+- Background provisioning handles VMs, databases, and networking setup
+- Cleanup resources automatically if validation fails
 
 **4. Document Processing & Approval Workflows**
 - Immediate receipt confirmation with document ID
 - Background OCR processing, content analysis, and routing to approvers
 - Users can track progress without waiting for full processing
 
-**5. AI/ML Model Training & Inference**
-```go
-func MLModelWorkflow(ctx workflow.Context, req TrainingRequest) (*ModelMetadata, error) {
-    var metadata *ModelMetadata
-    var setupDone bool
-    
-    workflow.SetUpdateHandler(ctx, "GetModelInfo",
-        func(ctx workflow.Context) (*ModelMetadata, error) {
-            workflow.Await(ctx, func() bool { return setupDone })
-            return metadata, nil
-        },
-    )
-    
-    // Quick setup: validate data, allocate resources, start training
-    localCtx := workflow.WithLocalActivityOptions(ctx, workflow.LocalActivityOptions{
-        ScheduleToCloseTimeout: 10 * time.Second,
-    })
-    err := workflow.ExecuteLocalActivity(localCtx, SetupTraining, req).Get(ctx, &metadata)
-    setupDone = true
-    
-    if err != nil {
-        return nil, err
-    }
-    
-    // Long-running training and evaluation
-    activityCtx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
-        StartToCloseTimeout: 6 * time.Hour, // Long training time
-    })
-    
-    return metadata, workflow.ExecuteActivity(activityCtx, TrainAndEvaluateModel, metadata).Get(ctx, nil)
-}
-```
-
-**6. Order Processing with Inventory Check**
+**5. Order Processing with Inventory Check**
 - Fast inventory availability check returns order confirmation
 - Background fulfillment includes picking, packing, and shipping
 - Customer gets immediate order confirmation while processing continues
 
-**7. Multi-step Financial Transactions**
+**6. Multi-step Financial Transactions**
 - Quick fraud detection and initial authorization
 - Background compliance checks, risk assessment, and final settlement
 - Critical for high-frequency trading or payment processing
 
-**8. Content Publishing & Moderation**
+**7. Content Publishing & Moderation**
 - Immediate publish with content ID after basic validation
 - Background content analysis, moderation, and optimization
 - Authors can share content immediately while safety checks continue
@@ -261,10 +307,10 @@ func MLModelWorkflow(ctx workflow.Context, req TrainingRequest) (*ModelMetadata,
 - ✅ Clear separation between validation and execution phases
 - ✅ Automatic cancellation handling on initialization failure
 
-###Cons
+## Cons
 - ❌ Requires careful timeout tuning for local activities
+- ❌ Concurrent update limit (10 per workflow) can bottleneck high-throughput scenarios requiring multiple simultaneous updates
 - ❌ Clients must handle asynchronous completion separately
-- ❌ More complex than simple synchronous workflows
 - ❌ Initialization must complete within a single workflow task
 - ❌ Limited to operations that can be split into fast/slow phases
 

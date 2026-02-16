@@ -9,6 +9,7 @@ Signal with Start is a pattern that lazily creates workflows when signaling them
 
 In distributed systems, you often need workflows that:
 - Represent long-lived entities (accounts, shopping carts, user sessions)
+- Consume events from streams (Kafka, SQS) and trigger certain behaviors of an aggregate or entity
 - Receive multiple operations over time
 - Should only exist when there's work to do
 - Need to handle the first operation without special client logic
@@ -44,31 +45,27 @@ sequenceDiagram
     deactivate W
 ```
 
-```java
-BatchRequest request = workflowClient.newSignalWithStartRequest();
-request.add(workflow::run);  // Workflow method to start
-request.add(workflow::signal, args);  // Signal to deliver
-workflowClient.signalWithStart(request);
-```
-
 ## Implementation
 
 ### Basic Signal with Start
 
-```java
+::: code-group
+
+```java [Java]
 public class ShoppingCartManager {
   public void addItem(String cartId, String itemId, String productId, int quantity) {
     WorkflowOptions options = WorkflowOptions.newBuilder()
-        .setWorkflowId("cart-" + cartId)
+        .setWorkflowId("cart-" + cartId)  // Stable ID for entity
         .setTaskQueue("carts")
         .build();
     
     ShoppingCartWorkflow workflow = 
         workflowClient.newWorkflowStub(ShoppingCartWorkflow.class, options);
     
+    // Atomically start workflow (if needed) and deliver signal
     BatchRequest request = workflowClient.newSignalWithStartRequest();
-    request.add(workflow::run);
-    request.add(workflow::addItem, itemId, productId, quantity);
+    request.add(workflow::run);  // Workflow method to start
+    request.add(workflow::addItem, itemId, productId, quantity);  // Signal to deliver
     workflowClient.signalWithStart(request);
   }
 }
@@ -83,79 +80,109 @@ public interface ShoppingCartWorkflow {
 }
 
 public class ShoppingCartWorkflowImpl implements ShoppingCartWorkflow {
-  private Set<String> processedItems = new HashSet<>();
+  private Set<String> processedItems = new HashSet<>();  // Track processed items
   private List<CartItem> items = new ArrayList<>();
   
   @Override
   public void run() {
-    Workflow.await(() -> false); // Run forever
+    Workflow.await(() -> false); // Run forever (entity workflow)
   }
   
   @Override
   public void addItem(String itemId, String productId, int quantity) {
     if (!processedItems.add(itemId)) {
-      return; // Duplicate signal
+      return; // Idempotency: ignore duplicate signals
     }
     items.add(new CartItem(productId, quantity));
   }
 }
 ```
 
-### Signal with Start + WorkflowInit
-
-Ensures proper initialization when signals arrive before the workflow method starts:
-
-```java
-public class GreetingManager {
-  public void addGreeting(String workflowId, Person person) {
-    WorkflowOptions options = WorkflowOptions.newBuilder()
-        .setWorkflowId(workflowId)
-        .setTaskQueue("greetings")
-        .build();
-    
-    MyWorkflow workflow = 
-        workflowClient.newWorkflowStub(MyWorkflow.class, options);
-    
-    WorkflowStub.fromTyped(workflow).signalWithStart(
-        "addGreeting",
-        new Object[] {person},  // Signal args
-        new Object[] {person}); // Workflow method args
-  }
+```typescript [TypeScript]
+export async function addItem(
+  cartId: string,
+  itemId: string,
+  productId: string,
+  quantity: number
+) {
+  // Atomically start workflow (if needed) and deliver signal
+  const handle = await client.workflow.signalWithStart(shoppingCartWorkflow, {
+    workflowId: `cart-${cartId}`,  // Stable ID for entity
+    taskQueue: 'carts',
+    signal: 'addItem',
+    signalArgs: [itemId, productId, quantity],
+  });
 }
 
-public class MyWorkflowImpl implements MyWorkflow {
-  private List<Person> peopleToGreet;
-  
-  @WorkflowInit
-  public MyWorkflowImpl(Person person) {
-    peopleToGreet = new ArrayList<>();  // Initialize before signal
-  }
-  
-  @Override
-  public String greet(Person person) {
-    peopleToGreet.add(person);
-    // Process greetings...
-  }
-  
-  @Override
-  public void addGreeting(Person person) {
-    peopleToGreet.add(person);  // Safe: list initialized in @WorkflowInit
-  }
+export async function shoppingCartWorkflow(): Promise<void> {
+  const processedItems = new Set<string>();  // Track processed items
+  const items: CartItem[] = [];
+
+  // Register signal handler before workflow logic
+  setHandler(addItemSignal, (itemId: string, productId: string, quantity: number) => {
+    if (processedItems.has(itemId)) {
+      return; // Idempotency: ignore duplicate signals
+    }
+    processedItems.add(itemId);
+    items.push({ productId, quantity });
+  });
+
+  await condition(() => false); // Run forever (entity workflow)
+}
+
+export const addItemSignal = defineSignal<[string, string, number]>('addItem');
+```
+
+```go [Go]
+func AddItem(ctx context.Context, cartID, itemID, productID string, quantity int) error {
+	opts := client.StartWorkflowOptions{
+		ID:        "cart-" + cartID,  // Stable ID for entity
+		TaskQueue: "carts",
+	}
+
+	// Atomically start workflow (if needed) and deliver signal
+	_, err := c.SignalWithStartWorkflow(ctx, opts, ShoppingCartWorkflow,
+		"addItem", AddItemSignal{ItemID: itemID, ProductID: productID, Quantity: quantity})
+	return err
+}
+
+func ShoppingCartWorkflow(ctx workflow.Context) error {
+	processedItems := make(map[string]bool)  // Track processed items
+	var items []CartItem
+
+	// Listen for signals in a coroutine
+	addItemCh := workflow.GetSignalChannel(ctx, "addItem")
+	workflow.Go(ctx, func(ctx workflow.Context) {
+		for {
+			var sig AddItemSignal
+			addItemCh.Receive(ctx, &sig)
+			if processedItems[sig.ItemID] {
+				continue // Idempotency: ignore duplicate signals
+			}
+			processedItems[sig.ItemID] = true
+			items = append(items, CartItem{ProductID: sig.ProductID, Quantity: sig.Quantity})
+		}
+	})
+
+	workflow.Await(ctx, func() bool { return false }) // Run forever (entity workflow)
+	return nil
 }
 ```
 
+:::
+
 ## Key Components
 
-1. **BatchRequest**: Container for workflow method and signal(s) to execute atomically
-2. **Workflow ID**: Derived from business entity (account ID, user ID, session ID)
-3. **Signal Handler**: Processes incoming operations with idempotency checks
-4. **WorkflowInit**: Optional constructor for initialization before signals are delivered
-5. **Long-Running Workflow**: Uses `Workflow.await()` or continues-as-new to stay alive
+1. **Workflow ID**: Derived from business entity (account ID, user ID, session ID)
+2. **Signal Handler**: Processes incoming operations with idempotency checks
+3. **BatchRequest**: Container for workflow method and signal(s) to execute atomically
+4. **WorkflowInit**: Optional constructor for initialization before signals are delivered (Java and .NET only)
 
 ## When to Use
 
 **Ideal for:**
 - Entity workflows (accounts, shopping carts, user sessions, clusters)
+- Event-driven architectures (Kafka consumers, message queue processors)
 - Workflows that receive multiple operations over their lifetime
 - Lazy entity creation—only create when first operation arrives
 - Fire-and-forget operations where immediate response isn't needed
@@ -182,11 +209,11 @@ public class MyWorkflowImpl implements MyWorkflow {
 
 ## Workflow ID Reuse Policies
 
-Choose the appropriate policy for your use case:
+Both **ALLOW_DUPLICATE** and **ALLOW_DUPLICATE_FAILED_ONLY** work well with Signal with Start:
 
-- **ALLOW_DUPLICATE_FAILED_ONLY**: Recommended for entity workflows—allows restart if previous run failed
-- **REJECT_DUPLICATE**: Prevents any duplicate starts - useful for one-time operations
-- **ALLOW_DUPLICATE**: Allows new run regardless of previous runs—rarely used
+- **ALLOW_DUPLICATE** (default): Allows new run regardless of previous runs—terminates existing workflow and starts fresh
+- **ALLOW_DUPLICATE_FAILED_ONLY**: Allows restart only if previous run failed—prevents accidental restarts of running workflows
+- **REJECT_DUPLICATE**: Prevents any duplicate starts—useful for one-time operations, not entity workflows
 - **TERMINATE_IF_RUNNING**: Terminates running workflow and starts new one—use with caution
 
 ## Comparison with Alternatives
@@ -208,9 +235,8 @@ Choose the appropriate policy for your use case:
 
 1. **Derive Workflow ID from Entity**: Use stable business identifiers (account ID, user ID)
 2. **Implement Signal Idempotency**: Track processed operation IDs to prevent duplicates
-3. **Use WorkflowInit**: Initialize state before signals are delivered
+3. **Use WorkflowInit**: Initialize state before signals are delivered (Java and .NET only)
 4. **Handle Unbounded Execution**: Use continue-as-new for long-running entity workflows
 5. **Choose Right Workflow ID Policy**: Use ALLOW_DUPLICATE_FAILED_ONLY for entity workflows
 6. **Include Operation IDs**: Every signal should include a unique operation/reference ID
 7. **Return Early**: Check for duplicates at the start of signal handlers
-8. **Consider Queries**: Use queries to check workflow state after signaling
