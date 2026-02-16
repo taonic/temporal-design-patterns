@@ -1,16 +1,14 @@
 
 # Saga Pattern
 
-[Go Sample](https://github.com/temporalio/samples-go/tree/main/saga) | [Java Sample](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/hello/HelloSaga.java) | [TypeScript Sample](https://github.com/temporalio/samples-typescript/tree/main/saga) | [Python Sample](https://github.com/temporalio/samples-python)
-
-## Intent
+## Overview
 Manage distributed transactions across multiple services by coordinating a sequence of local transactions, each with a compensating action that can undo its effects if subsequent steps fail.
 
 ## Problem
 In distributed systems, you need to maintain data consistency across multiple services or databases without using traditional ACID transactions. When a multi-step business process fails partway through, you must undo the effects of completed steps to maintain system consistency. Traditional two-phase commit doesn't scale well and creates tight coupling between services.
 
 ## Solution
-Implement each step as a local transaction with a corresponding compensation transaction. If any step fails, execute compensation transactions in reverse order to undo the effects of all completed steps. Use Go's `defer` mechanism to automatically trigger compensations when errors occur, ensuring cleanup happens even if the workflow logic panics or returns early.
+Implement each step as a local transaction with a corresponding compensation transaction. If any step fails, execute compensation transactions in reverse order to undo the effects of all completed steps. Register compensations as each step completes, then automatically trigger them when errors occur to ensure cleanup happens reliably.
 
 ```mermaid
 flowchart TD
@@ -41,31 +39,31 @@ flowchart TD
 ::: code-group
 ```go [Go]
 func TransferMoney(ctx workflow.Context, details TransferDetails) error {
-    // Step 1: Withdraw from source account
-    err := workflow.ExecuteActivity(ctx, Withdraw, details).Get(ctx, nil)
-    if err != nil {
-        return err
-    }
-    
-    // Register compensation for Step 1
+    // Register compensation for Step 1 BEFORE execution
     defer func() {
         if err != nil {
             _ = workflow.ExecuteActivity(ctx, WithdrawCompensation, details).Get(ctx, nil)
         }
     }()
     
-    // Step 2: Deposit to target account
-    err = workflow.ExecuteActivity(ctx, Deposit, details).Get(ctx, nil)
+    // Step 1: Withdraw from source account
+    err := workflow.ExecuteActivity(ctx, Withdraw, details).Get(ctx, nil)
     if err != nil {
-        return err // Triggers defer, which runs WithdrawCompensation
+        return err
     }
     
-    // Register compensation for Step 2
+    // Register compensation for Step 2 BEFORE execution
     defer func() {
         if err != nil {
             _ = workflow.ExecuteActivity(ctx, DepositCompensation, details).Get(ctx, nil)
         }
     }()
+    
+    // Step 2: Deposit to target account
+    err = workflow.ExecuteActivity(ctx, Deposit, details).Get(ctx, nil)
+    if err != nil {
+        return err // Triggers defer, which runs both compensations
+    }
     
     // Step 3: Additional operation
     err = workflow.ExecuteActivity(ctx, StepWithError, details).Get(ctx, nil)
@@ -78,38 +76,37 @@ export async function openAccount(params: OpenAccount): Promise<void> {
   const compensations: Compensation[] = [];
 
   try {
-    // Step 1: Create account (fatal if fails)
+    // Step 1: Create account
     await createAccount({ accountId: params.accountId });
-  } catch (err) {
-    throw err; // No compensations needed for first step
-  }
 
-  try {
-    // Step 2: Add address and register compensation
+    // Register compensation for Step 2 BEFORE execution
+    compensations.unshift({
+      fn: () => clearPostalAddresses({ accountId: params.accountId }),
+    });
+    // Step 2: Add address
     await addAddress({
       accountId: params.accountId,
       address: params.address,
     });
-    compensations.unshift({
-      fn: () => clearPostalAddresses({ accountId: params.accountId }),
-    });
 
-    // Step 3: Add client and register compensation
+    // Register compensation for Step 3 BEFORE execution
+    compensations.unshift({
+      fn: () => removeClient({ accountId: params.accountId }),
+    });
+    // Step 3: Add client
     await addClient({
       accountId: params.accountId,
       clientEmail: params.clientEmail,
     });
-    compensations.unshift({
-      fn: () => removeClient({ accountId: params.accountId }),
-    });
 
-    // Step 4: Add bank account and register compensation
+    // Register compensation for Step 4 BEFORE execution
+    compensations.unshift({
+      fn: () => disconnectBankAccounts({ accountId: params.accountId }),
+    });
+    // Step 4: Add bank account
     await addBankAccount({
       accountId: params.accountId,
       details: params.bankDetails,
-    });
-    compensations.unshift({
-      fn: () => disconnectBankAccounts({ accountId: params.accountId }),
     });
   } catch (err) {
     // On error, run all compensations in reverse order
@@ -131,12 +128,7 @@ class TransferMoneyWorkflow:
         compensations = []
         
         try:
-            # Step 1: Withdraw from source account
-            await workflow.execute_activity(
-                withdraw,
-                details,
-                start_to_close_timeout=timedelta(seconds=10),
-            )
+            # Register compensation for Step 1 BEFORE execution
             compensations.append(
                 lambda: workflow.execute_activity(
                     withdraw_compensation,
@@ -144,19 +136,26 @@ class TransferMoneyWorkflow:
                     start_to_close_timeout=timedelta(seconds=10),
                 )
             )
-            
-            # Step 2: Deposit to target account
+            # Step 1: Withdraw from source account
             await workflow.execute_activity(
-                deposit,
+                withdraw,
                 details,
                 start_to_close_timeout=timedelta(seconds=10),
             )
+            
+            # Register compensation for Step 2 BEFORE execution
             compensations.append(
                 lambda: workflow.execute_activity(
                     deposit_compensation,
                     details,
                     start_to_close_timeout=timedelta(seconds=10),
                 )
+            )
+            # Step 2: Deposit to target account
+            await workflow.execute_activity(
+                deposit,
+                details,
+                start_to_close_timeout=timedelta(seconds=10),
             )
             
             # Step 3: Additional operation
@@ -189,29 +188,32 @@ public class HelloSaga {
                 .build());
             
             try {
-                // Step 1: Execute activity and register compensation
+                // Register compensation for Step 1 BEFORE execution
+                saga.addCompensation(activities::cleanupHello, name);
+                // Step 1: Execute activity
                 String hello = Workflow.executeActivity(
                     activities::hello, 
                     String.class, 
                     name
                 ).get();
-                saga.addCompensation(activities::cleanupHello, name);
                 
-                // Step 2: Execute activity and register compensation
+                // Register compensation for Step 2 BEFORE execution
+                saga.addCompensation(activities::cleanupBye, name);
+                // Step 2: Execute activity
                 String bye = Workflow.executeActivity(
                     activities::bye, 
                     String.class, 
                     name
                 ).get();
-                saga.addCompensation(activities::cleanupBye, name);
                 
+                // Register compensation for Step 3 BEFORE execution
+                saga.addCompensation(activities::cleanupFile, name);
                 // Step 3: This might fail
                 Workflow.executeActivity(
                     activities::processFile, 
                     Void.class, 
                     name
                 ).get();
-                saga.addCompensation(activities::cleanupFile, name);
                 
                 return hello + "; " + bye;
                 
@@ -231,8 +233,30 @@ public class HelloSaga {
 - **Python**: Uses list with `reversed()` to iterate compensations in LIFO order on error
 - **TypeScript**: Uses array with `unshift()` to maintain LIFO order, manually iterates on error
 - **Java**: Uses explicit `Saga` object to track and trigger compensations
+- **All**: Compensations registered BEFORE activity execution to handle partial failures
 - **All**: Compensations run in reverse order of registration
-- **All**: Compensations are idempotent and can handle partial failures
+- **All**: Compensations are idempotent and can handle cases where forward activity never executed
+
+**When to Register Compensations:**
+
+There are two approaches for when to register compensation activities:
+
+1. **Register BEFORE activity execution** (Recommended for safety)
+   - Ensures compensation runs even if the activity fails after partial completion
+   - Example: Credit card charged but activity fails before returning success
+   - Compensation must be idempotent and handle cases where forward activity never executed (no-op)
+   - Safer default when activities have side effects that may occur before failure
+
+2. **Register AFTER activity execution** (Simpler when safe)
+   - Only compensates activities that completed successfully
+   - Simpler compensation logic - no need to check if forward action occurred
+   - Appropriate when activities are truly atomic (all-or-nothing)
+   - Risk: Partial completion without compensation if activity fails mid-execution
+
+The choice depends on your activity's failure characteristics and whether compensation can safely handle cases where the forward activity never executed. When in doubt, register compensations before execution and ensure they are idempotent.
+
+## Sample Repositories
+[Go Sample](https://github.com/temporalio/samples-go/tree/main/saga) | [Java Sample](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/hello/HelloSaga.java) | [TypeScript Sample](https://github.com/temporalio/samples-typescript/tree/main/saga) | [Python Sample](https://github.com/temporalio/samples-python)
 
 ## Applicability
 Use the Saga pattern when:
@@ -245,7 +269,7 @@ Use the Saga pattern when:
 ## Pros
 - ✅ Maintains eventual consistency without distributed locks
 - ✅ Each service can use its own database and transaction model
-- ✅ Automatic compensation execution via `defer` ensures cleanup
+- ✅ Automatic compensation execution ensures cleanup
 - ✅ Scales better than two-phase commit protocols
 - ✅ Temporal's durability guarantees compensations will execute even after worker failures
 
