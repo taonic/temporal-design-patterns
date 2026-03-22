@@ -1,7 +1,7 @@
 
-# Business Process Patterns
+# Business process patterns
 
-Patterns for human-in-the-loop workflows and business processes.
+Patterns for human-in-the-loop Workflows and business processes.
 
-- [Approval](approval.md) - Human approval workflows with timeouts
-- [Delayed Start](delayed-start.md) - Schedule workflow execution for future time
+- [Approval](approval.md) — Human approval Workflows with timeouts.
+- [Delayed Start](delayed-start.md) — Schedule Workflow execution for a future time.

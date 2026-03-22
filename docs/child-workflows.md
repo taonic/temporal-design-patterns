@@ -3,34 +3,30 @@
 
 ## Overview
 
-Child Workflows enable decomposition of complex business logic into smaller, reusable workflow units. Each child executes as an independent workflow with its own workflow ID, event history (50K event limit), and lifecycle. Unlike activities which execute code, child workflows orchestrate processes and provide workflow-level semantics: independent tracking, querying, timeouts, and the ability to outlive the parent.
+Child Workflows enable decomposition of complex business logic into smaller, reusable Workflow units.
+Each child executes as an independent Workflow with its own Workflow ID, event history (50K event limit), and lifecycle.
+Unlike Activities which execute code, Child Workflows orchestrate processes and provide Workflow-level semantics: independent tracking, querying, timeouts, and the ability to outlive the parent.
 
 Key capabilities:
-- **Independent Identity**: Each child has a unique workflow ID visible in the UI for tracking and querying
-- **Separate History**: Each child maintains its own event history, preventing parent history bloat
-- **Flexible Invocation**: Synchronous (blocking) or asynchronous (non-blocking) execution
-- **Lifecycle Control**: Parent close policies (TERMINATE, ABANDON, REQUEST_CANCEL) determine child behavior when parent completes
-- **Task Queue Routing**: Children can execute on different task queues with specialized workers
-- **Reusability**: Same child workflow logic can be invoked by multiple different parent workflows
+
+- **Independent identity**: Each child has a unique Workflow ID visible in the UI for tracking and querying.
+- **Separate history**: Each child maintains its own event history, preventing parent history bloat.
+- **Flexible invocation**: Synchronous (blocking) or asynchronous (non-blocking) execution.
+- **Lifecycle control**: Parent close policies (TERMINATE, ABANDON, REQUEST_CANCEL) determine child behavior when the parent completes.
+- **Task Queue routing**: Children can execute on different Task Queues with specialized Workers.
+- **Reusability**: The same Child Workflow logic can be invoked by multiple different parent Workflows.
 
 ## Problem
 
-In distributed systems, you often need workflows that:
-- Break down complex processes into modular, reusable components
-- Execute sub-processes that may outlive the parent workflow
-- Coordinate multiple independent workflows with different lifecycles
-- Isolate failure domains while maintaining orchestration control
-- Reuse workflow logic across different parent workflows
+In distributed systems, you often need Workflows that break down complex processes into modular, reusable components, execute sub-processes that may outlive the parent Workflow, coordinate multiple independent Workflows with different lifecycles, isolate failure domains while maintaining orchestration control, and reuse Workflow logic across different parent Workflows.
 
-Without child workflows, you must:
-- Implement all logic in a single monolithic workflow
-- Manually coordinate separate workflows via signals and queries
-- Duplicate workflow logic across multiple implementations
-- Manage complex state machines for sub-process coordination
+Without Child Workflows, you must implement all logic in a single monolithic Workflow, manually coordinate separate Workflows via Signals and Queries, duplicate Workflow logic across multiple implementations, and manage complex state machines for sub-process coordination.
 
 ## Solution
 
-Child Workflows are invoked from parent workflows using `Workflow.newChildWorkflowStub()`. They can be called synchronously (blocking until completion) or asynchronously (fire-and-forget). The `ParentClosePolicy` determines what happens to children when the parent completes.
+You invoke Child Workflows from parent Workflows using `Workflow.newChildWorkflowStub()`.
+You can call them synchronously (blocking until completion) or asynchronously (fire-and-forget).
+The `ParentClosePolicy` determines what happens to children when the parent completes.
 
 ```mermaid
 sequenceDiagram
@@ -57,9 +53,19 @@ sequenceDiagram
     end
 ```
 
+The following describes each step in the diagram:
+
+1. The parent starts Child 1 synchronously and blocks until it completes.
+2. The parent starts Child 2 asynchronously and continues doing other work immediately.
+3. If the parent completes before Child 2, the ABANDON policy allows Child 2 to continue running independently.
+
 ### Synchronous Child Workflow
 
+The following example creates a Child Workflow stub and calls it directly.
+The parent blocks until the child completes and returns a result:
+
 ```java
+// ParentWorkflowImpl.java
 @WorkflowInterface
 public interface ParentWorkflow {
   @WorkflowMethod
@@ -69,7 +75,6 @@ public interface ParentWorkflow {
 public class ParentWorkflowImpl implements ParentWorkflow {
   @Override
   public String execute(String input) {
-    // Create child workflow stub
     ChildWorkflow child = Workflow.newChildWorkflowStub(ChildWorkflow.class);
     
     // Synchronous call - blocks until child completes
@@ -80,9 +85,16 @@ public class ParentWorkflowImpl implements ParentWorkflow {
 }
 ```
 
+The `Workflow.newChildWorkflowStub()` call creates a typed stub for the Child Workflow.
+Calling `child.processData(input)` blocks the parent until the child completes and returns its result.
+
 ### Asynchronous Child Workflow
 
+The following example starts a Child Workflow asynchronously with an ABANDON policy.
+The parent receives the child's execution info without waiting for completion:
+
 ```java
+// ParentWorkflowImpl.java
 public class ParentWorkflowImpl implements ParentWorkflow {
   @Override
   public WorkflowExecution execute(String input) {
@@ -103,74 +115,29 @@ public class ParentWorkflowImpl implements ParentWorkflow {
 }
 ```
 
-## Parent Close Policy
+The `Async.function()` call starts the child asynchronously and returns immediately.
+`Workflow.getWorkflowExecution(child)` returns a Promise that resolves when the child starts (not when it completes).
+The ABANDON policy ensures the child continues running even if the parent completes first.
 
-The `ParentClosePolicy` determines child workflow behavior when the parent closes:
+## Parent close policy
 
-| Policy | Behavior | Use Case |
-|--------|----------|----------|
+The `ParentClosePolicy` determines Child Workflow behavior when the parent closes:
+
+| Policy | Behavior | Use case |
+| :--- | :--- | :--- |
 | `TERMINATE` | Child is terminated when parent closes | Tightly coupled processes |
 | `ABANDON` | Child continues independently | Fire-and-forget, long-running tasks |
 | `REQUEST_CANCEL` | Child receives cancellation request | Graceful cleanup |
 
-### Example: Abandon Policy
+## Implementation
+
+### Parallel Child Workflows
+
+The following example starts multiple Child Workflows in parallel and waits for all of them to complete:
 
 ```java
-ChildWorkflowOptions options = ChildWorkflowOptions.newBuilder()
-    .setParentClosePolicy(ParentClosePolicy.PARENT_CLOSE_POLICY_ABANDON)
-    .build();
-
-ChildWorkflow child = Workflow.newChildWorkflowStub(ChildWorkflow.class, options);
-Async.function(child::longRunningTask);
-
-// Parent can complete while child continues
-return "Parent done, child continues";
-```
-
-## Synchronous vs Asynchronous Invocation
-
-### Synchronous (Blocking)
-
-```java
-// Direct call - blocks until child completes
-ChildWorkflow child = Workflow.newChildWorkflowStub(ChildWorkflow.class);
-String result = child.process(data); // Waits for completion
-```
-
-**Characteristics:**
-- Parent waits for child to complete
-- Child result is returned directly
-- Parent history includes child completion
-- Simpler error handling
-- Child must complete before parent can proceed
-
-### Asynchronous (Non-Blocking)
-
-```java
-// Async call - returns immediately
-ChildWorkflow child = Workflow.newChildWorkflowStub(ChildWorkflow.class);
-Promise<String> result = Async.function(child::process, data);
-
-// Do other work
-doOtherWork();
-
-// Optionally wait for result later
-String value = result.get();
-```
-
-**Characteristics:**
-- Parent continues immediately
-- Returns `Promise<T>` for later retrieval
-- Can start multiple children in parallel
-- Parent can complete before child (with ABANDON policy)
-- More flexible orchestration
-
-## Implementation Patterns
-
-### Pattern 1: Parallel Child Workflows
-
-```java
-public class ParentWorkflowImpl implements ParentWorkflow {
+// ParallelParentWorkflowImpl.java
+public class ParallelParentWorkflowImpl implements ParentWorkflow {
   @Override
   public String execute(List<String> items) {
     List<Promise<String>> promises = new ArrayList<>();
@@ -183,7 +150,6 @@ public class ParentWorkflowImpl implements ParentWorkflow {
     // Wait for all children to complete
     Promise.allOf(promises).get();
     
-    // Collect results
     return promises.stream()
         .map(Promise::get)
         .collect(Collectors.joining(", "));
@@ -191,10 +157,15 @@ public class ParentWorkflowImpl implements ParentWorkflow {
 }
 ```
 
-### Pattern 2: Fire-and-Forget
+Each child starts asynchronously via `Async.function()`, and `Promise.allOf(promises).get()` blocks until every child completes.
+
+### Fire-and-forget
+
+The following example starts a Child Workflow with the ABANDON policy and returns immediately without waiting:
 
 ```java
-public class ParentWorkflowImpl implements ParentWorkflow {
+// FireAndForgetParentWorkflowImpl.java
+public class FireAndForgetParentWorkflowImpl implements ParentWorkflow {
   @Override
   public void execute(String data) {
     ChildWorkflowOptions options = ChildWorkflowOptions.newBuilder()
@@ -203,18 +174,28 @@ public class ParentWorkflowImpl implements ParentWorkflow {
     
     ChildWorkflow child = Workflow.newChildWorkflowStub(ChildWorkflow.class, options);
     
-    // Start child and don't wait
+    // Start child and don't wait for completion
     Async.function(child::longRunningProcess, data);
     
-    // Parent completes immediately, child continues
+    // Wait for child to start before parent completes
+    Workflow.getWorkflowExecution(child).get();
+    
+    // Parent completes, child continues independently
   }
 }
 ```
 
-### Pattern 3: Conditional Child Execution
+The `Workflow.getWorkflowExecution(child).get()` call blocks until the child has started (not completed).
+Without this call, the parent could complete before the child is scheduled, and the child would never execute.
+The ABANDON policy ensures the child continues running after the parent completes.
+
+### Conditional child execution
+
+The following example conditionally starts different Child Workflows based on business logic:
 
 ```java
-public class ParentWorkflowImpl implements ParentWorkflow {
+// ConditionalParentWorkflowImpl.java
+public class ConditionalParentWorkflowImpl implements ParentWorkflow {
   @Override
   public String execute(Order order) {
     if (order.requiresApproval()) {
@@ -232,134 +213,82 @@ public class ParentWorkflowImpl implements ParentWorkflow {
 }
 ```
 
-## Key Components
+The parent checks whether the order requires approval and only starts the approval Child Workflow when needed.
 
-1. **Child Workflow Stub**: Created via `Workflow.newChildWorkflowStub()`
-2. **ChildWorkflowOptions**: Configures workflow ID, task queue, timeouts, parent close policy
-3. **Async.function()**: Invokes child asynchronously, returns `Promise<T>`
-4. **Workflow.getWorkflowExecution()**: Gets child execution info without waiting for completion
-5. **ParentClosePolicy**: Controls child lifecycle when parent closes
+## When to use
 
-## When to Use Child Workflows vs Activities
+Child Workflows and Activities serve different purposes.
 
-Child workflows and activities serve different purposes. Understanding when to use each is critical for effective workflow design.
+Use Child Workflows when:
 
-### Use Child Workflows When:
+- You need a separate Workflow ID for tracking and querying.
+- The operation may outlive the parent Workflow.
+- You need to reuse Workflow logic across multiple parents.
+- You want to execute Workflows on different Task Queues.
+- You need independent history and event limits.
+- You want to apply different timeouts or retry policies at the Workflow level.
 
-1. **You need a separate workflow ID for tracking and querying**
-   - Each child has its own workflow ID visible in the UI
-   - Can query child workflow state independently
-   - Enables business-level tracking (e.g., per-order, per-customer workflows)
+Use Activities when:
 
-2. **The operation may outlive the parent workflow**
-   - Long-running processes that continue after parent completes
-   - Fire-and-forget operations with ABANDON policy
-   - Independent lifecycle management
+- You are executing external operations (API calls, database queries).
+- The operation is short-lived.
+- You do not need independent Workflow tracking.
+- The operation is tightly coupled to the parent Workflow lifecycle.
+- Lower overhead is important.
 
-3. **You need to reuse workflow logic across multiple parents**
-   - Common sub-processes used by different workflows
-   - Standardized business operations (approval, fulfillment, notification)
-   - Shared workflow implementations
+The key distinction is that Activities are for executing code (especially external operations), while Child Workflows are for orchestrating processes that benefit from independent Workflow semantics.
 
-4. **You want to execute workflows on different task queues**
-   - Route child to specialized workers
-   - Separate resource pools or worker capabilities
-   - Different deployment or scaling requirements
+## Benefits and trade-offs
 
-5. **You need independent history and event limits**
-   - Each child has its own 50K event history limit
-   - Prevents parent history from growing unbounded
-   - Isolates complex sub-processes
+Child Workflows provide modularity by breaking complex logic into reusable units.
+Each child is a first-class Workflow with its own ID for tracking, its own 50K event history limit, and its own execution timeout configuration.
+Children can outlive parents with the ABANDON policy, and you can start multiple children concurrently.
+Child failures do not automatically fail the parent, and the same Child Workflow can be reused by multiple parents.
 
-6. **You want to apply different timeouts or retry policies at the workflow level**
-   - Child workflows have their own execution timeouts
-   - Independent retry and failure handling
-   - Different SLAs for sub-processes
+The trade-offs to consider are that each child is a separate Workflow execution with its own history (overhead).
+There are more moving parts than a single Workflow.
+Child execution details are not in the parent history (but are queryable independently).
+Async children require explicit synchronization if needed.
+More Workflow executions mean higher resource usage.
+Starting a Child Workflow has more overhead than starting an Activity.
 
-### Use Activities When:
+## Comparison with alternatives
 
-- Executing external operations (API calls, database queries)
-- Simple, short-lived operations
-- No need for independent workflow tracking
-- Tightly coupled to parent workflow lifecycle
-- Lower overhead is important
-
-### Key Distinction
-
-**Activities** are for executing code (especially external operations).
-**Child Workflows** are for orchestrating processes that benefit from independent workflow semantics.
-
-## Benefits
-
-- **Modularity**: Break complex logic into reusable units
-- **Independent Workflow ID**: Each child is a first-class workflow with its own ID for tracking
-- **Independent History**: Each child has its own 50K event history limit
-- **Flexible Lifecycle**: Children can outlive parents with ABANDON policy
-- **Parallel Execution**: Start multiple children concurrently
-- **Failure Isolation**: Child failures don't automatically fail parent
-- **Reusability**: Same child workflow used by multiple parents
-- **Task Queue Routing**: Route children to different worker pools
-- **Independent Timeouts**: Each child has its own execution timeout configuration
-
-## Trade-offs
-
-- **Overhead**: Each child is a separate workflow execution with its own history
-- **Complexity**: More moving parts than single workflow
-- **Visibility**: Child execution details not in parent history (but queryable independently)
-- **Coordination**: Async children require explicit synchronization if needed
-- **Cost**: More workflow executions = higher resource usage
-- **Latency**: Starting a child workflow has more overhead than starting an activity
-- **Event Count**: Parent history includes ChildWorkflowExecutionStarted/Completed events
-
-## How It Works
-
-### Synchronous Flow
-1. Parent creates child workflow stub
-2. Parent calls child method directly
-3. Child workflow starts and executes
-4. Parent blocks until child completes
-5. Child result returned to parent
-6. Parent continues with result
-
-### Asynchronous Flow
-1. Parent creates child workflow stub with options
-2. Parent calls `Async.function(child::method)`
-3. Child workflow starts asynchronously
-4. Parent receives `Promise<T>` immediately
-5. Parent can continue or wait on promise later
-6. If ABANDON policy, parent can complete before child
-
-## Comparison with Alternatives
-
-| Approach | Modularity | Independent History | Can Outlive Parent | Overhead | Separate Workflow ID |
-|----------|------------|---------------------|-------------------|----------|---------------------|
+| Approach | Modularity | Independent history | Can outlive parent | Overhead | Separate Workflow ID |
+| :--- | :--- | :--- | :--- | :--- | :--- |
 | Child Workflow | High | Yes | Yes (ABANDON) | Medium | Yes |
 | Activity | Medium | No | No | Low | No |
 | Separate Workflow + Signals | High | Yes | Yes | High | Yes |
 | Async Lambda | Low | No | No | Very Low | No |
-| Async Lambda | Low | No | No | Very Low |
 
-## Related Patterns
+## Best practices
 
-- **Parallel Execution**: Running multiple children concurrently
-- **Continue-As-New**: Child workflows can use continue-as-new independently
-- **Saga Pattern**: Children as compensatable transactions
-- **Batch Processing**: Parent coordinates multiple child workers
-- **Fire-and-Forget**: Async children with ABANDON policy
+- **Use unique Workflow IDs.** Generate unique IDs for Child Workflows to avoid conflicts.
+- **Choose the appropriate policy.** Use TERMINATE for tightly coupled children, ABANDON for independent children.
+- **Handle child failures.** Catch and handle Child Workflow exceptions appropriately.
+- **Limit parallelism.** Do not spawn unlimited children; use batch patterns for large datasets.
+- **Consider Activities first.** Use Activities for operations that do not need independent Workflow tracking.
+- **Set timeouts.** Configure appropriate Workflow execution timeouts for children.
+- **Use typed stubs.** Prefer typed stubs over untyped for compile-time safety.
+- **Monitor child executions.** Track Child Workflow IDs for observability and debugging.
 
-## Sample Code
+## Common pitfalls
 
-- [HelloChild](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/hello/HelloChild.java) - Basic synchronous child workflow
-- [Async Child Workflow](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/asyncchild) - Asynchronous child with ABANDON policy
-- [Async Untyped Child](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/asyncuntypedchild) - Untyped async child workflow
+- **Treating Child Workflows like Activities.** Child Workflows are for orchestration, not for executing external code. If you only need to call an API or run a function, use an Activity instead.
+- **Spawning unbounded children in a loop.** Starting thousands of Child Workflows without batching can overwhelm the Temporal Service and bloat the parent's event history. Use fixed-size batches or a sliding window.
+- **Ignoring the Parent Close Policy.** The default policy is TERMINATE, which kills children when the parent closes. If children must outlive the parent, set the policy to ABANDON explicitly.
+- **Using synchronous calls when async is needed.** Calling a Child Workflow synchronously blocks the parent until the child completes. For long-running children, use `Async.function()` to avoid stalling the parent.
+- **Omitting Workflow IDs.** Without explicit Workflow IDs, you lose the ability to deduplicate or look up Child Workflows by a meaningful identifier. Generate deterministic IDs based on business keys.
+- **Not handling child failures.** Child Workflow failures propagate as `ChildWorkflowFailure` exceptions. If you do not catch and handle them, the parent Workflow fails as well.
 
-## Best Practices
+## Related patterns
 
-1. **Use Unique Workflow IDs**: Generate unique IDs for child workflows to avoid conflicts
-2. **Choose Appropriate Policy**: Use TERMINATE for tightly coupled, ABANDON for independent children
-3. **Handle Child Failures**: Catch and handle child workflow exceptions appropriately
-4. **Limit Parallelism**: Don't spawn unlimited children; use batch patterns for large datasets
-5. **Consider Activities First**: Use activities for simple operations; reserve children for complex logic
-6. **Set Timeouts**: Configure appropriate workflow execution timeouts for children
-7. **Use Typed Stubs**: Prefer typed stubs over untyped for compile-time safety
-8. **Monitor Child Executions**: Track child workflow IDs for observability and debugging
+- **[Parallel Execution](parallel-execution.md)**: Running multiple children concurrently.
+- **[Continue-As-New](continue-as-new.md)**: Child Workflows can use Continue-As-New independently.
+- **[Saga Pattern](saga-pattern.md)**: Children as compensatable transactions.
+
+## Sample code
+
+- [HelloChild](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/hello/HelloChild.java) — Basic synchronous Child Workflow.
+- [Async Child Workflow](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/asyncchild) — Asynchronous child with ABANDON policy.
+- [Async Untyped Child](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/asyncuntypedchild) — Untyped async Child Workflow.

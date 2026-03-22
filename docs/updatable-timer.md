@@ -3,25 +3,19 @@
 
 ## Overview
 
-The Updatable / Debounced Timer pattern implements a sleep operation that can be interrupted and dynamically adjusted via signals. It enables workflows to wait for deadlines that can be extended or shortened based on external events, making it ideal for approval processes, SLA management, and time-sensitive business operations.
+The Updatable / Debounced Timer pattern implements a sleep operation that can be interrupted and dynamically adjusted via Signals.
+It enables Workflows to wait for deadlines that can be extended or shortened based on external events, making it suitable for approval processes, SLA management, and time-sensitive business operations.
 
 ## Problem
 
-In business processes, you often need workflows that:
-- Wait for a deadline (approval timeout, SLA expiration, grace period)
-- Allow the deadline to be extended or shortened dynamically
-- React immediately when the deadline changes
-- Continue waiting with the new deadline without restarting
+In business processes, you often need Workflows that wait for a deadline (approval timeout, SLA expiration, grace period), allow the deadline to be extended or shortened dynamically, react immediately when the deadline changes, and continue waiting with the new deadline without restarting.
 
-Without an updatable / debounced timer, you must:
-- Use fixed timeouts that can't be adjusted
-- Cancel and restart workflows to change deadlines
-- Poll frequently to check for deadline changes
-- Implement complex state machines to handle timing updates
+Without an updatable timer, you must use fixed timeouts that cannot be adjusted, cancel and restart Workflows to change deadlines, poll frequently to check for deadline changes, or implement complex state machines to handle timing updates.
 
 ## Solution
 
-The Updatable / Debounced Timer uses `Workflow.await()` with a time condition that can be modified via signals. When a signal updates the wake-up time, the await condition becomes true, the workflow recalculates the sleep duration, and blocks again with the new deadline.
+The Updatable / Debounced Timer uses `Workflow.await()` with a time condition that can be modified via Signals.
+When a Signal updates the wake-up time, the await condition becomes true, the Workflow recalculates the sleep duration, and blocks again with the new deadline.
 
 ```mermaid
 sequenceDiagram
@@ -46,7 +40,19 @@ sequenceDiagram
     deactivate Workflow
 ```
 
+The following describes each step in the diagram:
+
+1. The client starts the Workflow with an initial deadline.
+2. The Workflow calls `sleepUntil(deadline)`, which blocks until the deadline.
+3. The client sends a Signal to extend the deadline.
+4. The timer recalculates the remaining duration based on the new deadline and continues waiting.
+5. When the timer expires, the Workflow completes.
+
+The core of the pattern is the `UpdatableTimer` helper class.
+It loops on `Workflow.await()`, recalculating the sleep duration each time the wake-up time is updated:
+
 ```java
+// UpdatableTimer.java
 public class UpdatableTimer {
   private long wakeUpTime;
   private boolean wakeUpTimeUpdated;
@@ -70,11 +76,19 @@ public class UpdatableTimer {
 }
 ```
 
+The `sleepUntil` method calculates the sleep interval and calls `Workflow.await()` with both a duration and a condition.
+If the duration expires first, `Workflow.await()` returns `false` and the timer completes.
+If the `wakeUpTimeUpdated` flag is set (via `updateWakeUpTime`), the condition becomes true, `Workflow.await()` returns `true`, and the loop recalculates the interval with the new deadline.
+
 ## Implementation
 
-### Basic Approval Workflow
+### Basic approval Workflow
+
+The following implementation combines the updatable timer with an approval flag.
+The Workflow waits for either an approval Signal or the deadline to expire:
 
 ```java
+// ApprovalWorkflowImpl.java
 @WorkflowInterface
 public interface ApprovalWorkflow {
   @WorkflowMethod
@@ -97,7 +111,6 @@ public class ApprovalWorkflowImpl implements ApprovalWorkflow {
   
   @Override
   public void execute(long approvalDeadline) {
-    // Wait for approval or deadline
     Workflow.await(
         Duration.ofMillis(approvalDeadline - Workflow.currentTimeMillis()),
         () -> approved);
@@ -126,10 +139,18 @@ public class ApprovalWorkflowImpl implements ApprovalWorkflow {
 }
 ```
 
-### Advanced: Multiple Deadline Extensions
+The `execute` method calls `Workflow.await()` with the deadline duration and a condition that checks the `approved` flag.
+If the `approve` Signal arrives before the deadline, the condition becomes true and the Workflow sets the status to APPROVED.
+If the deadline expires first, the Workflow sets the status to REJECTED.
+
+### Multiple deadline extensions
+
+The following implementation uses the `UpdatableTimer` directly to support multiple deadline extensions.
+The Workflow blocks on `timer.sleepUntil()` and checks the approval flag after the timer completes:
 
 ```java
-public class ApprovalWorkflowImpl implements ApprovalWorkflow {
+// MultiExtensionApprovalWorkflowImpl.java
+public class MultiExtensionApprovalWorkflowImpl implements ApprovalWorkflow {
   private UpdatableTimer timer = new UpdatableTimer();
   private boolean approved = false;
   private boolean rejected = false;
@@ -138,7 +159,6 @@ public class ApprovalWorkflowImpl implements ApprovalWorkflow {
   public void execute(long initialDeadline) {
     timer.sleepUntil(initialDeadline);
     
-    // Check if approved during wait
     if (!approved) {
       rejected = true;
     }
@@ -158,80 +178,60 @@ public class ApprovalWorkflowImpl implements ApprovalWorkflow {
 }
 ```
 
-## Key Components
+The `extendDeadline` Signal handler checks that the Workflow has not already been approved or rejected before updating the timer.
+Each call to `updateWakeUpTime` unblocks the `sleepUntil` loop, which recalculates the remaining duration and blocks again.
 
-1. **UpdatableTimer**: Reusable helper class that implements the updatable sleep logic
-2. **wakeUpTime**: Target timestamp when the timer should expire
-3. **wakeUpTimeUpdated**: Flag that unblocks `Workflow.await()` when deadline changes
-4. **Signal Handler**: Updates the wake-up time and sets the flag
-5. **Workflow.await()**: Blocks with both time and condition—whichever comes first
+## When to use
 
-## When to Use
+The Updatable Timer pattern is a good fit for approval Workflows with deadline extensions, SLA management with grace periods, time-based escalations that can be postponed, auction bidding with extended closing times, and payment grace periods that can be adjusted.
 
-**Ideal for:**
-- Approval workflows with deadline extensions
-- SLA management with grace periods
-- Time-based escalations that can be postponed
-- Auction bidding with extended closing times
-- Payment grace periods that can be adjusted
+It is not a good fit for fixed timeouts that never change (use `Workflow.sleep()`), immediate cancellation (use cancellation scopes), or complex scheduling (use Temporal Schedules).
 
-**Not ideal for:**
-- Fixed timeouts that never change (use simple `Workflow.sleep()`)
-- Immediate cancellation (use cancellation scopes)
-- Complex scheduling (use Temporal Schedules)
+## Benefits and trade-offs
 
-## Benefits
+The pattern allows you to adjust deadlines without restarting Workflows.
+Changes take effect instantly.
+The `UpdatableTimer` class is reusable across multiple Workflows.
+All timing is based on Workflow time, ensuring replay consistency.
+You can Query the current deadline at any time.
 
-- **Dynamic Timing**: Adjust deadlines without restarting workflows
-- **Immediate Response**: Changes take effect instantly
-- **Reusable**: UpdatableTimer can be used across multiple workflows
-- **Deterministic**: All timing is based on workflow time, ensuring replay consistency
-- **Query Support**: Can query current deadline at any time
+The trade-offs to consider are that the pattern requires an external process to send update Signals.
+Each `UpdatableTimer` instance manages one deadline.
+Previous deadlines are not tracked (add tracking if needed).
+You must calculate absolute timestamps rather than relative durations.
 
-## Trade-offs
+## Comparison with alternatives
 
-- **Signal-Based**: Requires external process to send update signals
-- **Single Timer**: Each UpdatableTimer instance manages one deadline
-- **No History**: Previous deadlines aren't tracked (add if needed)
-- **Manual Calculation**: Must calculate absolute timestamps (not relative durations)
-
-## How It Works
-
-1. Workflow calls `timer.sleepUntil(deadline)`
-2. Timer calculates sleep duration and calls `Workflow.await(duration, () -> updated)`
-3. Await blocks until either:
-   - Duration expires → timer completes
-   - Condition becomes true → signal updated the deadline
-4. If condition triggered, loop recalculates duration and awaits again
-5. If duration expired, timer completes and workflow continues
-
-## Comparison with Alternatives
-
-| Approach | Dynamic Updates | Complexity | Use Case |
-|----------|----------------|------------|----------|
+| Approach | Dynamic updates | Complexity | Use case |
+| :--- | :--- | :--- | :--- |
 | Updatable / Debounced Timer | Yes | Medium | Adjustable deadlines |
 | Workflow.sleep() | No | Low | Fixed delays |
 | Cancellation Scope | Yes (cancel only) | Medium | Abort operations |
 | Polling Loop | Yes | High | Frequent checks |
 
-## Related Patterns
+## Best practices
 
-- **Signal-Based Event Handling**: Receiving external events to modify behavior
-- **Workflow Timers**: Using explicit timers for timeout control
-- **Cancellation Scopes**: Canceling operations when conditions change
-- **Query for State Inspection**: Checking current deadline status
+- **Use absolute timestamps.** Store wake-up time as epoch millis, not relative durations.
+- **Validate updates.** Ensure new deadlines are in the future.
+- **Add Queries.** Expose the current deadline via Query methods.
+- **Handle edge cases.** Check if the timer already expired before updating.
+- **Consider max extensions.** Limit how many times or how far deadlines can be extended.
+- **Log changes.** Log each deadline update for observability.
+- **Reuse UpdatableTimer.** Extract to a helper class for use across Workflows.
+- **Combine with conditions.** Use `Workflow.await()` with both time and business conditions.
 
-## Sample Code
+## Common pitfalls
 
-- [Full Java Sample](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/updatabletimer) - Complete implementation with starter and updater
+- **Using time-based conditions in `Workflow.await` without a duration.** `Workflow.await(() -> someTimeCondition)` does not create a timer. The condition is only re-evaluated on state changes (Signals, Activity completions). Always use `Workflow.await(Duration, condition)` for time-based waits.
+- **Expecting `Workflow.await` to re-evaluate its duration.** The timer duration is set once when `Workflow.await` is called. Changing the duration variable afterward has no effect. This is why the `UpdatableTimer` loops and recalculates.
+- **Not validating new deadlines.** Accepting a deadline in the past causes the timer to expire immediately. Always check that the new deadline is in the future before updating.
+- **Accumulating uncancelled timers in Java.** In the Java SDK, `Workflow.await(Duration, condition)` does not automatically cancel its internal timer when the condition is met. Repeated calls in a loop accumulate timers. Wrap in a `CancellationScope` if this is a concern.
 
-## Best Practices
+## Related patterns
 
-1. **Use Absolute Timestamps**: Store wake-up time as epoch millis, not relative durations
-2. **Validate Updates**: Ensure new deadlines are in the future
-3. **Add Queries**: Expose current deadline via query methods
-4. **Handle Edge Cases**: Check if timer already expired before updating
-5. **Consider Max Extensions**: Limit how many times or how far deadlines can be extended
-6. **Log Changes**: Log each deadline update for observability
-7. **Reuse UpdatableTimer**: Extract to helper class for use across workflows
-8. **Combine with Conditions**: Use `Workflow.await()` with both time and business conditions
+- **[Signal with Start](signal-with-start.md)**: Receiving external events to modify behavior.
+- **[Approval Pattern](approval.md)**: Approval Workflows with adjustable deadlines.
+
+## Sample code
+
+- [Full Java Sample](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/updatabletimer) — Complete implementation with starter and updater.

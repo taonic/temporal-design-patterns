@@ -1,27 +1,27 @@
+
 # Entity Workflow Pattern
 
 ## Overview
 
-The Entity Workflow pattern models long-lived business entities (users, accounts, devices, orders) as individual workflows that persist for the entity's entire lifetime—potentially months or years. Each entity gets its own workflow instance identified by the entity ID, handling all state transitions and operations for that entity through signals and updates.
+The Entity Workflow pattern models long-lived business entities (users, accounts, devices, orders) as individual Workflows that persist for the entity's entire lifetime — potentially months or years.
+Each entity gets its own Workflow instance identified by the entity ID, handling all state transitions and operations through Signals and Updates.
 
 ## Problem
 
-Many business domains have entities that:
-- Exist for extended periods (user accounts, IoT devices, customer relationships)
-- Undergo multiple state transitions over their lifetime
-- Need to maintain consistent state across operations
-- Require audit trails of all changes
-- Must handle concurrent operations safely
+Many business domains have entities that exist for extended periods, undergo multiple state transitions over their lifetime, need to maintain consistent state across operations, require audit trails of all changes, and must handle concurrent operations safely.
 
-Traditional approaches struggle with:
-- **Database-centric**: Complex locking, race conditions, scattered business logic
-- **Event Sourcing**: Requires rebuilding state from events, complex infrastructure
-- **Stateless Services**: No built-in consistency, must coordinate state externally
-- **Short-lived Workflows**: Don't model the full entity lifecycle
+Traditional approaches struggle with these requirements:
+
+- **Database-centric**: Complex locking, race conditions, scattered business logic.
+- **Event Sourcing**: Requires rebuilding state from events, complex infrastructure.
+- **Stateless Services**: No built-in consistency, must coordinate state externally.
+- **Short-lived Workflows**: Do not model the full entity lifecycle.
 
 ## Solution
 
-Create one workflow per entity, using the entity ID as the workflow ID. The workflow runs for the entity's entire lifetime, maintaining state in workflow variables and handling operations via signals and updates. Use Continue-As-New periodically to prevent unbounded history growth.
+You create one Workflow per entity, using the entity ID as the Workflow ID.
+The Workflow runs for the entity's entire lifetime, maintaining state in Workflow variables and handling operations via Signals and Updates.
+You use Continue-As-New periodically to prevent unbounded history growth.
 
 ```mermaid
 sequenceDiagram
@@ -63,11 +63,24 @@ sequenceDiagram
     deactivate UserWorkflow
 ```
 
+The following describes each step in the diagram:
+
+1. The client starts the Workflow with a user ID. The Workflow initializes in the ACTIVE state.
+2. The client sends an Update to modify the profile. The Workflow validates the data via an Activity, persists the change, and returns success.
+3. The client sends a Signal to suspend the account. The Workflow transitions to SUSPENDED and starts a Child Workflow to send a notification email.
+4. The client sends an Update to reactivate the account. The Workflow transitions back to ACTIVE.
+5. After 1000 operations, the Workflow calls Continue-As-New to reset its history while preserving state.
+6. The client sends a Signal to delete the account. The Workflow transitions to DELETED and completes.
+
 ## Implementation
+
+The following examples show how each SDK implements the Entity Workflow pattern.
+Each implementation defines Update handlers for synchronous operations, Signal handlers for asynchronous events, and Query handlers for state inspection.
 
 ::: code-group
 
 ```java [Java]
+// UserAccountWorkflow.java
 @WorkflowInterface
 public interface UserAccountWorkflow {
   @WorkflowMethod
@@ -102,11 +115,17 @@ public class UserAccountWorkflowImpl implements UserAccountWorkflow {
   @Override
   public void run(String userId) {
     this.userId = userId;
-    state.setStatus("ACTIVE");
-    state.setCreatedAt(Workflow.currentTimeMillis());
+    if (state.getStatus() == null) {
+      state.setStatus("ACTIVE");
+      state.setCreatedAt(Workflow.currentTimeMillis());
+    }
     
-    // Run until deleted
-    Workflow.await(() -> deleted);
+    // Run until deleted or Continue-As-New is needed
+    Workflow.await(() -> deleted || Workflow.getInfo().isContinueAsNewSuggested());
+    
+    if (!deleted && Workflow.getInfo().isContinueAsNewSuggested()) {
+      Workflow.continueAsNew(userId, state);
+    }
     
     state.setStatus("DELETED");
     state.setDeletedAt(Workflow.currentTimeMillis());
@@ -115,27 +134,19 @@ public class UserAccountWorkflowImpl implements UserAccountWorkflow {
   @Override
   public void updateProfile(ProfileData data) {
     validateNotDeleted();
-    
-    // Validate via activity
     Activities.validateProfile(data);
-    
     state.setProfile(data);
     state.setUpdatedAt(Workflow.currentTimeMillis());
-    
-    checkContinueAsNew();
+    incrementOperationCount();
   }
   
   @Override
   public void changeEmail(String newEmail) {
     validateNotDeleted();
-    
-    // Send verification email via activity
     Activities.sendVerificationEmail(userId, newEmail);
-    
     state.setPendingEmail(newEmail);
     state.setUpdatedAt(Workflow.currentTimeMillis());
-    
-    checkContinueAsNew();
+    incrementOperationCount();
   }
   
   @Override
@@ -143,7 +154,7 @@ public class UserAccountWorkflowImpl implements UserAccountWorkflow {
     if (!deleted && !"SUSPENDED".equals(state.getStatus())) {
       state.setStatus("SUSPENDED");
       state.setUpdatedAt(Workflow.currentTimeMillis());
-      checkContinueAsNew();
+      incrementOperationCount();
     }
   }
   
@@ -152,7 +163,7 @@ public class UserAccountWorkflowImpl implements UserAccountWorkflow {
     if (!deleted && "SUSPENDED".equals(state.getStatus())) {
       state.setStatus("ACTIVE");
       state.setUpdatedAt(Workflow.currentTimeMillis());
-      checkContinueAsNew();
+      incrementOperationCount();
     }
   }
   
@@ -172,16 +183,14 @@ public class UserAccountWorkflowImpl implements UserAccountWorkflow {
     }
   }
   
-  private void checkContinueAsNew() {
+  private void incrementOperationCount() {
     operationCount++;
-    if (operationCount >= CONTINUE_AS_NEW_THRESHOLD) {
-      Workflow.continueAsNew(userId, state);
-    }
   }
 }
 ```
 
 ```go [Go]
+// workflow.go
 type UserAccountWorkflow struct{}
 
 type UserState struct {
@@ -205,7 +214,6 @@ func (w *UserAccountWorkflow) Run(ctx workflow.Context, userId string) error {
 			return errors.New("user account is deleted")
 		}
 		
-		// Validate via activity
 		if err := workflow.ExecuteActivity(ctx, ValidateProfile, data).Get(ctx, nil); err != nil {
 			return err
 		}
@@ -214,9 +222,6 @@ func (w *UserAccountWorkflow) Run(ctx workflow.Context, userId string) error {
 		state.UpdatedAt = workflow.Now(ctx)
 		operationCount++
 		
-		if operationCount >= 1000 {
-			return workflow.NewContinueAsNewError(ctx, w.Run, userId)
-		}
 		return nil
 	})
 	if err != nil {
@@ -235,16 +240,29 @@ func (w *UserAccountWorkflow) Run(ctx workflow.Context, userId string) error {
 		return err
 	}
 	
-	workflow.GetSignalChannel(ctx, "delete").Receive(ctx, nil)
-	deleted = true
-	state.Status = "DELETED"
-	
-	return nil
+	// Block until deleted or Continue-As-New is suggested
+	for {
+		selector := workflow.NewSelector(ctx)
+		selector.AddReceive(workflow.GetSignalChannel(ctx, "delete"), func(c workflow.ReceiveChannel, more bool) {
+			c.Receive(ctx, nil)
+			deleted = true
+		})
+		selector.Select(ctx)
+		
+		if deleted {
+			state.Status = "DELETED"
+			return nil
+		}
+		if workflow.GetInfo(ctx).GetContinueAsNewSuggested() {
+			return workflow.NewContinueAsNewError(ctx, w.Run, userId)
+		}
+	}
 }
 ```
 
 ```typescript [TypeScript]
-import { condition, defineUpdate, defineSignal, defineQuery, setHandler } from '@temporalio/workflow';
+// workflow.ts
+import { condition, allHandlersFinished, defineUpdate, defineSignal, defineQuery, setHandler, continueAsNew, workflowInfo } from '@temporalio/workflow';
 
 interface UserState {
   status: string;
@@ -274,16 +292,13 @@ export async function userAccountWorkflow(userId: string): Promise<void> {
       throw new Error('User account is deleted');
     }
     
-    // Validate via activity
     await activities.validateProfile(data);
     
     state.profile = data;
     state.updatedAt = Date.now();
     operationCount++;
     
-    if (operationCount >= 1000) {
-      await continueAsNew<typeof userAccountWorkflow>(userId);
-    }
+
   });
   
   setHandler(suspendSignal, () => {
@@ -300,100 +315,83 @@ export async function userAccountWorkflow(userId: string): Promise<void> {
   
   setHandler(getStateQuery, () => state);
   
-  await condition(() => deleted);
+  // Block until deleted or Continue-As-New is suggested
+  await condition(() => deleted || workflowInfo().continueAsNewSuggested);
+  
+  if (!deleted && workflowInfo().continueAsNewSuggested) {
+    await condition(allHandlersFinished);
+    await continueAsNew<typeof userAccountWorkflow>(userId);
+  }
+  
   state.status = 'DELETED';
 }
 ```
 
 :::
 
-## Key Components
+The Workflow blocks on `Workflow.await(() -> deleted)` (or the equivalent in each SDK) until the delete Signal arrives.
+All state transitions happen through Signal and Update handlers, ensuring that every operation on the entity goes through a single Workflow with no race conditions.
+Continue-As-New is triggered from the main Workflow method (not from handlers) when `isContinueAsNewSuggested()` returns true.
+All SDK docs explicitly warn: do not call Continue-As-New from Update or Signal handlers.
+Instead, handlers set state, and the main Workflow method checks whether to Continue-As-New.
 
-1. **Entity ID as Workflow ID**: Ensures one workflow per entity, enables idempotent starts
-2. **Long-Running Loop**: Workflow runs until entity is deleted/decommissioned
-3. **State in Variables**: All entity state stored in workflow variables
-4. **Signals for Events**: Asynchronous state changes (telemetry, notifications)
-5. **Updates for Operations**: Synchronous operations with validation and results
-6. **Queries for State**: Read current entity state without modification
-7. **Continue-As-New**: Prevents unbounded history after many operations
-8. **Activities for Side Effects**: External calls (emails, storage, APIs)
+## When to use
 
-## When to Use
+The Entity Workflow pattern is a good fit for user accounts and profiles, IoT devices and sensors, customer relationships (CRM), shopping carts and orders, financial accounts, subscription management, device provisioning and lifecycle, and multi-tenant resources.
 
-**Ideal for:**
-- User accounts and profiles
-- IoT devices and sensors
-- Customer relationships (CRM)
-- Shopping carts and orders
-- Financial accounts
-- Subscription management
-- Device provisioning and lifecycle
-- Multi-tenant resources
+It is not a good fit for short-lived processes (use regular Workflows), stateless operations (use Activities), high-frequency updates (more than 100 per second per entity), or entities with only CRUD operations (use a database).
 
-**Not ideal for:**
-- Short-lived processes (use regular workflows)
-- Stateless operations (use activities)
-- High-frequency updates (>100/sec per entity)
-- Entities with simple CRUD (use database)
+## Benefits and trade-offs
 
-## Benefits
+All operations on an entity go through a single Workflow, eliminating race conditions.
+The Workflow history provides a complete audit trail of all state changes.
+All entity logic lives in one place, and state survives process crashes and restarts.
+Temporal provides exactly-once execution and automatic retries.
+You can inspect current state through Queries without side effects.
 
-- **Consistency**: All operations on entity go through single workflow—no race conditions
-- **Audit Trail**: Complete history of all state changes in workflow history
-- **Business Logic Centralization**: All entity logic in one place
-- **Durable State**: State survives process crashes and restarts
-- **Temporal Guarantees**: Exactly-once execution, automatic retries
-- **Query Support**: Inspect current state without side effects
-- **Event Handling**: React to signals and updates deterministically
+The trade-offs to consider are that you must use Continue-As-New to prevent unbounded history growth.
+A single Workflow handles all operations for one entity, which limits throughput.
+State is kept in Workflow memory, so you should use Activities for large data.
+One Workflow per entity means you should consider costs at scale.
+The first operation after an idle period may have latency.
 
-## Trade-offs
+## Comparison with alternatives
 
-- **History Growth**: Must use Continue-As-New to prevent unbounded history
-- **Throughput Limits**: Single workflow handles all operations for one entity
-- **Memory Usage**: State kept in workflow memory (use activities for large data)
-- **Workflow Count**: One workflow per entity (consider costs at scale)
-- **Cold Start**: First operation after idle may have latency
-
-## How It Works
-
-1. **Start**: Client starts workflow with entity ID as workflow ID
-2. **Idempotent**: If workflow exists, start is ignored (idempotent)
-3. **State Management**: Workflow maintains entity state in variables
-4. **Operations**: Signals and updates modify state deterministically
-5. **Queries**: Read state without blocking or modifying
-6. **Continue-As-New**: After N operations, continue with fresh history
-7. **Completion**: Workflow completes when entity is deleted/decommissioned
-
-## Best Practices
-
-1. **Use Entity ID as Workflow ID**: Ensures uniqueness and idempotent starts
-2. **Implement Continue-As-New**: Prevent unbounded history (every 500-1000 operations)
-3. **Validate in Updates**: Use updates for operations requiring validation
-4. **Use Signals for Events**: Async notifications that don't need responses
-5. **Keep State Minimal**: Store large data externally, reference in workflow
-6. **Add Queries**: Expose state for monitoring and debugging
-7. **Handle Deletion**: Implement explicit deletion/decommission signal
-8. **Version Carefully**: Use worker versioning for workflow code changes
-9. **Set Timeouts**: Use workflow execution timeout as safety net
-10. **Monitor History Size**: Alert when approaching Continue-As-New threshold
-
-## Comparison with Alternatives
-
-| Approach | Consistency | Audit Trail | Complexity | Scalability |
-|----------|-------------|-------------|------------|-------------|
+| Approach | Consistency | Audit trail | Complexity | Scalability |
+| :--- | :--- | :--- | :--- | :--- |
 | Entity Workflow | Strong | Complete | Low | High (per entity) |
 | Database + Locks | Eventual | Manual | High | Very High |
 | Event Sourcing | Strong | Complete | High | High |
 | Stateless Service | Weak | Manual | Medium | Very High |
 
-## Related Patterns
+## Best practices
 
-- **[Continue-As-New](continue-as-new.md)**: Essential for preventing unbounded history
-- **[Request-Response via Updates](request-response-via-updates.md)**: Synchronous operations with validation
-- **Signal-With-Start**: Idempotent workflow start with initial signal
-- **Query for State Inspection**: Reading entity state
+- **Use entity ID as Workflow ID.** This ensures uniqueness and idempotent starts.
+- **Implement Continue-As-New.** Use `isContinueAsNewSuggested()` to check when to continue. Always call Continue-As-New from the main Workflow method, never from handlers. Wait for all handlers to finish before continuing.
+- **Validate in Updates.** Use Updates for operations that require validation and a return value.
+- **Use Signals for events.** Use Signals for asynchronous notifications that do not need responses.
+- **Keep state minimal.** Store large data externally and reference it in the Workflow.
+- **Add Queries.** Expose state for monitoring and debugging.
+- **Handle deletion.** Implement an explicit deletion or decommission Signal.
+- **Version carefully.** Use Worker versioning for Workflow code changes.
+- **Set timeouts.** Use Workflow execution timeout as a safety net.
+- **Monitor history size.** Alert when approaching the Continue-As-New threshold.
+
+## Common pitfalls
+
+- **Calling Continue-As-New from Signal or Update handlers.** Continue-As-New must be called from the main Workflow method, never from inside a handler. Calling it from a handler causes non-determinism errors.
+- **Not waiting for handlers to finish before Continue-As-New.** Use `allHandlersFinished` (TypeScript) or `Workflow.isEveryHandlerFinished()` (Java) to ensure in-flight handlers complete before transitioning.
+- **Losing Update ID deduplication across Continue-As-New.** Update IDs are scoped to a single Workflow Execution. After Continue-As-New, the same Update ID can be accepted again. Carry processed IDs in the Continue-As-New input if deduplication is needed.
+- **Exceeding the 2 MB payload limit on Continue-As-New input.** State passed to Continue-As-New is subject to the same 2 MB blob size limit as Workflow inputs. Use external storage for large state.
+- **Using a hardcoded counter instead of `isContinueAsNewSuggested`.** The SDK provides `isContinueAsNewSuggested()` which accounts for actual history size. Hardcoded thresholds may be too aggressive or too lenient.
+
+## Related patterns
+
+- **[Continue-As-New](continue-as-new.md)**: Essential for preventing unbounded history.
+- **[Request-Response via Updates](request-response-via-updates.md)**: Synchronous operations with validation.
+- **[Signal with Start](signal-with-start.md)**: Idempotent Workflow start with an initial Signal.
 
 ## References
 
-- [Temporal Blog: Very Long-Running Workflows](https://temporal.io/blog/very-long-running-workflows)
-- [Temporal Docs: Continue-As-New](https://docs.temporal.io/workflows#continue-as-new)
+- [Temporal Blog: Very Long-Running Workflows](https://temporal.io/blog/very-long-running-workflows) — Guidance on managing Workflows that run for extended periods.
+- [Temporal Docs: Continue-As-New](https://docs.temporal.io/workflows#continue-as-new) — Official documentation on the Continue-As-New mechanism.

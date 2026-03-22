@@ -1,7 +1,7 @@
 
-# Event-Driven Patterns
+# Event-driven patterns
 
-Patterns for handling signals and event-driven workflows.
+Patterns for handling Signals and event-driven Workflows.
 
-- [Signal with Start](signal-with-start.md) - Start workflow or signal if already running
-- [Updatable Timer](updatable-timer.md) - Dynamic timer that can be extended or shortened
+- [Signal with Start](signal-with-start.md) — Start a Workflow or Signal it if already running.
+- [Updatable Timer](updatable-timer.md) — Dynamic timer that you can extend or shorten.

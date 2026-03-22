@@ -3,25 +3,18 @@
 
 ## Overview
 
-The Pick First pattern executes multiple activities in parallel and returns the result of whichever completes first, then cancels the remaining activities. It's ideal for racing multiple approaches to the same task, implementing timeout alternatives, or optimizing for fastest response when multiple options are available.
+The Pick First pattern executes multiple Activities in parallel and returns the result of whichever completes first, then cancels the remaining Activities.
+It is suitable for racing multiple approaches to the same task, implementing timeout alternatives, or optimizing for fastest response when multiple options are available.
 
 ## Problem
 
-In distributed systems, you often need workflows that:
-- Execute multiple activities that can accomplish the same goal
-- Return as soon as any one succeeds (fastest wins)
-- Cancel remaining activities to avoid wasted resources
-- Handle scenarios where speed matters more than trying all options
+In distributed systems, you often need Workflows that execute multiple Activities that can accomplish the same goal, return as soon as any one succeeds (fastest wins), cancel remaining Activities to avoid wasted resources, and handle scenarios where speed matters more than trying all options.
 
-Without pick first, you must:
-- Wait for all activities to complete even when only one result is needed
-- Manually track which activity finished first
-- Implement complex cancellation logic for remaining activities
-- Waste compute resources on activities whose results won't be used
+Without the Pick First pattern, you must wait for all Activities to complete even when only one result is needed, manually track which Activity finished first, implement complex cancellation logic for remaining Activities, and waste compute resources on Activities whose results will not be used.
 
 ## Solution
 
-The Pick First pattern uses `workflow.NewSelector()` to wait for multiple futures simultaneously, captures the first result, then cancels remaining activities using a shared cancellation context.
+The Pick First pattern uses `workflow.NewSelector()` to wait for multiple futures simultaneously, captures the first result, then cancels remaining Activities using a shared cancellation context.
 
 ```mermaid
 sequenceDiagram
@@ -52,7 +45,18 @@ sequenceDiagram
     deactivate Activity2
 ```
 
+The following describes each step in the diagram:
+
+1. The Workflow starts three Activities in parallel using a shared cancellable context.
+2. The Selector waits for the first Activity to complete.
+3. Activity 2 completes first. The Selector captures its result.
+4. The Workflow calls `cancelHandler()` to cancel the shared context, which cancels Activities 1 and 3.
+
+The following implementation shows the core pattern in Go.
+The Workflow creates a cancellable context, starts two Activities, and uses a Selector to capture the first result:
+
 ```go
+// workflow.go
 func PickFirstWorkflow(ctx workflow.Context) (string, error) {
   selector := workflow.NewSelector(ctx)
   var firstResponse string
@@ -76,42 +80,18 @@ func PickFirstWorkflow(ctx workflow.Context) (string, error) {
 }
 ```
 
+The `workflow.WithCancel(ctx)` call creates a cancellable context shared by all Activities.
+`selector.Select(ctx)` blocks until the first future resolves and executes its callback.
+`cancelHandler()` cancels the shared context, which sends a cancellation Signal to all remaining Activities.
+
 ## Implementation
 
-### Basic Pick First
+### Activity with cancellation support
+
+For the Pick First pattern to work efficiently, Activities must detect cancellation via heartbeats and `ctx.Done()`:
 
 ```go
-func SamplePickFirstWorkflow(ctx workflow.Context) (string, error) {
-  selector := workflow.NewSelector(ctx)
-  var firstResponse string
-  
-  childCtx, cancelHandler := workflow.WithCancel(ctx)
-  ao := workflow.ActivityOptions{
-    StartToCloseTimeout: 2 * time.Minute,
-    HeartbeatTimeout:    10 * time.Second,
-    WaitForCancellation: true,
-  }
-  childCtx = workflow.WithActivityOptions(childCtx, ao)
-  
-  f1 := workflow.ExecuteActivity(childCtx, SampleActivity, 0, 10*time.Second)
-  f2 := workflow.ExecuteActivity(childCtx, SampleActivity, 1, 1*time.Second)
-  
-  selector.AddFuture(f1, func(f workflow.Future) {
-    _ = f.Get(ctx, &firstResponse)
-  }).AddFuture(f2, func(f workflow.Future) {
-    _ = f.Get(ctx, &firstResponse)
-  })
-  
-  selector.Select(ctx)
-  cancelHandler()
-  
-  return firstResponse, nil
-}
-```
-
-### Activity with Cancellation Support
-
-```go
+// activity.go
 func SampleActivity(ctx context.Context, branchID int, duration time.Duration) (string, error) {
   logger := activity.GetLogger(ctx)
   elapsed := time.Nanosecond
@@ -136,9 +116,15 @@ func SampleActivity(ctx context.Context, branchID int, duration time.Duration) (
 }
 ```
 
-### Advanced: Wait for Cancellation Completion
+The Activity heartbeats on each iteration and checks `ctx.Done()` to detect cancellation.
+When the context is cancelled, the Activity logs the cancellation and returns the context error.
+
+### Wait for cancellation completion
+
+The following implementation waits for all Activities to finish their cleanup before returning:
 
 ```go
+// workflow.go
 func PickFirstWithCleanup(ctx workflow.Context) (string, error) {
   selector := workflow.NewSelector(ctx)
   var firstResponse string
@@ -146,7 +132,7 @@ func PickFirstWithCleanup(ctx workflow.Context) (string, error) {
   childCtx, cancelHandler := workflow.WithCancel(ctx)
   childCtx = workflow.WithActivityOptions(childCtx, workflow.ActivityOptions{
     StartToCloseTimeout: 2 * time.Minute,
-    WaitForCancellation: true, // Wait for cleanup
+    WaitForCancellation: true,
   })
   
   f1 := workflow.ExecuteActivity(childCtx, Activity, "branch1")
@@ -171,84 +157,58 @@ func PickFirstWithCleanup(ctx workflow.Context) (string, error) {
 }
 ```
 
-## Key Components
+Setting `WaitForCancellation: true` tells Temporal to wait for the Activity to acknowledge cancellation before marking it as cancelled.
+The loop at the end waits for all futures (including cancelled ones) to resolve, ensuring cleanup completes before the Workflow returns.
 
-1. **workflow.NewSelector()**: Waits for multiple futures simultaneously
-2. **workflow.WithCancel()**: Creates cancellable context for child activities
-3. **AddFuture()**: Registers futures with callbacks that capture results
-4. **Select()**: Blocks until first future completes
-5. **cancelHandler()**: Cancels all activities using the shared context
-6. **WaitForCancellation**: Controls whether to wait for cancelled activities to finish
+## When to use
 
-## When to Use
+The Pick First pattern is a good fit for racing multiple data sources (primary vs backup), trying multiple algorithms and picking the fastest, implementing fallback strategies with timeout, optimizing for latency when multiple options exist, and testing multiple service endpoints for fastest response.
 
-**Ideal for:**
-- Racing multiple data sources (primary vs backup)
-- Trying multiple algorithms and picking fastest
-- Implementing fallback strategies with timeout
-- Optimizing for latency when multiple options exist
-- Testing multiple service endpoints for fastest response
+It is not a good fit when you need results from all Activities (use parallel execution), Activities have side effects that should not be cancelled, order matters (use sequential execution), or all Activities must complete.
 
-**Not ideal for:**
-- Need results from all activities (use parallel execution)
-- Activities have side effects that shouldn't be cancelled
-- Order matters (use sequential execution)
-- All activities must complete (use workflow.Go())
+## Benefits and trade-offs
 
-## Benefits
+The pattern returns as soon as the fastest option completes, optimizing for latency.
+Unnecessary work is cancelled automatically.
+The Selector ensures replay consistency, and cancellation cleanup is handled properly.
 
-- **Optimized Latency**: Returns as soon as fastest option completes
-- **Resource Efficient**: Cancels unnecessary work automatically
-- **Flexible**: Works with any number of parallel activities
-- **Deterministic**: Selector ensures replay consistency
-- **Clean Cancellation**: Proper cleanup of cancelled activities
+The trade-offs to consider are that cancelled Activities may have done partial work.
+Activities need heartbeats to detect cancellation quickly.
+Activities do not cancel instantly (they wait for the next heartbeat).
+You must implement proper cancellation handling in Activities.
+Only the first result is used; others are discarded.
 
-## Trade-offs
+## Comparison with alternatives
 
-- **Wasted Work**: Cancelled activities may have done partial work
-- **Heartbeat Required**: Activities need heartbeats to detect cancellation quickly
-- **Cancellation Delay**: Activities don't cancel instantly (wait for heartbeat)
-- **Complexity**: Requires proper cancellation handling in activities
-- **No Result Aggregation**: Only first result is used, others discarded
-
-## How It Works
-
-1. Workflow creates cancellable context with `workflow.WithCancel()`
-2. Multiple activities start in parallel using the shared context
-3. Selector registers all futures with callbacks
-4. `selector.Select()` blocks until first future completes
-5. First completion triggers callback, capturing result
-6. `cancelHandler()` cancels context, signaling all activities
-7. Activities detect cancellation via heartbeat and `ctx.Done()`
-8. Optionally wait for all activities to finish cleanup
-
-## Comparison with Alternatives
-
-| Approach | Returns First | Cancels Others | Complexity | Use Case |
-|----------|---------------|----------------|------------|----------|
+| Approach | Returns first | Cancels others | Complexity | Use case |
+| :--- | :--- | :--- | :--- | :--- |
 | Pick First | Yes | Yes | Medium | Race for fastest |
 | workflow.Go() | No | No | Low | All must complete |
 | Sequential | No | N/A | Low | Order matters |
 | Split/Merge | No | No | Medium | Aggregate results |
 
-## Related Patterns
+## Best practices
 
-- **Split/Merge**: Execute in parallel and combine all results
-- **Branch**: Execute different activities based on conditions
-- **Cancellation Scopes**: Fine-grained cancellation control
-- **Selectors**: Wait for multiple conditions simultaneously
+- **Use heartbeats.** Activities must heartbeat to detect cancellation quickly.
+- **Set WaitForCancellation.** Decide if the Workflow should wait for cleanup.
+- **Handle ctx.Done().** Activities must check context cancellation.
+- **Use a shared context.** Use a single cancellable context for all Activities.
+- **Track futures.** Keep references to all futures if waiting for cleanup.
+- **Set Activity timeouts.** Configure appropriate StartToCloseTimeout.
+- **Log cancellations.** Log when Activities are cancelled for observability.
+- **Design idempotent Activities.** Ensure Activities handle cancellation safely.
 
-## Sample Code
+## Common pitfalls
 
-- [Full Go Sample](https://github.com/temporalio/samples-go/tree/main/pickfirst) - Complete implementation with worker and starter
+- **Missing heartbeats in Activities.** Activities must heartbeat to detect cancellation. Without heartbeats, cancelled Activities continue running until their StartToCloseTimeout expires, wasting resources.
+- **Not setting WaitForCancellation.** Without `WaitForCancellation: true`, calling `Get` on a cancelled Activity's future returns a `CanceledError` immediately, before the Activity has finished cleanup. Set it to `true` if you need to wait for cleanup to complete.
+- **Ignoring errors from the winning Activity.** The Selector callback should check the error from `f.Get()`. If the first Activity to complete returns an error, the Workflow captures that error as the result.
+- **Forgetting to cancel the shared context.** If you forget to call `cancelHandler()` after the Selector returns, the remaining Activities continue running indefinitely.
 
-## Best Practices
+## Related patterns
 
-1. **Use Heartbeats**: Activities must heartbeat to detect cancellation quickly
-2. **Set WaitForCancellation**: Decide if workflow should wait for cleanup
-3. **Handle ctx.Done()**: Activities must check context cancellation
-4. **Shared Context**: Use single cancellable context for all activities
-5. **Track Futures**: Keep reference to all futures if waiting for cleanup
-6. **Timeout Activities**: Set appropriate StartToCloseTimeout
-7. **Log Cancellations**: Log when activities are cancelled for observability
-8. **Idempotent Activities**: Design activities to handle cancellation safely
+- **[Parallel Execution](parallel-execution.md)**: Execute in parallel and combine all results.
+
+## Sample code
+
+- [Full Go Sample](https://github.com/temporalio/samples-go/tree/main/pickfirst) — Complete implementation with Worker and starter.

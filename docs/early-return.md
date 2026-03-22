@@ -2,13 +2,18 @@
 # Early Return (Update with Start)
 
 ## Overview
-Return initialization results to the caller immediately while continuing asynchronous processing in the background.
+
+The Early Return pattern returns initialization results to the caller immediately while continuing asynchronous processing in the background.
 
 ## Problem
-Clients need immediate feedback on whether an operation can proceed, but the full operation takes significant time to complete. Blocking the client for the entire operation duration creates poor user experience and ties up resources.
+
+Clients need immediate feedback on whether an operation can proceed, but the full operation takes significant time to complete.
+Blocking the client for the entire operation duration creates a poor user experience and ties up resources.
 
 ## Solution
-Uses Update-with-Start to split operations into two phases: a fast synchronous initialization phase that validates and returns results immediately, and a slower asynchronous completion phase that runs in the background. The workflow uses local activities for quick initialization, signals completion via update handlers, then either completes or cancels the operation based on initialization success.
+
+You use Update-with-Start to split operations into two phases: a fast synchronous initialization phase that validates and returns results immediately, and a slower asynchronous completion phase that runs in the background.
+The Workflow uses local Activities for quick initialization, Signals completion via Update handlers, then either completes or cancels the operation based on initialization success.
 
 ```mermaid
 sequenceDiagram
@@ -29,9 +34,20 @@ sequenceDiagram
     deactivate Workflow
 ```
 
+The following describes each step in the diagram:
+
+1. The client sends an Update-with-Start request to the Workflow.
+2. The Workflow executes a fast initialization Activity (Phase 1) and returns the result to the client immediately.
+3. The client receives the initialization result while the Workflow continues executing.
+4. The Workflow executes the slower completion Activity (Phase 2) in the background.
+
+The following examples show how each SDK implements this pattern.
+The Workflow registers an Update handler that blocks until initialization completes, then returns the result to the caller.
+The client receives the initialization result in a single round trip while the Workflow continues processing.
+
 ::: code-group
 ```go [Go]
-// Workflow Implementation
+// workflow.go
 func Workflow(ctx workflow.Context, txRequest TransactionRequest) (*Transaction, error) {
     var tx *Transaction
     var initDone bool
@@ -66,20 +82,25 @@ func Workflow(ctx workflow.Context, txRequest TransactionRequest) (*Transaction,
     return tx, workflow.ExecuteActivity(activityCtx, CompleteTransaction, tx).Get(ctx, nil)
 }
 
-// Client Usage
-updateHandle, err := client.UpdateWithStartWorkflow(ctx, 
+// client.go
+startOp := client.NewWithStartWorkflowOperation(
+    client.StartWorkflowOptions{
+        ID:                       "transaction-123",
+        TaskQueue:                "transactions",
+        WorkflowIDConflictPolicy: enumspb.WORKFLOW_ID_CONFLICT_POLICY_FAIL,
+    },
+    Workflow,
+    txRequest,
+)
+
+updateHandle, err := client.UpdateWithStartWorkflow(ctx,
     client.UpdateWithStartWorkflowOptions{
+        StartWorkflowOperation: startOp,
         UpdateOptions: client.UpdateWorkflowOptions{
-            WorkflowID:   "transaction-123",
             UpdateName:   UpdateName,
-        },
-        StartWorkflowOptions: client.StartWorkflowOptions{
-            ID:        "transaction-123",
-            TaskQueue: "transactions",
+            WaitForStage: client.WorkflowUpdateStageCompleted,
         },
     },
-    "Workflow",
-    txRequest,
 )
 
 // Get initialization result immediately
@@ -94,7 +115,7 @@ fmt.Printf("Transaction initialized: %s\n", tx.ID)
 ```
 
 ```typescript [TypeScript]
-// Workflow Implementation
+// workflow.ts
 import { defineUpdate, setHandler, condition } from '@temporalio/workflow';
 import * as activities from './activities';
 
@@ -138,23 +159,33 @@ export async function transactionWorkflow(txRequest: TransactionRequest): Promis
   return tx;
 }
 
-// Client Usage
-const handle = await client.workflow.startWithUpdate(transactionWorkflow, {
-  workflowId: 'transaction-123',
-  taskQueue: 'transactions',
-  update: returnInitResultUpdate,
-  args: [txRequest],
-});
+// client.ts
+const startWorkflowOperation = new WithStartWorkflowOperation(
+  transactionWorkflow,
+  {
+    workflowId: 'transaction-123',
+    args: [txRequest],
+    taskQueue: 'transactions',
+    workflowIdConflictPolicy: 'FAIL',
+  },
+);
 
-// Get initialization result immediately
-const tx = await handle.updateResult();
+const tx = await client.workflow.executeUpdateWithStart(
+  returnInitResultUpdate,
+  { startWorkflowOperation },
+);
+
+const wfHandle = await startWorkflowOperation.workflowHandle();
 
 // Use transaction ID immediately while workflow continues
 console.log(`Transaction initialized: ${tx.id}`);
+
+// Optionally wait for the workflow to complete
+const finalResult = await wfHandle.result();
 ```
 
 ```java [Java]
-// Workflow Implementation
+// TransactionWorkflowImpl.java
 public class TransactionWorkflowImpl implements TransactionWorkflow {
     private boolean initDone = false;
     private Transaction tx;
@@ -193,19 +224,21 @@ public class TransactionWorkflowImpl implements TransactionWorkflow {
     }
 }
 
-// Client Usage
-WorkflowUpdateHandle<TxResult> updateHandle = 
-    client.updateWithStart(
-        "returnInitResult",
-        WorkflowUpdateStage.COMPLETED,
-        TxResult.class,
-        WorkflowOptions.newBuilder()
-            .setWorkflowId("transaction-123")
-            .setTaskQueue("transactions")
-            .build(),
-        "processTransaction",
-        txRequest
-    );
+// Client.java
+TransactionWorkflow workflow = client.newWorkflowStub(
+    TransactionWorkflow.class,
+    WorkflowOptions.newBuilder()
+        .setWorkflowId("transaction-123")
+        .setTaskQueue("transactions")
+        .setWorkflowIdConflictPolicy(
+            WorkflowIdConflictPolicy.WORKFLOW_ID_CONFLICT_POLICY_FAIL)
+        .build());
+
+WorkflowUpdateHandle<TxResult> updateHandle =
+    WorkflowClient.startUpdateWithStart(
+        workflow::returnInitResult,
+        UpdateOptions.<TxResult>newBuilder().build(),
+        new WithStartWorkflowOperation<>(workflow::processTransaction, txRequest));
 
 // Get initialization result immediately
 TxResult result = updateHandle.getResultAsync().get();
@@ -215,107 +248,68 @@ System.out.println("Transaction initialized: " + result.getId());
 ```
 :::
 
-**Sample Repositories:**
-[Go Sample](https://github.com/temporalio/samples-go/tree/main/early-return) | [TypeScript Sample](https://github.com/temporalio/samples-typescript/tree/main/early-return) | [Java Sample](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/earlyreturn)
+The key points across all SDKs are:
 
-**Key Points:**
-- **Update-with-Start**: Single API call starts workflow and returns initialization result
-- **Workflow**: Uses update handler with condition/await to block until initialization completes
-- **Client**: Gets immediate result while workflow continues executing in background
-- **All SDKs**: Same pattern with language-specific syntax differences
+- **Update-with-Start** is a single API call that starts the Workflow and returns the initialization result.
+- The Workflow uses an Update handler with a condition/await to block until initialization completes.
+- The client receives the result immediately while the Workflow continues executing in the background.
+- A `WorkflowIdConflictPolicy` must be specified. For early return, use `FAIL` to assert a new Workflow is created.
+- Update-with-Start is **not atomic**. If the Update cannot be delivered (for example, no Worker is available), the Workflow Execution will still start. The SDKs will retry the Update request, but there is no guarantee the Update will succeed.
 
-## Applicability
-Use this pattern when:
-- Clients need immediate feedback but operations take time to complete
-- Validation or initialization can be done quickly (< 5 seconds)
-- The operation can be safely cancelled if initialization fails
-- You want to avoid blocking clients during long-running processing
-- The initialization result determines whether to proceed or abort
+## When to use
 
-## Additional Use Cases
+The Early Return pattern is a good fit when clients need immediate feedback but operations take time to complete, validation or initialization can be done quickly (under 5 seconds), the operation can be safely cancelled if initialization fails, and the initialization result determines whether to proceed or abort.
+Common use cases include e-commerce payment processing (immediate authorization while settlement runs in the background), user onboarding and KYC verification (quick user ID return while background checks continue), resource provisioning (fast validation results while infrastructure is set up), document processing (immediate receipt confirmation while OCR and content analysis continue), and order processing (fast inventory check while fulfillment runs in the background).
 
-**1. E-commerce Payment Processing**
-```go
-// Return payment authorization immediately while processing settlement
-func PaymentWorkflow(ctx workflow.Context, payment PaymentRequest) (*PaymentAuth, error) {
-    var auth *PaymentAuth
-    var authDone bool
-    
-    workflow.SetUpdateHandler(ctx, "GetAuthResult",
-        func(ctx workflow.Context) (*PaymentAuth, error) {
-            workflow.Await(ctx, func() bool { return authDone })
-            return auth, nil
-        },
-    )
-    
-    // Fast authorization check (local activity)
-    localCtx := workflow.WithLocalActivityOptions(ctx, workflow.LocalActivityOptions{
-        ScheduleToCloseTimeout: 3 * time.Second,
-    })
-    err := workflow.ExecuteLocalActivity(localCtx, AuthorizePayment, payment).Get(ctx, &auth)
-    authDone = true
-    
-    if err != nil {
-        return nil, workflow.ExecuteActivity(ctx, CancelPayment, payment).Get(ctx, nil)
-    }
-    
-    // Background settlement processing
-    return auth, workflow.ExecuteActivity(ctx, SettlePayment, auth).Get(ctx, nil)
-}
-```
+It is not a good fit for fully automated processes that require no intermediate feedback, operations that cannot be split into fast and slow phases, or fire-and-forget operations where no immediate response is needed (use Signals).
 
-**2. User Onboarding & KYC Verification**
-- Quick identity validation returns user ID immediately
-- Background processes handle document verification, credit checks, and account setup
-- Client can proceed with basic user experience while onboarding completes
+## Benefits and trade-offs
 
-**3. Resource Provisioning (Cloud/Infrastructure)**
-- Fast resource validation checks quotas, permissions, and availability
-- Returns validation result with resource IDs immediately
-- Background provisioning handles VMs, databases, and networking setup
-- Cleanup resources automatically if validation fails
+The Early Return pattern provides immediate client feedback via Update-with-Start in a single round trip.
+Clients do not wait for full operation completion.
+Local Activities avoid extra server roundtrips during initialization, and there is a clear separation between validation and execution phases.
+Automatic cancellation handling runs on initialization failure.
 
-**4. Document Processing & Approval Workflows**
-- Immediate receipt confirmation with document ID
-- Background OCR processing, content analysis, and routing to approvers
-- Users can track progress without waiting for full processing
+The trade-offs to consider are that you must tune timeouts carefully for local Activities.
+There is a concurrent Update limit (10 per Workflow) that can bottleneck high-throughput scenarios requiring multiple simultaneous Updates.
+Clients must handle asynchronous completion separately, and initialization must complete within a single Workflow Task.
+The pattern is limited to operations that you can split into fast and slow phases.
 
-**5. Order Processing with Inventory Check**
-- Fast inventory availability check returns order confirmation
-- Background fulfillment includes picking, packing, and shipping
-- Customer gets immediate order confirmation while processing continues
+## Comparison with alternatives
 
-**6. Multi-step Financial Transactions**
-- Quick fraud detection and initial authorization
-- Background compliance checks, risk assessment, and final settlement
-- Critical for high-frequency trading or payment processing
+| Approach | Immediate response | Consistency | Complexity | Use case |
+| :--- | :--- | :--- | :--- | :--- |
+| Early Return (Update-with-Start) | Yes (typed) | Strong | Medium | Synchronous init + async completion |
+| Signal + Query polling | Yes (eventual) | Eventual | High | Fire-and-forget with status checks |
+| Child Workflow split | Yes (Workflow ID) | Strong | High | Separate init and completion Workflows |
+| Blocking until completion | Yes (final) | Strong | Low | Short operations only |
 
-**7. Content Publishing & Moderation**
-- Immediate publish with content ID after basic validation
-- Background content analysis, moderation, and optimization
-- Authors can share content immediately while safety checks continue
+## Best practices
 
-**Performance Benefits:**
-- Latency reduction of 40-50% compared to synchronous processing
-- Can achieve up to 91% improvement when combined with Local Activities
-- Measured improvements from 850ms to 265ms in payment processing scenarios
+- **Set WorkflowIdConflictPolicy to FAIL.** For early return, use `FAIL` to assert a new Workflow is created per request. Use `USE_EXISTING` only for lazy initialization patterns.
+- **Use Workflow.await in the Update handler.** Keep the Update handler lightweight — block on a condition flag and let the main Workflow method do the real work.
+- **Use local Activities for initialization.** Local Activities avoid extra server roundtrips, keeping the synchronous phase fast (under 5 seconds).
+- **Handle Update-with-Start non-atomicity.** Update-with-Start is not atomic. The Workflow may start even if the Update fails. Ensure Workers are running and handle the case where the Update is not delivered.
+- **Set a timeout on the Update result.** Use a timeout when waiting for the Update result to avoid blocking the client indefinitely if the Worker is unavailable.
+- **Be aware of the concurrent Update limit.** The default `maxInFlightUpdates` is 10 per Workflow. If you expect high concurrency, design accordingly or use separate Workflows.
+- **Provide a unique Update ID.** Use a unique Update ID for idempotency so retried requests attach to the same Update rather than creating duplicates.
+- **Avoid Workflow timeouts.** Do not set Workflow Execution timeouts when using early return, as the background phase may take longer than expected.
 
-## Pros
-- ✅ Immediate client feedback via Update-with-Start in single round trip
-- ✅ Non-blocking - clients don't wait for full operation completion
-- ✅ Local activities avoid extra server roundtrips during initialization
-- ✅ Clear separation between validation and execution phases
-- ✅ Automatic cancellation handling on initialization failure
+## Common pitfalls
 
-## Cons
-- ❌ Requires careful timeout tuning for local activities
-- ❌ Concurrent update limit (10 per workflow) can bottleneck high-throughput scenarios requiring multiple simultaneous updates
-- ❌ Clients must handle asynchronous completion separately
-- ❌ Initialization must complete within a single workflow task
-- ❌ Limited to operations that can be split into fast/slow phases
+- **Assuming Update-with-Start is atomic.** Unlike Signal-with-Start, Update-with-Start is not atomic. The Workflow may start even if the Update fails (for example, if no Worker is available). Handle this by checking Workflow state after the call.
+- **Missing WorkflowIdConflictPolicy.** Update-with-Start requires a `WorkflowIdConflictPolicy`. Omitting it causes an error. Use `FAIL` for early return (one Workflow per request) or `USE_EXISTING` for lazy initialization.
+- **Blocking too long in the Update handler.** The Update handler should return quickly. Perform long-running work in the main Workflow method and use `Workflow.await` in the Update handler to wait for a result.
+- **Swallowing the ContinueAsNew exception.** In TypeScript, `continueAsNew` throws a special exception. Catching it in a try-catch without re-throwing (or returning in a `finally` block) silently prevents Continue-As-New.
 
-## Relations with Other Patterns
-- Uses **Local Activities** for fast initialization without server roundtrips
-- Can combine with **Saga Pattern** to add compensation for failed completions
-- Often paired with **Signals** or **Queries** for clients to check completion status
-- May use **Async Activity Completion** for external system integration in phase 2
+## Related patterns
+
+- **[Saga Pattern](saga-pattern.md)**: You can combine this with the Saga pattern to add compensation for failed completions.
+- **[Signal with Start](signal-with-start.md)**: For fire-and-forget operations that do not need an immediate response.
+- **[Request-Response via Updates](request-response-via-updates.md)**: For synchronous state modifications on already-running Workflows.
+
+## Sample code
+
+- [Go Sample](https://github.com/temporalio/samples-go/tree/main/early-return) — Early return with Update-with-Start.
+- [TypeScript Sample](https://github.com/temporalio/samples-typescript/tree/main/early-return) — Early return with local Activities.
+- [Java Sample](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/earlyreturn) — Early return with Update handler.

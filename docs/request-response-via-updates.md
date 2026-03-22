@@ -3,26 +3,19 @@
 
 ## Overview
 
-Workflow Updates enable synchronous request-response interactions where clients receive immediate, typed responses while the workflow continues processing. Updates modify workflow state, validate inputs, and return results directly to the caller with strong consistency guarantees.
+Workflow Updates enable synchronous request-response interactions where clients receive immediate, typed responses while the Workflow continues processing.
+Updates modify Workflow state, validate inputs, and return results directly to the caller with strong consistency guarantees.
 
 ## Problem
 
-In distributed systems, you often need workflows that:
-- Must provide immediate feedback to clients (validation results, confirmation IDs)
-- Require strong consistency guarantees for operations
-- Need typed error handling for validation failures
-- Should validate inputs before accepting work
-- Allow external systems to modify workflow state synchronously
+In distributed systems, you often need Workflows that provide immediate feedback to clients (validation results, confirmation IDs), require strong consistency guarantees for operations, need typed error handling for validation failures, should validate inputs before accepting work, and allow external systems to modify Workflow state synchronously.
 
-Without Updates, clients must:
-- Use signals and poll via queries (complex, eventually consistent)
-- Wait for entire workflow completion (slow)
-- Implement complex coordination logic
-- Handle race conditions between signals and queries
+Without Updates, clients must use Signals and poll via Queries (complex, eventually consistent), wait for entire Workflow completion (slow), implement complex coordination logic, and handle race conditions between Signals and Queries.
 
 ## Solution
 
-Temporal's Update API executes an update handler that can validate inputs, modify state, and return values synchronously. The update is recorded in workflow history before returning, providing strong consistency.
+Temporal's Update API executes an Update handler that can validate inputs, modify state, and return values synchronously.
+The Update is recorded in Workflow history before returning, providing strong consistency.
 
 ```mermaid
 sequenceDiagram
@@ -42,11 +35,21 @@ sequenceDiagram
     deactivate Workflow
 ```
 
+The following describes each step in the diagram:
+
+1. The client sends an Update request to the Workflow.
+2. The Workflow validates the input. If validation fails, it returns a typed error response.
+3. If validation succeeds, the Workflow modifies its state and returns a typed response to the client.
+
 ## Implementation
+
+The following examples show a task assignment Workflow that accepts tasks via Updates with validation.
+The Update validator rejects requests when the task limit is reached, and the Update handler assigns the task and returns a result.
 
 ::: code-group
 
 ```java [Java]
+// TaskWorkflow.java
 @WorkflowInterface
 public interface TaskWorkflow {
   @WorkflowMethod
@@ -68,7 +71,6 @@ public class TaskWorkflowImpl implements TaskWorkflow {
     Workflow.await(() -> false);
   }
   
-  // Optional: Validator runs before update handler
   @UpdateValidatorMethod(updateName = "assignTask")
   protected void validateAssignTask(String taskName) {
     if (tasks.size() >= MAX_TASKS) {
@@ -89,15 +91,10 @@ public class TaskWorkflowImpl implements TaskWorkflow {
     return new ArrayList<>(tasks);
   }
 }
-
-// Client usage
-public AssignmentResult assignTask(String workflowId, String taskName) {
-  TaskWorkflow workflow = client.newWorkflowStub(TaskWorkflow.class, workflowId);
-  return workflow.assignTask(taskName);
-}
 ```
 
 ```go [Go]
+// workflow.go
 type TaskWorkflow struct{}
 
 const MaxTasks = 10
@@ -105,7 +102,6 @@ const MaxTasks = 10
 func (w *TaskWorkflow) Run(ctx workflow.Context) error {
 	tasks := []string{}
 
-	// Optional: Validator runs before update handler
 	err := workflow.SetUpdateHandlerWithOptions(
 		ctx,
 		"AssignTask",
@@ -141,25 +137,10 @@ func (w *TaskWorkflow) Run(ctx workflow.Context) error {
 	workflow.GetSignalChannel(ctx, "").Receive(ctx, nil)
 	return nil
 }
-
-// Client usage
-func assignTask(c client.Client, workflowID string, taskName string) (AssignmentResult, error) {
-	updateHandle, err := c.UpdateWorkflow(context.Background(), client.UpdateWorkflowOptions{
-		WorkflowID: workflowID,
-		UpdateName: "AssignTask",
-		Args:       []interface{}{taskName},
-	})
-	if err != nil {
-		return AssignmentResult{}, err
-	}
-
-	var result AssignmentResult
-	err = updateHandle.Get(context.Background(), &result)
-	return result, err
-}
 ```
 
 ```typescript [TypeScript]
+// workflow.ts
 import * as wf from '@temporalio/workflow';
 import { v4 as uuid } from 'uuid';
 
@@ -177,7 +158,6 @@ const MAX_TASKS = 10;
 export async function taskWorkflow(): Promise<void> {
   const tasks: string[] = [];
 
-  // Optional: Validator runs before update handler
   wf.setHandler(
     assignTaskUpdate,
     (taskName: string): AssignmentResult => {
@@ -198,95 +178,69 @@ export async function taskWorkflow(): Promise<void> {
 
   await wf.condition(() => false);
 }
-
-// Client usage
-async function assignTask(workflowId: string, taskName: string): Promise<AssignmentResult> {
-  const handle = client.workflow.getHandle(workflowId);
-  return await handle.executeUpdate(assignTaskUpdate, { args: [taskName] });
-}
 ```
 
 :::
 
-## Key Components
+In all SDKs, the validator runs before the Update handler.
+If the validator throws an exception, the Update is rejected and the client receives a typed error.
+If the validator passes, the Update handler modifies state and returns a typed result.
+The Update is recorded in Workflow history before the response is returned to the client.
 
-1. **Update Handler**: Method annotated with @UpdateMethod that modifies state and returns synchronously
-2. **Validation Logic**: Input validation that throws typed exceptions
-3. **State Modification**: Updates to workflow state variables
-4. **Typed Return**: Synchronous return value sent to client
-5. **Strong Consistency**: Update recorded in history before returning
+## When to use
 
-## When to Use
+The Update pattern is a good fit for request-response patterns requiring immediate confirmation, input validation before accepting work, synchronous state modifications with typed responses, operations requiring strong consistency guarantees, and entity Workflows that need external state Updates.
 
-**Ideal for:**
-- Request-response patterns requiring immediate confirmation
-- Input validation before accepting work
-- Synchronous state modifications with typed responses
-- Operations requiring strong consistency guarantees
-- Entity workflows that need external state updates
+It is not a good fit for fire-and-forget operations (use Signals), read-only operations (use Queries), high-throughput scenarios where latency matters (Updates are slower than Signals), or operations that do not need an immediate response.
 
-**Not ideal for:**
-- Fire-and-forget operations (use Signals)
-- Read-only operations (use Queries)
-- High-throughput scenarios where latency matters (updates are slower than signals)
-- Operations that don't need immediate response
+## Benefits and trade-offs
 
-## Benefits
+Updates provide a synchronous response — the client receives a typed return value immediately.
+Validation failures return as typed exceptions.
+The Update is recorded in history before returning, providing strong consistency.
+You can modify Workflow state directly from external systems.
 
-- **Synchronous Response**: Client receives typed return value immediately
-- **Typed Errors**: Validation failures return as typed exceptions
-- **Strong Consistency**: Update is recorded in history before returning
-- **State Modification**: Directly modify workflow state from external systems
-- **Validation**: Reject invalid inputs before accepting work
+The trade-offs to consider are that Updates are slower than Signals (they require a history write).
+The Update handler blocks Workflow Task execution.
+Update handlers consume Workflow Task execution time.
+Updates are more complex than Signals for notifications.
+Update arguments and return values are limited by the Workflow history event size (typically 2 MB per event).
+Each Update adds events to Workflow history, contributing to the 50K event limit.
+There is a maximum of 10 in-flight Updates per Workflow execution and a maximum of 2,000 total Updates in Workflow history.
 
-## Trade-offs
+## Comparison with alternatives
 
-- **Higher Latency**: Updates are slower than signals (requires history write)
-- **Blocking**: Update handler blocks workflow task execution
-- **Resource Usage**: Update handlers consume workflow task execution time
-- **Complexity**: More complex than signals for simple notifications
-
-## Limitations
-
-- **Payload Size**: Update arguments and return values are limited by the workflow history event size (typically 2MB per event)
-- **History Growth**: Each update adds events to workflow history, contributing to the 50K event limit
-- **Concurrent Updates**: Maximum of 10 in-flight updates per workflow execution
-- **Total Updates**: Maximum of 2,000 total updates in workflow history
-
-## Comparison with Alternatives
-
-| Approach | Use Case | Response Type | Latency | Consistency |
-|----------|----------|---------------|---------|-------------|
+| Approach | Use case | Response type | Latency | Consistency |
+| :--- | :--- | :--- | :--- | :--- |
 | Update | Request-response | Sync typed value | Higher | Strong |
 | Signal | Fire-and-forget | None | Lower | Eventual |
 | Query | Read-only | Sync typed value | Lowest | Eventual |
 
-## Related Patterns
+## Best practices
 
-- **Signal**: Fire-and-forget state modifications
-- **Query**: Read-only state inspection
-- **Entity Workflow**: Long-running workflows representing business entities
-- **[Early Return](early-return.md)**: Returning intermediate results before workflow completion
+- **Validate early.** Check inputs at the start of the Update handler to fail fast.
+- **Handle errors.** Throw typed exceptions for validation failures.
+- **Return quickly.** Do not perform long operations in the Update handler.
+- **Ensure idempotency.** Track processed Update IDs if Updates can be retried.
+- **Set timeouts.** Configure appropriate Update timeouts.
+- **Maintain state consistency.** Ensure state modifications are atomic within the handler.
 
-## Best Practices
+## Common pitfalls
 
-1. **Validate Early**: Check inputs at the start of update handler to fail fast
-2. **Handle Errors**: Throw typed exceptions for validation failures
-3. **Return Quickly**: Don't perform long operations in update handler
-4. **Idempotency**: Track processed update IDs if updates can be retried
-5. **Timeout Configuration**: Set appropriate update timeouts
-6. **State Consistency**: Ensure state modifications are atomic within the handler
+- **Performing long operations in the Update handler.** Update handlers block Workflow Task execution. Offload long-running work to Activities and use `Workflow.await` in the handler to wait for results.
+- **Exceeding the 2,000 total Updates limit.** Each accepted Update adds events to history. Use Continue-As-New before reaching the limit. The server sets `SuggestContinueAsNew` at 90% of the limit.
+- **Not setting Update timeouts.** Without a client-side timeout, the caller blocks indefinitely if the Worker is unavailable. Always set a context timeout or deadline.
+- **Ignoring Update ID for deduplication.** Without an Update ID, retried requests create duplicate Updates. Provide a unique `updateId` for idempotency, especially with Update-with-Start.
+- **Using Updates for fire-and-forget.** Updates require a Worker to be online and responsive. For fire-and-forget operations, use Signals instead.
 
-## Comparison: Signal vs Update
+## Related patterns
 
-**Use Signal when:**
-- No immediate response needed
-- Fire-and-forget semantics acceptable
-- Minimizing latency is critical
-- Eventually consistent is acceptable
+- **Signal**: Fire-and-forget state modifications.
+- **Query**: Read-only state inspection.
+- **[Entity Workflow](entity-workflow.md)**: Long-running Workflows representing business entities.
+- **[Early Return](early-return.md)**: Returning intermediate results before Workflow completion.
 
-**Use Update when:**
-- Client needs immediate confirmation
-- Typed return values required
-- Input validation before acceptance
-- Strong consistency guarantees needed
+## Sample code
+
+- [Safe Message Passing](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/safemessagepassing) — Concurrent Update handling with validation.
+- [Update with Start - Shopping Cart (Go)](https://github.com/temporalio/samples-go/tree/main/shoppingcart) — Update-with-Start for lazy initialization.

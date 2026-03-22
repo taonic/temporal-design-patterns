@@ -1,37 +1,42 @@
 # Temporal Design Patterns
 
-> **⚠️ Work In Progress**: This catalog is currently under active development. Content and structure may change.
+> **Warning:** This catalog is under active development. Content and structure may change.
 >
 > **Personal project by [@taonic](https://github.com/taonic).**
 
-Common catalog of reusable patterns for Temporal workflows.
+A catalog of design patterns for Temporal Workflows.
 
-🌐 **[View Live Site](https://taonic.github.io/temporal-design-patterns)**
-
-📖 [View the full pattern catalog](docs/README.md)
+- [View the live site](https://taonic.github.io/temporal-design-patterns)
+- [View the full pattern catalog](docs/README.md)
 
 ## Development
 
-Install dependencies:
+Install the project dependencies before running any commands:
+
 ```bash
 npm install
 ```
 
-Start development server:
+Start a local development server to preview changes as you edit:
+
 ```bash
 npm run docs:dev
 ```
 
-Build for production:
+The development server watches for file changes and reloads automatically.
+
+Generate the static site output for production hosting:
+
 ```bash
 npm run docs:build
 ```
 
-Preview production build:
+After building, you can verify the production output locally:
+
 ```bash
 npm run docs:preview
 ```
 
 ## Deployment
 
-The site is automatically deployed to GitHub Pages when changes are pushed to the main branch.
+The site deploys to GitHub Pages automatically when you push changes to the main branch.

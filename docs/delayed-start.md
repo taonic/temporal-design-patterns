@@ -3,25 +3,19 @@
 
 ## Overview
 
-The Delayed Start pattern enables workflows to be created immediately but begin execution after a specified delay. The workflow execution is registered in Temporal right away, but the first workflow task is scheduled to run only after the delay period expires, making it ideal for scheduled operations, grace periods, and deferred processing.
+The Delayed Start pattern enables Workflows to be created immediately but begin execution after a specified delay.
+The Workflow execution is registered in Temporal right away, but the first Workflow Task is scheduled to run only after the delay period expires, making it suitable for scheduled operations, grace periods, and deferred processing.
 
 ## Problem
 
-In business processes, you often need workflows that:
-- Start execution at a future time (scheduled maintenance, delayed notifications)
-- Are created immediately for tracking but execute later
-- Avoid external scheduling systems or cron jobs for one-time delays
-- Maintain workflow identity and queryability before execution begins
+In business processes, you often need Workflows that start execution at a future time, are created immediately for tracking but execute later, avoid external scheduling systems or cron jobs for one-time delays, and maintain Workflow identity and queryability before execution begins.
 
-Without delayed start, you must:
-- Use external schedulers to trigger workflow creation later
-- Start workflows immediately and sleep as the first operation (wastes resources)
-- Implement complex queueing systems for deferred execution
-- Use Temporal Schedules for simple one-time delays (overkill)
+Without delayed start, you must use external schedulers to trigger Workflow creation later, start Workflows immediately and sleep as the first operation (which wastes resources), implement complex queueing systems for deferred execution, or use Temporal Schedules for one-time delays (which is more than you need).
 
 ## Solution
 
-The Delayed Start uses `setStartDelay()` in WorkflowOptions to defer the first workflow task. The workflow execution is created immediately with a `firstWorkflowTaskBackoff` set to the delay duration, but no workflow code runs until the delay expires.
+The Delayed Start uses `setStartDelay()` in WorkflowOptions to defer the first Workflow Task.
+The Workflow execution is created immediately with a `firstWorkflowTaskBackoff` set to the delay duration, but no Workflow code runs until the delay expires.
 
 ```mermaid
 sequenceDiagram
@@ -37,17 +31,27 @@ sequenceDiagram
     Note over Temporal: Delay period (30s)...
     
     opt During delay
-        Client->>Temporal: Query/Signal
-        Temporal-->>Client: Response
+        Client->>Temporal: Signal-With-Start
+        Note over Temporal: Bypasses remaining delay
     end
     
-    Note over Temporal: Delay expires
+    Note over Temporal: Delay expires (if not bypassed)
     Temporal->>+Workflow: Schedule first task
     Workflow->>Workflow: Execute
     Workflow-->>-Temporal: Complete
 ```
 
+The following describes each step in the diagram:
+
+1. The client starts the Workflow with a 30-second delay. Temporal creates the execution immediately.
+2. The execution is visible and queryable, but no Workflow code runs during the delay.
+3. If the client sends a Signal-With-Start or Update-With-Start during the delay, the remaining delay is bypassed and a Workflow Task is dispatched immediately. Regular Signals do not interrupt the delay.
+4. After the delay expires, Temporal schedules the first Workflow Task and the Workflow begins execution.
+
+The following example creates a Workflow with a 30-second start delay:
+
 ```java
+// Client.java
 DelayedStartWorkflow workflow = client.newWorkflowStub(
     DelayedStartWorkflow.class,
     WorkflowOptions.newBuilder()
@@ -59,11 +63,18 @@ DelayedStartWorkflow workflow = client.newWorkflowStub(
 workflow.start(); // Created now, executes in 30 seconds
 ```
 
+The `setStartDelay()` method sets the `firstWorkflowTaskBackoff` on the execution.
+The Workflow is created and visible in the UI immediately, but the Worker does not receive a Task until the delay expires.
+
 ## Implementation
 
-### Basic Delayed Notification
+### Basic delayed notification
+
+The following implementation sends a notification after a one-hour delay.
+The Workflow code runs only after the delay expires:
 
 ```java
+// NotificationWorkflowImpl.java
 @WorkflowInterface
 public interface NotificationWorkflow {
   @WorkflowMethod
@@ -73,13 +84,12 @@ public interface NotificationWorkflow {
 public class NotificationWorkflowImpl implements NotificationWorkflow {
   @Override
   public void sendNotification(String message) {
-    // Workflow code runs only after delay expires
     Workflow.getLogger(NotificationWorkflowImpl.class)
         .info("Sending notification: " + message);
   }
 }
 
-// Start workflow with 1-hour delay
+// Client.java
 NotificationWorkflow workflow = client.newWorkflowStub(
     NotificationWorkflow.class,
     WorkflowOptions.newBuilder()
@@ -90,9 +100,15 @@ NotificationWorkflow workflow = client.newWorkflowStub(
 workflow.sendNotification("Your trial expires soon");
 ```
 
-### Advanced: Cancellable Delayed Execution
+The Workflow is created immediately, but the `sendNotification` method does not execute until one hour later.
+
+### Cancellable delayed execution
+
+The following implementation adds Signal handlers for cancellation and a Query for status.
+You can cancel the Workflow before it runs or check its status during the delay:
 
 ```java
+// DelayedOrderWorkflowImpl.java
 @WorkflowInterface
 public interface DelayedOrderWorkflow {
   @WorkflowMethod
@@ -111,7 +127,6 @@ public class DelayedOrderWorkflowImpl implements DelayedOrderWorkflow {
   
   @Override
   public void processOrder(String orderId) {
-    // Check if cancelled during delay period
     if (cancelled) {
       status = "CANCELLED";
       return;
@@ -132,97 +147,67 @@ public class DelayedOrderWorkflowImpl implements DelayedOrderWorkflow {
     return status;
   }
 }
-
-// Create with delay
-WorkflowStub stub = client.newWorkflowStub(
-    DelayedOrderWorkflow.class,
-    WorkflowOptions.newBuilder()
-        .setWorkflowId("order-123")
-        .setTaskQueue(TASK_QUEUE)
-        .setStartDelay(Duration.ofMinutes(15))
-        .build());
-
-stub.start("order-123");
-
-// Can query or signal before execution starts
-String status = stub.query("getStatus", String.class); // "SCHEDULED"
-stub.signal("cancel"); // Cancel before it runs
 ```
 
-## Key Components
+The `cancel` Signal handler sets a flag that the Workflow checks when it starts executing.
+Note that Signal handlers and Query handlers only run after the delay expires and the first Workflow Task is dispatched.
+To cancel before execution, use `Signal-With-Start` to bypass the delay, or cancel the Workflow Execution directly.
 
-1. **setStartDelay()**: WorkflowOptions method that sets the delay duration
-2. **firstWorkflowTaskBackoff**: Internal attribute set by Temporal to defer first task
-3. **Immediate Creation**: Workflow execution is created and visible immediately
-4. **Deferred Execution**: Workflow code doesn't run until delay expires
-5. **Query/Signal Support**: Can interact with workflow during delay period
+## When to use
 
-## When to Use
+The Delayed Start pattern is a good fit for scheduled one-time operations (send a reminder in 24 hours), grace periods before processing (cancel a subscription in 7 days), delayed notifications and alerts, deferred batch processing, and trial expiration Workflows.
 
-**Ideal for:**
-- Scheduled one-time operations (send reminder in 24 hours)
-- Grace periods before processing (cancel subscription in 7 days)
-- Delayed notifications and alerts
-- Deferred batch processing
-- Trial expiration workflows
+It is not a good fit for recurring Schedules (use Temporal Schedules), immediate execution with internal delays (use `Workflow.sleep()`), complex scheduling logic (use Schedules with cron), or sub-second delays (minimal benefit).
 
-**Not ideal for:**
-- Recurring schedules (use Temporal Schedules)
-- Immediate execution with internal delays (use Workflow.sleep())
-- Complex scheduling logic (use Schedules with cron)
-- Sub-second delays (minimal benefit)
+## Benefits and trade-offs
 
-## Benefits
+The Workflow is queryable before execution starts (immediate visibility).
+No Worker resources are consumed during the delay.
+You can cancel the Workflow Execution before it runs.
+A Signal-With-Start or Update-With-Start bypasses the remaining delay.
+Regular Signals sent during the delay do not interrupt it.
+The API is a single configuration option with no external schedulers needed.
+The delay is managed by Temporal, ensuring deterministic behavior.
 
-- **Immediate Visibility**: Workflow is queryable before execution starts
-- **Resource Efficient**: No worker resources consumed during delay
-- **Cancellable**: Can signal or cancel workflow before it runs
-- **Simple API**: Single configuration option, no external schedulers
-- **Deterministic**: Delay is managed by Temporal, not external systems
+The trade-offs to consider are that you cannot dynamically adjust the delay after creation (use the Updatable Timer pattern for that).
+The pattern is for one-time delays only — for recurring Schedules, use Temporal Schedules.
+Very short delays (milliseconds) provide minimal benefit — the minimum timer duration is 1 second.
+The delay is time-based only, not condition-based.
+Regular Signals sent during the delay are not delivered until the first Workflow Task fires, so Query and Signal handlers are not available until execution begins.
 
-## Trade-offs
+## Comparison with alternatives
 
-- **Fixed Delay**: Cannot dynamically adjust delay after creation (use Updatable Timer for that)
-- **One-Time Only**: For recurring schedules, use Temporal Schedules
-- **Minimum Delay**: Very short delays (milliseconds) provide minimal benefit
-- **No Conditional Start**: Delay is time-based only, not condition-based
-
-## How It Works
-
-1. Client calls `workflow.start()` with `setStartDelay()` configured
-2. Temporal creates workflow execution immediately
-3. Execution has `firstWorkflowTaskBackoff` set to delay duration
-4. Workflow appears in UI/queries but shows no task history yet
-5. After delay expires, first workflow task is scheduled
-6. Worker picks up task and workflow code begins execution
-
-## Comparison with Alternatives
-
-| Approach | Immediate Visibility | Resource Usage | Cancellable | Use Case |
-|----------|---------------------|----------------|-------------|----------|
+| Approach | Immediate visibility | Resource usage | Cancellable | Use case |
+| :--- | :--- | :--- | :--- | :--- |
 | Delayed Start | Yes | None during delay | Yes | One-time future execution |
 | Workflow.sleep() | Yes | Worker resources | Yes | Internal delays |
-| Temporal Schedules | Yes | None | Yes | Recurring schedules |
+| Temporal Schedules | Yes | None | Yes | Recurring Schedules |
 | External Scheduler | No | External system | Depends | Complex scheduling |
 
-## Related Patterns
+## Best practices
 
-- **Temporal Schedules**: For recurring workflow execution
-- **Updatable Timer**: For dynamically adjustable delays within workflows
-- **Signal-Based Event Handling**: Interacting with workflows before execution
-- **Workflow Timers**: Using explicit timers for timeout control
+- **Use for one-time delays.** For recurring Schedules, use Temporal Schedules instead.
+- **Set Workflow ID.** Always set an explicit Workflow ID for tracking and cancellation.
+- **Add Query methods.** Expose status via Queries to check state during the delay.
+- **Enable cancellation.** Add Signal handlers to cancel before execution.
+- **Validate delay duration.** Ensure the delay is reasonable (not too short or too long).
+- **Monitor backoff.** Check `firstWorkflowTaskBackoff` in history for verification.
+- **Consider time zones.** Use absolute timestamps if the delay depends on a specific time.
+- **Document behavior.** Clearly indicate that the Workflow does not execute immediately.
 
-## Sample Code
+## Common pitfalls
 
-- [Full Java Sample](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/hello/HelloDelayedStart.java) - Complete implementation with delayed start
+- **Using Signals during the delay.** Regular Signals do not interrupt the Start Delay. Only Signal-With-Start or Update-With-Start bypass the delay. Signals sent to a delayed Workflow are buffered but the Workflow code has not started, so there is no handler to process them until the delay expires.
+- **Querying before the Workflow starts.** Queries have no state to return during the delay because no Workflow code has executed yet. Clients may receive errors or empty results.
+- **Setting delays shorter than 1 second.** The minimum timer resolution is 1 second. Sub-second delays are not supported.
+- **Forgetting that the Workflow ID is reserved.** A delayed Workflow reserves its Workflow ID immediately. Starting another Workflow with the same ID will fail depending on the ID reuse policy.
 
-## Best Practices
+## Related patterns
 
-1. **Use for One-Time Delays**: For recurring schedules, use Temporal Schedules instead
-2. **Set Workflow ID**: Always set explicit workflow ID for tracking and cancellation
-3. **Add Query Methods**: Expose status via queries to check state during delay
-4. **Enable Cancellation**: Add signal handlers to cancel before execution
-5. **Validate Delay Duration**: Ensure delay is reasonable (not too short or too long)
-6. **Monitor Backoff**: Check `firstWorkflowTaskBackoff` in history for verification
-7. **Consider Time Zones**: Use absolute timestamps if delay depends on specific time
-8. **Document Behavior**: Clearly indicate workflow won't execute immediately
+- **Temporal Schedules**: For recurring Workflow execution.
+- **[Updatable Timer](updatable-timer.md)**: For dynamically adjustable delays within Workflows.
+- **[Signal with Start](signal-with-start.md)**: Interacting with Workflows before execution.
+
+## Sample code
+
+- [Full Java Sample](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/hello/HelloDelayedStart.java) — Complete implementation with delayed start.

@@ -1,39 +1,43 @@
 # Temporal Design Patterns - Common Catalog
 
-> **⚠️ Work In Progress**: This catalog is currently under active development. Content and structure may change.
+> **Warning:** This catalog is under active development. Content and structure may change.
 >
 > **Personal project by [@taonic](https://github.com/taonic).**
 
-Temporal has a set of durable execution primitives that can be composed into common, reusable, and proven patterns. Having these patterns in your toolbox helps you solve recurring problems in a battle-tested way.
+Temporal provides a set of durable execution primitives that you can compose into common, reusable, and proven patterns.
+Having these patterns in your toolbox helps you solve recurring problems in a battle-tested way.
 
-## Distributed Transaction Patterns
+## Distributed transaction patterns
 
 ### [Saga Pattern](saga-pattern.md)
 
-Manages distributed transactions with compensating actions. Each step has a compensation that undoes its effects if subsequent steps fail.
+Manages distributed transactions with compensating actions.
+Each step has a compensation that undoes its effects if subsequent steps fail.
 
 ### [Early Return, a.k.a Update with Start](early-return.md)
 
-Synchronous initialization with asynchronous completion. Returns results immediately while processing continues in background.
+Synchronous initialization with asynchronous completion.
+Returns results immediately while processing continues in the background.
 
-
-## Stateful / Lifecycle Patterns
+## Stateful / lifecycle patterns
 
 ### [Entity Workflow](entity-workflow.md)
 
-Models long-lived business entities (users, accounts, devices) as individual workflows that persist for the entity's entire lifetime. Each entity gets its own workflow instance handling all state transitions through signals and updates.
+Models long-lived business entities (users, accounts, devices) as individual Workflows that persist for the entity's entire lifetime.
+Each entity gets its own Workflow instance handling all state transitions through Signals and Updates.
 
 ### [Continue-As-New](continue-as-new.md)
 
-Prevents unbounded history growth by starting new execution with fresh history.
+Prevents unbounded history growth by starting a new execution with fresh history.
 
 ### [Child Workflows](child-workflows.md)
 
-Decomposes complex workflows into smaller, reusable workflow units. Each child has independent workflow ID, history, and lifecycle with flexible parent-child coordination.
+Decomposes complex Workflows into smaller, reusable Workflow units.
+Each child has an independent Workflow ID, history, and lifecycle with flexible parent-child coordination.
 
-### Query for State Inspection
+### Query for state inspection
 
-Read-only operations that expose workflow state without modification.
+Read-only operations that expose Workflow state without modification.
 
 ### Workflow Updates
 
@@ -41,44 +45,43 @@ Synchronous state modification with validation and direct result return.
 
 ### Memo and Search Attributes
 
-Attaches metadata for filtering and discovery. Memos store data; search attributes enable querying.
+Attaches metadata for filtering and discovery.
+Memos store data; Search Attributes enable querying.
 
-
-## Long-Running and Operational Patterns
+## Long-running and operational patterns
 
 ### [Polling External Services](polling.md)
 
 Strategies for polling external resources with varying frequencies.
 
-### Retry Policies
+### Retry policies
 
 Automatic retry with exponential backoff and non-retryable error types.
 
-### [Long running Activity - tracking progress and handle cancellation with heartbeats](long-running-activity.md)
+### [Long-running Activity - tracking progress and handling cancellation with heartbeats](long-running-activity.md)
 
-Long-running activities report progress and enable resumption after failures.
+Long-running Activities report progress and enable resumption after failures.
 
-### Cancellation Handling
+### Cancellation handling
 
-Graceful workflow and activity cancellation with cleanup.
+Graceful Workflow and Activity cancellation with cleanup.
 
 ### [Parallel Execution](parallel-execution.md)
 
-Executes multiple activities concurrently for maximum throughput.
+Executes multiple Activities concurrently for maximum throughput.
 
 ### [Pick First (Race)](pick-first.md)
 
-Starts multiple activities in parallel and uses first result.
+Starts multiple Activities in parallel and uses the first result.
 
-### Batch Processing
+### Batch processing
 
 Processes large datasets efficiently with various strategies.
 
 ### [Worker-Specific Task Queues](worker-specific-taskqueue.md)
 
-Routes activities to specific workers using unique task queues for worker affinity.
+Routes Activities to specific Workers using unique Task Queues for Worker affinity.
 
-### Worker Versioning
+### Worker versioning
 
-Manages workflow code changes safely using build IDs and version sets.
-
+Manages Workflow code changes safely using build IDs and version sets.

@@ -3,26 +3,20 @@
 
 ## Overview
 
-Signal with Start is a pattern that lazily creates workflows when signaling them. If the workflow is already running, it receives the signal; if not, the workflow starts first and then receives the signal. This enables entity workflows that only exist when needed and can receive operations throughout their lifetime.
+Signal with Start is a pattern that lazily creates Workflows when Signaling them.
+If the Workflow is already running, it receives the Signal; if not, the Workflow starts first and then receives the Signal.
+This enables entity Workflows that only exist when needed and can receive operations throughout their lifetime.
 
 ## Problem
 
-In distributed systems, you often need workflows that:
-- Represent long-lived entities (accounts, shopping carts, user sessions)
-- Consume events from streams (Kafka, SQS) and trigger certain behaviors of an aggregate or entity
-- Receive multiple operations over time
-- Should only exist when there's work to do
-- Need to handle the first operation without special client logic
+In distributed systems, you often need Workflows that represent long-lived entities (accounts, shopping carts, user sessions), consume events from streams (Kafka, SQS) and trigger certain behaviors of an aggregate or entity, receive multiple operations over time, should only exist when there is work to do, and need to handle the first operation without special client logic.
 
-Without Signal with Start, clients must:
-- Check if the workflow exists before signaling
-- Start the workflow if it doesn't exist, then signal it
-- Handle race conditions when multiple clients try to start the same workflow
-- Write complex coordination logic
+Without Signal with Start, clients must check if the Workflow exists before Signaling, start the Workflow if it does not exist and then Signal it, handle race conditions when multiple clients try to start the same Workflow, and write complex coordination logic.
 
 ## Solution
 
-Temporal's Signal with Start API atomically starts a workflow (if not running) and delivers a signal in a single operation. The client doesn't need to know whether the workflow exists—the platform handles it automatically.
+Temporal's Signal with Start API atomically starts a Workflow (if not running) and delivers a Signal in a single operation.
+The client does not need to know whether the Workflow exists — the platform handles it automatically.
 
 ```mermaid
 sequenceDiagram
@@ -45,17 +39,28 @@ sequenceDiagram
     deactivate W
 ```
 
+The following describes each step in the diagram:
+
+1. The client calls SignalWithStart with a Workflow ID, Signal name, and arguments.
+2. Temporal checks whether a Workflow with that ID is already running.
+3. If the Workflow does not exist, Temporal starts it and then delivers the Signal.
+4. If the Workflow is already running, Temporal delivers the Signal without starting a new instance.
+
 ## Implementation
 
 ### Basic Signal with Start
 
+The following examples show a shopping cart entity Workflow that is created lazily when the first item is added.
+Each SDK uses its own API to atomically start the Workflow (if needed) and deliver the Signal.
+
 ::: code-group
 
 ```java [Java]
+// ShoppingCartManager.java
 public class ShoppingCartManager {
   public void addItem(String cartId, String itemId, String productId, int quantity) {
     WorkflowOptions options = WorkflowOptions.newBuilder()
-        .setWorkflowId("cart-" + cartId)  // Stable ID for entity
+        .setWorkflowId("cart-" + cartId)
         .setTaskQueue("carts")
         .build();
     
@@ -64,12 +69,13 @@ public class ShoppingCartManager {
     
     // Atomically start workflow (if needed) and deliver signal
     BatchRequest request = workflowClient.newSignalWithStartRequest();
-    request.add(workflow::run);  // Workflow method to start
-    request.add(workflow::addItem, itemId, productId, quantity);  // Signal to deliver
+    request.add(workflow::run);
+    request.add(workflow::addItem, itemId, productId, quantity);
     workflowClient.signalWithStart(request);
   }
 }
 
+// ShoppingCartWorkflow.java
 @WorkflowInterface
 public interface ShoppingCartWorkflow {
   @WorkflowMethod
@@ -80,7 +86,7 @@ public interface ShoppingCartWorkflow {
 }
 
 public class ShoppingCartWorkflowImpl implements ShoppingCartWorkflow {
-  private Set<String> processedItems = new HashSet<>();  // Track processed items
+  private Set<String> processedItems = new HashSet<>();
   private List<CartItem> items = new ArrayList<>();
   
   @Override
@@ -99,6 +105,7 @@ public class ShoppingCartWorkflowImpl implements ShoppingCartWorkflow {
 ```
 
 ```typescript [TypeScript]
+// client.ts
 export async function addItem(
   cartId: string,
   itemId: string,
@@ -107,18 +114,18 @@ export async function addItem(
 ) {
   // Atomically start workflow (if needed) and deliver signal
   const handle = await client.workflow.signalWithStart(shoppingCartWorkflow, {
-    workflowId: `cart-${cartId}`,  // Stable ID for entity
+    workflowId: `cart-${cartId}`,
     taskQueue: 'carts',
     signal: 'addItem',
     signalArgs: [itemId, productId, quantity],
   });
 }
 
+// workflow.ts
 export async function shoppingCartWorkflow(): Promise<void> {
-  const processedItems = new Set<string>();  // Track processed items
+  const processedItems = new Set<string>();
   const items: CartItem[] = [];
 
-  // Register signal handler before workflow logic
   setHandler(addItemSignal, (itemId: string, productId: string, quantity: number) => {
     if (processedItems.has(itemId)) {
       return; // Idempotency: ignore duplicate signals
@@ -134,23 +141,24 @@ export const addItemSignal = defineSignal<[string, string, number]>('addItem');
 ```
 
 ```go [Go]
+// client.go
 func AddItem(ctx context.Context, cartID, itemID, productID string, quantity int) error {
 	opts := client.StartWorkflowOptions{
-		ID:        "cart-" + cartID,  // Stable ID for entity
+		ID:        "cart-" + cartID,
 		TaskQueue: "carts",
 	}
 
 	// Atomically start workflow (if needed) and deliver signal
-	_, err := c.SignalWithStartWorkflow(ctx, opts, ShoppingCartWorkflow,
-		"addItem", AddItemSignal{ItemID: itemID, ProductID: productID, Quantity: quantity})
+	sig := AddItemSignal{ItemID: itemID, ProductID: productID, Quantity: quantity}
+	_, err := c.SignalWithStartWorkflow(ctx, "cart-"+cartID, "addItem", sig, opts, ShoppingCartWorkflow)
 	return err
 }
 
+// workflow.go
 func ShoppingCartWorkflow(ctx workflow.Context) error {
-	processedItems := make(map[string]bool)  // Track processed items
+	processedItems := make(map[string]bool)
 	var items []CartItem
 
-	// Listen for signals in a coroutine
 	addItemCh := workflow.GetSignalChannel(ctx, "addItem")
 	workflow.Go(ctx, func(ctx workflow.Context) {
 		for {
@@ -171,72 +179,70 @@ func ShoppingCartWorkflow(ctx workflow.Context) error {
 
 :::
 
-## Key Components
+In all SDKs, the Workflow ID is derived from the business entity (the cart ID), ensuring one Workflow per entity.
+The Signal handler checks a set of processed item IDs to prevent duplicate processing.
+The Workflow blocks indefinitely, acting as a long-lived entity that receives operations over its lifetime.
 
-1. **Workflow ID**: Derived from business entity (account ID, user ID, session ID)
-2. **Signal Handler**: Processes incoming operations with idempotency checks
-3. **BatchRequest**: Container for workflow method and signal(s) to execute atomically
-4. **WorkflowInit**: Optional constructor for initialization before signals are delivered (Java and .NET only)
+## When to use
 
-## When to Use
+The Signal with Start pattern is a good fit for entity Workflows (accounts, shopping carts, user sessions, clusters), event-driven architectures (Kafka consumers, message queue processors), Workflows that receive multiple operations over their lifetime, lazy entity creation where you only create when the first operation arrives, and fire-and-forget operations where immediate response is not needed.
 
-**Ideal for:**
-- Entity workflows (accounts, shopping carts, user sessions, clusters)
-- Event-driven architectures (Kafka consumers, message queue processors)
-- Workflows that receive multiple operations over their lifetime
-- Lazy entity creation—only create when first operation arrives
-- Fire-and-forget operations where immediate response isn't needed
+It is not a good fit for one-time operations (use REJECT_DUPLICATE policy instead), request-response patterns requiring synchronous confirmation (use Update with Start), or operations that need immediate return values.
 
-**Not ideal for:**
-- One-time operations (use REJECT_DUPLICATE policy instead)
-- Request-response patterns requiring synchronous confirmation (use Update with Start)
-- Operations that need immediate return values
+## Benefits and trade-offs
 
-## Benefits
+Signal with Start provides an atomic operation — start and Signal happen atomically with no race conditions.
+Workflows only exist when needed (lazy creation).
+The client does not need to check if the Workflow exists.
+The operation is safe to retry because duplicate starts are handled by the Workflow ID.
+The pattern is a natural fit for long-lived business entities.
 
-- **Atomic Operation**: Start and signal happen atomically—no race conditions
-- **Lazy Creation**: Workflows only exist when needed
-- **Simplified Client**: No need to check if workflow exists
-- **Idempotent**: Safe to retry—duplicate starts are handled by Workflow ID
-- **Entity Pattern**: Natural fit for long-lived business entities
+The trade-offs to consider are that Signals are fire-and-forget with no immediate confirmation that the Signal was processed.
+You still need to track processed operation IDs in the Workflow for Signal idempotency.
+Workflows must handle unbounded execution (use Continue-As-New).
+Signals do not return values — use Queries or Updates for that.
 
-## Trade-offs
+Both ALLOW_DUPLICATE and ALLOW_DUPLICATE_FAILED_ONLY work well with Signal with Start:
 
-- **Fire-and-Forget**: No immediate confirmation that signal was processed
-- **Signal Idempotency**: Still need to track processed operation IDs in workflow
-- **Long-Running**: Workflows must handle unbounded execution (use continue-as-new)
-- **No Return Value**: Signals don't return values (use queries or updates for that)
+- **ALLOW_DUPLICATE** (default): Allows a new Workflow Execution with the same ID after the previous one has closed (completed, failed, timed out, terminated, or cancelled). Does not affect a currently running Workflow — Signal with Start delivers the Signal to the running execution.
+- **ALLOW_DUPLICATE_FAILED_ONLY**: Allows restart only if the previous run failed — prevents accidental restarts of running Workflows.
+- **REJECT_DUPLICATE**: Prevents any duplicate starts — useful for one-time operations, not entity Workflows.
+- **TERMINATE_IF_RUNNING**: Terminates the running Workflow and starts a new one — use with caution.
 
-## Workflow ID Reuse Policies
+## Comparison with alternatives
 
-Both **ALLOW_DUPLICATE** and **ALLOW_DUPLICATE_FAILED_ONLY** work well with Signal with Start:
-
-- **ALLOW_DUPLICATE** (default): Allows new run regardless of previous runs—terminates existing workflow and starts fresh
-- **ALLOW_DUPLICATE_FAILED_ONLY**: Allows restart only if previous run failed—prevents accidental restarts of running workflows
-- **REJECT_DUPLICATE**: Prevents any duplicate starts—useful for one-time operations, not entity workflows
-- **TERMINATE_IF_RUNNING**: Terminates running workflow and starts new one—use with caution
-
-## Comparison with Alternatives
-
-| Approach | Use Case | Response Type | Idempotency |
-|----------|----------|---------------|-------------|
-| Signal with Start | Entity workflows | Fire-and-forget | Signal-level |
+| Approach | Use case | Response type | Idempotency |
+| :--- | :--- | :--- | :--- |
+| Signal with Start | Entity Workflows | Fire-and-forget | Signal-level |
 | Update with Start | Request-response | Sync return value | Update-level |
 | REJECT_DUPLICATE | One-time operations | Async (Workflow ID) | Workflow-level |
 
-## Related Patterns
+## Best practices
 
-- **Entity Workflow**: Long-running workflows representing business entities
-- **Idempotent Operations**: Preventing duplicate processing
-- **Continue-As-New**: Managing unbounded workflow history
-- **Safe Message Passing**: Concurrent signal handling with locking
+- **Derive Workflow ID from entity.** Use stable business identifiers (account ID, user ID).
+- **Implement Signal idempotency.** Track processed operation IDs to prevent duplicates.
+- **Use WorkflowInit.** Initialize state before Signals are delivered (Java and .NET only).
+- **Handle unbounded execution.** Use Continue-As-New for long-running entity Workflows.
+- **Choose the right Workflow ID policy.** Use ALLOW_DUPLICATE_FAILED_ONLY for entity Workflows.
+- **Include operation IDs.** Every Signal should include a unique operation or reference ID.
+- **Return early.** Check for duplicates at the start of Signal handlers.
 
-## Best Practices
+## Common pitfalls
 
-1. **Derive Workflow ID from Entity**: Use stable business identifiers (account ID, user ID)
-2. **Implement Signal Idempotency**: Track processed operation IDs to prevent duplicates
-3. **Use WorkflowInit**: Initialize state before signals are delivered (Java and .NET only)
-4. **Handle Unbounded Execution**: Use continue-as-new for long-running entity workflows
-5. **Choose Right Workflow ID Policy**: Use ALLOW_DUPLICATE_FAILED_ONLY for entity workflows
-6. **Include Operation IDs**: Every signal should include a unique operation/reference ID
-7. **Return Early**: Check for duplicates at the start of signal handlers
+- **Not implementing Signal idempotency.** Signals can be delivered more than once (for example, client retries). Without tracking processed operation IDs, the Workflow processes duplicates.
+- **Unbounded history growth.** Entity Workflows that receive many Signals without calling Continue-As-New will hit the 50K event or 10K Signal limit. Use `isContinueAsNewSuggested()` to trigger Continue-As-New.
+- **Losing pending Signals on Continue-As-New.** Drain all pending Signals before calling Continue-As-New, and pass unprocessed ones as input to the new execution.
+- **Expecting a return value from Signals.** Signals are fire-and-forget. If you need a synchronous response, use Updates or Update-with-Start instead.
+- **Race between SignalWithStart and Continue-As-New.** Temporal prevents this race — if a Signal arrives while the Workflow is completing via Continue-As-New, the Workflow rewinds to process the Signal first.
+
+## Related patterns
+
+- **[Entity Workflow](entity-workflow.md)**: Long-running Workflows representing business entities.
+- **[Continue-As-New](continue-as-new.md)**: Managing unbounded Workflow history.
+- **[Request-Response via Updates](request-response-via-updates.md)**: When you need synchronous responses instead of fire-and-forget.
+- **[Early Return](early-return.md)**: Update-with-Start for request-response with lazy initialization.
+
+## Sample code
+
+- [Hello Signal](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/hello/HelloSignal.java) — Basic Signal handling in a Workflow.
+- [Safe Message Passing](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/safemessagepassing) — Concurrent Signal handling with validation.

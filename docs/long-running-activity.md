@@ -1,29 +1,22 @@
 
-# Long Running Activity - Tracking Progress and Handling Cancellation with Heartbeats
+# Long-Running Activity - Tracking Progress and Handling Cancellation with Heartbeats
 
 ## Overview
 
-The Activity Heartbeat pattern enables long-running activities to report progress, handle cancellation gracefully, and resume from the last checkpoint after failures. Heartbeats inform Temporal that the activity is still alive and allow storing progress details that survive worker restarts.
+The Activity Heartbeat pattern enables long-running Activities to report progress, handle cancellation gracefully, and resume from the last checkpoint after failures.
+Heartbeats inform Temporal that the Activity is still alive and allow storing progress details that survive Worker restarts.
 
 ## Problem
 
-In long-running operations, you often need activities that:
-- Process large datasets or perform time-consuming operations (minutes to hours)
-- Report progress to avoid appearing stuck or timing out
-- Resume from the last checkpoint after worker crashes or restarts
-- Handle cancellation requests gracefully and clean up resources
-- Avoid reprocessing already-completed work
+In long-running operations, you often need Activities that process large datasets or perform time-consuming operations (minutes to hours), report progress to avoid appearing stuck or timing out, resume from the last checkpoint after Worker crashes or restarts, handle cancellation requests gracefully and clean up resources, and avoid reprocessing already-completed work.
 
-Without heartbeats, you must:
-- Set very long activity timeouts that delay failure detection
-- Reprocess entire batches from the beginning on failures
-- Have no visibility into activity progress
-- Risk zombie activities that appear alive but are actually stuck
-- Implement custom checkpointing and recovery logic
+Without heartbeats, you must set very long Activity timeouts that delay failure detection, reprocess entire batches from the beginning on failures, accept no visibility into Activity progress, risk zombie Activities that appear alive but are stuck, and implement custom checkpointing and recovery logic.
 
 ## Solution
 
-Activity heartbeats use `Activity.getExecutionContext().heartbeat(details)` to periodically report progress. The heartbeat details are persisted and available to retry attempts, enabling resumption from the last checkpoint. Heartbeat timeouts detect stuck activities faster than execution timeouts.
+Activity heartbeats use `Activity.getExecutionContext().heartbeat(details)` to periodically report progress.
+The heartbeat details are persisted and available to retry attempts, enabling resumption from the last checkpoint.
+Heartbeat timeouts detect stuck Activities faster than execution timeouts.
 
 ```mermaid
 sequenceDiagram
@@ -50,11 +43,22 @@ sequenceDiagram
     end
 ```
 
+The following describes each step in the diagram:
+
+1. The Workflow starts the Activity with a heartbeat timeout.
+2. The Activity processes items in a loop, heartbeating progress after each batch.
+3. If the Activity completes normally, it returns the result to the Workflow.
+4. If the Worker crashes, the heartbeat timeout expires and Temporal retries the Activity on a new Worker. The new attempt retrieves the last heartbeat details and resumes from the checkpoint.
+
 ## Implementation
 
-### Basic Progress Tracking
+### Basic progress tracking
+
+The following implementation processes a large file line by line, heartbeating every 100 lines.
+On retry, it retrieves the last processed line number and skips ahead:
 
 ```java
+// FileProcessingActivityImpl.java
 @ActivityInterface
 public interface FileProcessingActivity {
   void processLargeFile(String filePath);
@@ -68,7 +72,6 @@ public class FileProcessingActivityImpl implements FileProcessingActivity {
     int startLine = lastProcessedLine.orElse(0);
     
     try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
-      // Skip already processed lines
       for (int i = 0; i < startLine; i++) {
         reader.readLine();
       }
@@ -79,7 +82,6 @@ public class FileProcessingActivityImpl implements FileProcessingActivity {
         processLine(line);
         currentLine++;
         
-        // Heartbeat every 100 lines
         if (currentLine % 100 == 0) {
           context.heartbeat(currentLine);
         }
@@ -89,9 +91,17 @@ public class FileProcessingActivityImpl implements FileProcessingActivity {
 }
 ```
 
-### Handling Cancellation
+The `getHeartbeatDetails(Integer.class)` call retrieves the last heartbeat value from a previous attempt.
+If this is the first attempt, it returns empty and the Activity starts from line 0.
+The Activity heartbeats every 100 lines, storing the current line number as the checkpoint.
+
+### Handling cancellation
+
+The following implementation adds cancellation support.
+The Activity checks for cancellation on each heartbeat and cleans up resources before exiting:
 
 ```java
+// FileProcessingActivityImpl.java
 public class FileProcessingActivityImpl implements FileProcessingActivity {
   @Override
   public void processLargeFile(String filePath) {
@@ -106,34 +116,37 @@ public class FileProcessingActivityImpl implements FileProcessingActivity {
       
       String line;
       while ((line = reader.readLine()) != null) {
-        // Check for cancellation
         context.heartbeat(currentLine);
-        
-        try {
-          processLine(line);
-          currentLine++;
-        } catch (ActivityCancelledException e) {
-          // Cleanup before cancellation
-          cleanupResources();
-          throw e;
-        }
+        processLine(line);
+        currentLine++;
       }
+    } catch (ActivityFailure e) {
+      if (e.getCause() instanceof CanceledFailure) {
+        cleanupResources();
+        throw e;
+      }
+      throw e;
     }
   }
 }
 ```
 
-### Advanced: Complex Progress State
+Cancellation is delivered to the Activity when it heartbeats.
+If the Workflow has cancelled the Activity, the next `heartbeat()` call causes an `ActivityFailure` with a `CanceledFailure` cause.
+The catch block performs cleanup before re-throwing the exception.
+
+### Complex progress state
+
+The following implementation tracks multiple progress fields — processed count, failed count, and the last processed ID:
 
 ```java
+// BatchProcessingActivityImpl.java
 public class BatchProcessingActivityImpl implements BatchProcessingActivity {
   
   static class ProgressState {
     int processedCount;
     int failedCount;
     String lastProcessedId;
-    
-    // Constructor, getters, setters
   }
   
   @Override
@@ -142,7 +155,6 @@ public class BatchProcessingActivityImpl implements BatchProcessingActivity {
     Optional<ProgressState> details = context.getHeartbeatDetails(ProgressState.class);
     ProgressState progress = details.orElse(new ProgressState());
     
-    // Resume from last checkpoint
     int startIndex = itemIds.indexOf(progress.lastProcessedId) + 1;
     
     for (int i = startIndex; i < itemIds.size(); i++) {
@@ -164,91 +176,65 @@ public class BatchProcessingActivityImpl implements BatchProcessingActivity {
 }
 ```
 
-## Key Components
+The `ProgressState` object stores all the checkpoint data needed to resume.
+On retry, the Activity finds the index of the last processed ID and starts from the next item.
+Each heartbeat stores the full progress state, so the next attempt has everything it needs to resume.
 
-1. **ActivityExecutionContext**: Provides access to heartbeat functionality
-2. **heartbeat(details)**: Reports progress and stores checkpoint data
-3. **getHeartbeatDetails()**: Retrieves progress from previous attempt on retry
-4. **Heartbeat Timeout**: Configured in ActivityOptions, triggers retry if exceeded
-5. **ActivityCancelledException**: Thrown when activity is cancelled, enabling cleanup
+## When to use
 
-## When to Use
+The Heartbeat pattern is a good fit for batch processing of large datasets, file uploads and downloads with progress tracking, database migrations or bulk operations, long-running computations (ML training, video encoding), external API polling with multiple attempts, and any Activity running longer than 30 seconds.
 
-**Ideal for:**
-- Batch processing of large datasets
-- File uploads/downloads with progress tracking
-- Database migrations or bulk operations
-- Long-running computations (ML training, video encoding)
-- External API polling with multiple attempts
-- Any activity running longer than 30 seconds
+It is not a good fit for quick operations (under 10 seconds), operations that cannot be checkpointed, Activities requiring exact-once semantics without idempotency, or real-time streaming (use Workflows instead).
 
-**Not ideal for:**
-- Quick operations (< 10 seconds)
-- Operations that can't be checkpointed
-- Activities requiring exact-once semantics without idempotency
-- Real-time streaming (use workflows instead)
+## Benefits and trade-offs
 
-## Benefits
+Heartbeats enable fault tolerance by resuming from the last checkpoint after failures.
+Heartbeat timeouts detect stuck Activities faster than execution timeouts.
+You gain visibility into Activity progress in real-time.
+Activities can handle cancellation gracefully and clean up resources.
+Completed work is not reprocessed, and Activities can move between Workers.
 
-- **Fault Tolerance**: Resume from last checkpoint after failures
-- **Fast Failure Detection**: Heartbeat timeout detects stuck activities quickly
-- **Progress Visibility**: Monitor activity progress in real-time
-- **Graceful Cancellation**: Clean up resources before terminating
-- **Resource Efficiency**: Avoid reprocessing completed work
-- **Worker Mobility**: Activities can move between workers seamlessly
+The trade-offs to consider are that frequent heartbeats increase network traffic.
+You must implement checkpointing logic and state management.
+You must handle partial reprocessing of the last checkpoint (idempotency).
+You need to balance heartbeat frequency between responsiveness and overhead.
+Heartbeat details have size limits, so you should avoid large objects.
 
-## Trade-offs
+## Comparison with alternatives
 
-- **Network Overhead**: Frequent heartbeats increase network traffic
-- **Complexity**: Requires checkpointing logic and state management
-- **Idempotency**: Must handle partial reprocessing of last checkpoint
-- **Heartbeat Frequency**: Balance between responsiveness and overhead
-- **State Size**: Heartbeat details have size limits (avoid large objects)
-
-## How It Works
-
-1. Activity starts and checks `getHeartbeatDetails()` for previous progress
-2. Activity resumes from last checkpoint (or starts from beginning)
-3. Activity processes work and periodically calls `heartbeat(progress)`
-4. Temporal records heartbeat timestamp and details
-5. If worker crashes:
-   - Heartbeat timeout expires
-   - Activity is retried on another worker
-   - New attempt retrieves details and resumes
-6. If workflow cancels activity:
-   - Next heartbeat throws `ActivityCancelledException`
-   - Activity performs cleanup and exits
-
-## Comparison with Alternatives
-
-| Approach | Progress Tracking | Resumable | Cancellation | Complexity |
-|----------|------------------|-----------|--------------|------------|
+| Approach | Progress tracking | Resumable | Cancellation | Complexity |
+| :--- | :--- | :--- | :--- | :--- |
 | Heartbeat | Yes | Yes | Graceful | Medium |
 | Long Timeout | No | No | Delayed | Low |
 | Child Workflows | Yes | Yes | Immediate | High |
 | Local Activity | No | No | N/A | Low |
 
-## Related Patterns
+## Best practices
 
-- **Batch Processing**: Processing large datasets with checkpointing
-- **Saga Pattern**: Compensating transactions with long-running steps
-- **Activity Retry**: Automatic retry with exponential backoff
-- **Cancellation Scopes**: Workflow-level cancellation handling
+- **Set heartbeat timeout.** Configure to 2–3x the expected heartbeat interval.
+- **Heartbeat at regular intervals.** Balance between responsiveness (every 10–30 seconds) and overhead.
+- **Checkpoint strategically.** Save progress at meaningful boundaries (records, pages, chunks).
+- **Keep details small.** Store minimal state (IDs, offsets, counts), not full objects.
+- **Handle idempotency.** Ensure reprocessing the last checkpoint is safe.
+- **Check cancellation.** Heartbeat regularly to detect cancellation quickly.
+- **Clean up on cancel.** Catch `ActivityFailure` and check for `CanceledFailure` cause.
+- **Log progress.** Log heartbeat details for debugging and monitoring.
+- **Test resumption.** Verify Activities resume correctly after simulated failures.
+- **Avoid heartbeat spam.** Do not heartbeat on every iteration of tight loops.
 
-## Sample Code
+## Common pitfalls
 
-- [Heartbeating Activity Batch](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/batch/heartbeatingactivity) - Complete batch processing implementation
-- [Auto-Heartbeating](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/autoheartbeat) - Automatic heartbeating via interceptor
+- **Missing HeartbeatTimeout.** Without a HeartbeatTimeout, Temporal cannot detect a stuck or crashed Worker until the StartToCloseTimeout expires. Always set HeartbeatTimeout shorter than StartToCloseTimeout.
+- **Heartbeating too infrequently.** Cancellation is only delivered on the next heartbeat. If the Activity heartbeats every 5 minutes, cancellation takes up to 5 minutes to propagate.
+- **Not resuming from heartbeat progress on retry.** When an Activity retries, use `Activity.getExecutionContext().getHeartbeatDetails()` (Java) or equivalent to resume from the last checkpoint instead of restarting from scratch.
+- **Catching the wrong exception for cancellation.** In Java, cancellation is delivered as `ActivityFailure` with a `CanceledFailure` cause, not a standalone exception. Catch `ActivityFailure` and check `getCause()`.
 
-## Best Practices
+## Related patterns
 
-1. **Set Heartbeat Timeout**: Configure to 2-3x expected heartbeat interval
-2. **Heartbeat Frequency**: Balance between responsiveness (every 10-30s) and overhead
-3. **Checkpoint Strategically**: Save progress at meaningful boundaries (records, pages, chunks)
-4. **Keep Details Small**: Store minimal state (IDs, offsets, counts), not full objects
-5. **Handle Idempotency**: Ensure reprocessing last checkpoint is safe
-6. **Check Cancellation**: Heartbeat regularly to detect cancellation quickly
-7. **Cleanup on Cancel**: Use try-catch to handle `ActivityCancelledException`
-8. **Log Progress**: Log heartbeat details for debugging and monitoring
-9. **Test Resumption**: Verify activities resume correctly after simulated failures
-10. **Avoid Heartbeat Spam**: Don't heartbeat on every iteration of tight loops
+- **[Saga Pattern](saga-pattern.md)**: Compensating transactions with long-running steps.
+- **[Polling](polling.md)**: Heartbeating Activity for frequent polling.
+
+## Sample code
+
+- [Heartbeating Activity Batch](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/batch/heartbeatingactivity) — Complete batch processing implementation.
+- [Auto-Heartbeating](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/autoheartbeat) — Automatic heartbeating via interceptor.
