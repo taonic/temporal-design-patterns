@@ -1,5 +1,5 @@
 
-# Continue-As-New Pattern
+<h1>Continue-As-New Pattern <img src="/images/continue-as-new-icon.png" alt="Continue-As-New Pattern" class="pattern-page-icon"></h1>
 
 ## Overview
 

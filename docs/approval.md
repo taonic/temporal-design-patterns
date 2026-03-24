@@ -1,5 +1,5 @@
 
-# Approval Pattern
+<h1>Approval Pattern <img src="/images/approval-icon.png" alt="Approval Pattern" class="pattern-page-icon"></h1>
 
 ## Overview
 

@@ -1,5 +1,5 @@
 
-# Child Workflows Pattern
+<h1>Child Workflows Pattern <img src="/images/child-workflows-icon.png" alt="Child Workflows Pattern" class="pattern-page-icon"></h1>
 
 ## Overview
 

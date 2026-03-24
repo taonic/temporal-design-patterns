@@ -1,5 +1,5 @@
 
-# Saga Pattern
+<h1>Saga Pattern <img src="/images/saga-icon.png" alt="Saga Pattern" class="pattern-page-icon"></h1>
 
 ## Overview
 

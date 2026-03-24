@@ -1,5 +1,5 @@
 
-# Pick First Pattern
+<h1>Pick First Pattern <img src="/images/pick-first-icon.png" alt="Pick First Pattern" class="pattern-page-icon"></h1>
 
 ## Overview
 

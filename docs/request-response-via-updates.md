@@ -1,5 +1,5 @@
 
-# Request-Response via Updates
+<h1>Request-Response via Updates <img src="/images/request-response-icon.png" alt="Request-Response via Updates" class="pattern-page-icon"></h1>
 
 ## Overview
 

@@ -1,5 +1,5 @@
 
-# Polling External Services
+<h1>Polling External Services <img src="/images/polling-icon.png" alt="Polling External Services" class="pattern-page-icon"></h1>
 
 ## Overview
 
