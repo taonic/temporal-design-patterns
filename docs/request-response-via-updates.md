@@ -48,49 +48,47 @@ The Update validator rejects requests when the task limit is reached, and the Up
 
 ::: code-group
 
-```java [Java]
-// TaskWorkflow.java
-@WorkflowInterface
-public interface TaskWorkflow {
-  @WorkflowMethod
-  void run();
-  
-  @UpdateMethod
-  AssignmentResult assignTask(String taskName);
-  
-  @QueryMethod
-  List<String> getTasks();
-}
+```python [Python]
+# workflows.py
+import uuid
+from dataclasses import dataclass
+from temporalio import workflow
 
-public class TaskWorkflowImpl implements TaskWorkflow {
-  private static final int MAX_TASKS = 10;
-  private List<String> tasks = new ArrayList<>();
-  
-  @Override
-  public void run() {
-    Workflow.await(() -> false);
-  }
-  
-  @UpdateValidatorMethod(updateName = "assignTask")
-  protected void validateAssignTask(String taskName) {
-    if (tasks.size() >= MAX_TASKS) {
-      throw new IllegalStateException("Task limit reached");
-    }
-  }
-  
-  @Override
-  public AssignmentResult assignTask(String taskName) {
-    String assignmentId = UUID.randomUUID().toString();
-    tasks.add(taskName);
-    
-    return new AssignmentResult(assignmentId, taskName, tasks.size());
-  }
-  
-  @Override
-  public List<String> getTasks() {
-    return new ArrayList<>(tasks);
-  }
-}
+MAX_TASKS = 10
+
+@dataclass
+class AssignmentResult:
+    assignment_id: str
+    task_name: str
+    total_tasks: int
+
+@workflow.defn
+class TaskWorkflow:
+    def __init__(self) -> None:
+        self.tasks: list[str] = []
+
+    @workflow.run
+    async def run(self) -> None:
+        await workflow.wait_condition(lambda: False)
+
+    @workflow.update
+    async def assign_task(self, task_name: str) -> AssignmentResult:
+        assignment_id = str(uuid.uuid4())
+        self.tasks.append(task_name)
+        return AssignmentResult(
+            assignment_id=assignment_id,
+            task_name=task_name,
+            total_tasks=len(self.tasks),
+        )
+
+    @assign_task.validator
+    def validate_assign_task(self, task_name: str) -> None:
+        if len(self.tasks) >= MAX_TASKS:
+            raise ValueError("Task limit reached")
+
+    @workflow.query
+    def get_tasks(self) -> list[str]:
+        return list(self.tasks)
 ```
 
 ```go [Go]
@@ -115,7 +113,7 @@ func (w *TaskWorkflow) Run(ctx workflow.Context) error {
 			}, nil
 		},
 		workflow.UpdateHandlerOptions{
-			Validator: func(ctx workflow.Context, taskName string) error {
+			Validator: func(taskName string) error {
 				if len(tasks) >= MaxTasks {
 					return fmt.Errorf("task limit reached")
 				}
@@ -139,10 +137,54 @@ func (w *TaskWorkflow) Run(ctx workflow.Context) error {
 }
 ```
 
+```java [Java]
+// TaskWorkflow.java
+@WorkflowInterface
+public interface TaskWorkflow {
+  @WorkflowMethod
+  void run();
+
+  @UpdateMethod
+  AssignmentResult assignTask(String taskName);
+
+  @QueryMethod
+  List<String> getTasks();
+}
+
+public class TaskWorkflowImpl implements TaskWorkflow {
+  private static final int MAX_TASKS = 10;
+  private List<String> tasks = new ArrayList<>();
+
+  @Override
+  public void run() {
+    Workflow.await(() -> false);
+  }
+
+  @UpdateValidatorMethod(updateName = "assignTask")
+  protected void validateAssignTask(String taskName) {
+    if (tasks.size() >= MAX_TASKS) {
+      throw new IllegalStateException("Task limit reached");
+    }
+  }
+
+  @Override
+  public AssignmentResult assignTask(String taskName) {
+    String assignmentId = UUID.randomUUID().toString();
+    tasks.add(taskName);
+
+    return new AssignmentResult(assignmentId, taskName, tasks.size());
+  }
+
+  @Override
+  public List<String> getTasks() {
+    return new ArrayList<>(tasks);
+  }
+}
+```
+
 ```typescript [TypeScript]
 // workflow.ts
 import * as wf from '@temporalio/workflow';
-import { v4 as uuid } from 'uuid';
 
 interface AssignmentResult {
   assignmentId: string;
@@ -161,7 +203,7 @@ export async function taskWorkflow(): Promise<void> {
   wf.setHandler(
     assignTaskUpdate,
     (taskName: string): AssignmentResult => {
-      const assignmentId = uuid();
+      const assignmentId = wf.uuid4();
       tasks.push(taskName);
       return { assignmentId, taskName, totalTasks: tasks.length };
     },
@@ -242,5 +284,6 @@ There is a maximum of 10 in-flight Updates per Workflow execution and a maximum 
 
 ## Sample code
 
-- [Safe Message Passing](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/safemessagepassing) — Concurrent Update handling with validation.
+- [Safe Message Handlers (Python)](https://github.com/temporalio/samples-python/tree/main/message_passing/safe_message_handlers) — Concurrent Update handling with validation.
+- [Safe Message Passing (Java)](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/safemessagepassing) — Concurrent Update handling with validation.
 - [Update with Start - Shopping Cart (Go)](https://github.com/temporalio/samples-go/tree/main/shoppingcart) — Update-with-Start for lazy initialization.

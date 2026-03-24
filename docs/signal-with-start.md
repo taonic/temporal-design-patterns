@@ -55,6 +55,91 @@ Each SDK uses its own API to atomically start the Workflow (if needed) and deliv
 
 ::: code-group
 
+```python [Python]
+# client.py
+from temporalio.client import Client
+from workflows import ShoppingCartWorkflow, AddItemSignal
+
+async def add_item(client: Client, cart_id: str, item_id: str, product_id: str, quantity: int) -> None:
+    # Atomically start workflow (if needed) and deliver signal
+    await client.start_workflow(
+        ShoppingCartWorkflow.run,
+        id=f"cart-{cart_id}",
+        task_queue="carts",
+        start_signal="add_item",
+        start_signal_args=[AddItemSignal(item_id=item_id, product_id=product_id, quantity=quantity)],
+    )
+
+# workflows.py
+from dataclasses import dataclass
+from temporalio import workflow
+
+@dataclass
+class AddItemSignal:
+    item_id: str
+    product_id: str
+    quantity: int
+
+@dataclass
+class CartItem:
+    product_id: str
+    quantity: int
+
+@workflow.defn
+class ShoppingCartWorkflow:
+    def __init__(self) -> None:
+        self.processed_items: set[str] = set()
+        self.items: list[CartItem] = []
+
+    @workflow.run
+    async def run(self) -> None:
+        await workflow.wait_condition(lambda: False)  # Run forever (entity workflow)
+
+    @workflow.signal
+    def add_item(self, sig: AddItemSignal) -> None:
+        if sig.item_id in self.processed_items:
+            return  # Idempotency: ignore duplicate signals
+        self.processed_items.add(sig.item_id)
+        self.items.append(CartItem(product_id=sig.product_id, quantity=sig.quantity))
+```
+
+```go [Go]
+// client.go
+func AddItem(ctx context.Context, cartID, itemID, productID string, quantity int) error {
+	opts := client.StartWorkflowOptions{
+		ID:        "cart-" + cartID,
+		TaskQueue: "carts",
+	}
+
+	// Atomically start workflow (if needed) and deliver signal
+	sig := AddItemSignal{ItemID: itemID, ProductID: productID, Quantity: quantity}
+	_, err := c.SignalWithStartWorkflow(ctx, "cart-"+cartID, "addItem", sig, opts, ShoppingCartWorkflow)
+	return err
+}
+
+// workflow.go
+func ShoppingCartWorkflow(ctx workflow.Context) error {
+	processedItems := make(map[string]bool)
+	var items []CartItem
+
+	addItemCh := workflow.GetSignalChannel(ctx, "addItem")
+	workflow.Go(ctx, func(ctx workflow.Context) {
+		for {
+			var sig AddItemSignal
+			addItemCh.Receive(ctx, &sig)
+			if processedItems[sig.ItemID] {
+				continue // Idempotency: ignore duplicate signals
+			}
+			processedItems[sig.ItemID] = true
+			items = append(items, CartItem{ProductID: sig.ProductID, Quantity: sig.Quantity})
+		}
+	})
+
+	workflow.Await(ctx, func() bool { return false }) // Run forever (entity workflow)
+	return nil
+}
+```
+
 ```java [Java]
 // ShoppingCartManager.java
 public class ShoppingCartManager {
@@ -63,10 +148,10 @@ public class ShoppingCartManager {
         .setWorkflowId("cart-" + cartId)
         .setTaskQueue("carts")
         .build();
-    
-    ShoppingCartWorkflow workflow = 
+
+    ShoppingCartWorkflow workflow =
         workflowClient.newWorkflowStub(ShoppingCartWorkflow.class, options);
-    
+
     // Atomically start workflow (if needed) and deliver signal
     BatchRequest request = workflowClient.newSignalWithStartRequest();
     request.add(workflow::run);
@@ -80,7 +165,7 @@ public class ShoppingCartManager {
 public interface ShoppingCartWorkflow {
   @WorkflowMethod
   void run();
-  
+
   @SignalMethod
   void addItem(String itemId, String productId, int quantity);
 }
@@ -88,12 +173,12 @@ public interface ShoppingCartWorkflow {
 public class ShoppingCartWorkflowImpl implements ShoppingCartWorkflow {
   private Set<String> processedItems = new HashSet<>();
   private List<CartItem> items = new ArrayList<>();
-  
+
   @Override
   public void run() {
     Workflow.await(() -> false); // Run forever (entity workflow)
   }
-  
+
   @Override
   public void addItem(String itemId, String productId, int quantity) {
     if (!processedItems.add(itemId)) {
@@ -140,43 +225,6 @@ export async function shoppingCartWorkflow(): Promise<void> {
 export const addItemSignal = defineSignal<[string, string, number]>('addItem');
 ```
 
-```go [Go]
-// client.go
-func AddItem(ctx context.Context, cartID, itemID, productID string, quantity int) error {
-	opts := client.StartWorkflowOptions{
-		ID:        "cart-" + cartID,
-		TaskQueue: "carts",
-	}
-
-	// Atomically start workflow (if needed) and deliver signal
-	sig := AddItemSignal{ItemID: itemID, ProductID: productID, Quantity: quantity}
-	_, err := c.SignalWithStartWorkflow(ctx, "cart-"+cartID, "addItem", sig, opts, ShoppingCartWorkflow)
-	return err
-}
-
-// workflow.go
-func ShoppingCartWorkflow(ctx workflow.Context) error {
-	processedItems := make(map[string]bool)
-	var items []CartItem
-
-	addItemCh := workflow.GetSignalChannel(ctx, "addItem")
-	workflow.Go(ctx, func(ctx workflow.Context) {
-		for {
-			var sig AddItemSignal
-			addItemCh.Receive(ctx, &sig)
-			if processedItems[sig.ItemID] {
-				continue // Idempotency: ignore duplicate signals
-			}
-			processedItems[sig.ItemID] = true
-			items = append(items, CartItem{ProductID: sig.ProductID, Quantity: sig.Quantity})
-		}
-	})
-
-	workflow.Await(ctx, func() bool { return false }) // Run forever (entity workflow)
-	return nil
-}
-```
-
 :::
 
 In all SDKs, the Workflow ID is derived from the business entity (the cart ID), ensuring one Workflow per entity.
@@ -221,7 +269,7 @@ Both ALLOW_DUPLICATE and ALLOW_DUPLICATE_FAILED_ONLY work well with Signal with 
 
 - **Derive Workflow ID from entity.** Use stable business identifiers (account ID, user ID).
 - **Implement Signal idempotency.** Track processed operation IDs to prevent duplicates.
-- **Use WorkflowInit.** Initialize state before Signals are delivered (Java and .NET only).
+- **Use WorkflowInit.** Initialize state before Signals are delivered (Java, .NET, and Python's `__init__`).
 - **Handle unbounded execution.** Use Continue-As-New for long-running entity Workflows.
 - **Choose the right Workflow ID policy.** Use ALLOW_DUPLICATE_FAILED_ONLY for entity Workflows.
 - **Include operation IDs.** Every Signal should include a unique operation or reference ID.
@@ -244,5 +292,16 @@ Both ALLOW_DUPLICATE and ALLOW_DUPLICATE_FAILED_ONLY work well with Signal with 
 
 ## Sample code
 
+**Python**
+- [Hello Signal](https://github.com/temporalio/samples-python/tree/main/hello/hello_signal.py) — Basic Signal handling in a Workflow.
+- [Message Passing](https://github.com/temporalio/samples-python/tree/main/message_passing/introduction) — Introduction to message passing with Signals, Queries, and Updates.
+
+**Java**
 - [Hello Signal](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/hello/HelloSignal.java) — Basic Signal handling in a Workflow.
 - [Safe Message Passing](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/safemessagepassing) — Concurrent Signal handling with validation.
+
+**TypeScript**
+- [Signals and Queries](https://github.com/temporalio/samples-typescript/tree/main/signals-queries) — Signal and Query usage in a Workflow.
+
+**Go**
+- [Await Signals](https://github.com/temporalio/samples-go/tree/main/await-signals) — Waiting for Signals with timeout.

@@ -23,11 +23,11 @@ You can use Temporal to implement three distinct polling strategies, each optimi
 ```mermaid
 flowchart TD
     Start([Polling Required]) --> Freq{Polling<br/>Frequency?}
-    
+
     Freq -->|≤1 second| Fast[Frequent Polling]
     Freq -->|≥1 minute| Slow[Infrequent Polling]
     Freq -->|Complex| Complex[Periodic Sequence]
-    
+
     Fast --> FastImpl[Activity with loop<br/>+ heartbeats]
     Slow --> SlowImpl[Activity retries<br/>backoffCoefficient=1]
     Complex --> ComplexImpl[Child workflow<br/>+ Continue-As-New]
@@ -46,7 +46,50 @@ The following describes each path in the diagram:
 For polling intervals of 1 second or faster, implement the polling loop inside the Activity with heartbeats.
 The heartbeat reports progress and enables Temporal to detect stuck Activities:
 
-```java
+::: code-group
+```python [Python]
+# activities.py
+from temporalio import activity
+import asyncio
+
+@activity.defn
+async def do_poll() -> str:
+    while True:
+        activity.heartbeat()
+
+        result = await external_service.check_status()
+
+        if result == "COMPLETED":
+            return result
+
+        await asyncio.sleep(1)
+```
+
+```go [Go]
+// activities.go
+func DoPoll(ctx context.Context) (string, error) {
+	for {
+		activity.RecordHeartbeat(ctx)
+
+		result, err := externalService.CheckStatus()
+		if err != nil {
+			return "", err
+		}
+
+		if result == "COMPLETED" {
+			return result, nil
+		}
+
+		select {
+		case <-ctx.Done():
+			return "", ctx.Err()
+		case <-time.After(1 * time.Second):
+		}
+	}
+}
+```
+
+```java [Java]
 // FrequentPollingActivityImpl.java
 @ActivityInterface
 public interface PollingActivities {
@@ -58,13 +101,13 @@ public class FrequentPollingActivityImpl implements PollingActivities {
   public String doPoll() {
     while (true) {
       Activity.getExecutionContext().heartbeat(null);
-      
+
       String result = externalService.checkStatus();
-      
+
       if (result.equals("COMPLETED")) {
         return result;
       }
-      
+
       try {
         Thread.sleep(1000);
       } catch (InterruptedException e) {
@@ -75,12 +118,67 @@ public class FrequentPollingActivityImpl implements PollingActivities {
 }
 ```
 
+```typescript [TypeScript]
+// activities.ts
+import { heartbeat, sleep } from '@temporalio/activity';
+
+export async function doPoll(): Promise<string> {
+  while (true) {
+    heartbeat();
+
+    const result = await externalService.checkStatus();
+
+    if (result === 'COMPLETED') {
+      return result;
+    }
+
+    await sleep('1s');
+  }
+}
+```
+:::
+
 The Activity loops indefinitely, heartbeating on each iteration.
 If the Worker crashes, the heartbeat timeout expires and Temporal retries the Activity on another Worker.
 
 The Workflow configures the Activity with a heartbeat timeout shorter than the start-to-close timeout:
 
-```java
+::: code-group
+```python [Python]
+# workflows.py
+from datetime import timedelta
+from temporalio import workflow
+
+with workflow.unsafe.imports_passed_through():
+    from activities import do_poll
+
+@workflow.defn
+class FrequentPollingWorkflow:
+    @workflow.run
+    async def run(self) -> str:
+        return await workflow.execute_activity(
+            do_poll,
+            start_to_close_timeout=timedelta(seconds=60),
+            heartbeat_timeout=timedelta(seconds=2),
+        )
+```
+
+```go [Go]
+// workflow.go
+func FrequentPollingWorkflow(ctx workflow.Context) (string, error) {
+	ao := workflow.ActivityOptions{
+		StartToCloseTimeout: 60 * time.Second,
+		HeartbeatTimeout:    2 * time.Second,
+	}
+	ctx = workflow.WithActivityOptions(ctx, ao)
+
+	var result string
+	err := workflow.ExecuteActivity(ctx, DoPoll).Get(ctx, &result)
+	return result, err
+}
+```
+
+```java [Java]
 // FrequentPollingWorkflowImpl.java
 public class FrequentPollingWorkflowImpl implements PollingWorkflow {
   @Override
@@ -89,12 +187,28 @@ public class FrequentPollingWorkflowImpl implements PollingWorkflow {
         .setStartToCloseTimeout(Duration.ofSeconds(60))
         .setHeartbeatTimeout(Duration.ofSeconds(2))
         .build();
-    
+
     PollingActivities activities = Workflow.newActivityStub(PollingActivities.class, options);
     return activities.doPoll();
   }
 }
 ```
+
+```typescript [TypeScript]
+// workflows.ts
+import { proxyActivities } from '@temporalio/workflow';
+import type * as activities from './activities';
+
+const { doPoll } = proxyActivities<typeof activities>({
+  startToCloseTimeout: '60s',
+  heartbeatTimeout: '2s',
+});
+
+export async function frequentPollingWorkflow(): Promise<string> {
+  return await doPoll();
+}
+```
+:::
 
 The heartbeat timeout (2 seconds) is shorter than the start-to-close timeout (60 seconds).
 If the Activity misses a heartbeat, Temporal detects the failure and retries the Activity.
@@ -104,28 +218,118 @@ If the Activity misses a heartbeat, Temporal detects the failure and retries the
 For polling intervals of 1 minute or slower, use Activity retries with a backoff coefficient of 1.
 The Activity throws an exception when the external service is not ready, and Temporal retries after the configured interval:
 
-```java
+::: code-group
+```python [Python]
+# activities.py
+from temporalio import activity
+from temporalio.exceptions import ApplicationError
+
+@activity.defn
+async def do_poll() -> str:
+    result = await external_service.check_status()
+
+    if result != "COMPLETED":
+        raise ApplicationError("Service not ready, will retry")
+
+    return result
+```
+
+```go [Go]
+// activities.go
+func DoPoll(ctx context.Context) (string, error) {
+	result, err := externalService.CheckStatus()
+	if err != nil {
+		return "", err
+	}
+
+	if result != "COMPLETED" {
+		return "", fmt.Errorf("service not ready, will retry")
+	}
+
+	return result, nil
+}
+```
+
+```java [Java]
 // InfrequentPollingActivityImpl.java
 public class InfrequentPollingActivityImpl implements PollingActivities {
   @Override
   public String doPoll() {
     String result = externalService.checkStatus();
-    
+
     if (!result.equals("COMPLETED")) {
       throw new RuntimeException("Service not ready, will retry");
     }
-    
+
     return result;
   }
 }
 ```
+
+```typescript [TypeScript]
+// activities.ts
+import { ApplicationFailure } from '@temporalio/activity';
+
+export async function doPoll(): Promise<string> {
+  const result = await externalService.checkStatus();
+
+  if (result !== 'COMPLETED') {
+    throw ApplicationFailure.retryable('Service not ready, will retry');
+  }
+
+  return result;
+}
+```
+:::
 
 The Activity performs a single poll and throws if the service is not ready.
 Temporal handles the retry scheduling.
 
 The Workflow configures the retry policy with a fixed interval:
 
-```java
+::: code-group
+```python [Python]
+# workflows.py
+from datetime import timedelta
+from temporalio import workflow
+from temporalio.common import RetryPolicy
+
+with workflow.unsafe.imports_passed_through():
+    from activities import do_poll
+
+@workflow.defn
+class InfrequentPollingWorkflow:
+    @workflow.run
+    async def run(self) -> str:
+        return await workflow.execute_activity(
+            do_poll,
+            start_to_close_timeout=timedelta(seconds=2),
+            retry_policy=RetryPolicy(
+                backoff_coefficient=1,
+                initial_interval=timedelta(seconds=60),
+            ),
+        )
+```
+
+```go [Go]
+// workflow.go
+func InfrequentPollingWorkflow(ctx workflow.Context) (string, error) {
+	ao := workflow.ActivityOptions{
+		StartToCloseTimeout: 2 * time.Second,
+		RetryPolicy: &temporal.RetryPolicy{
+			BackoffCoefficient: 1,
+			InitialInterval:    60 * time.Second,
+		},
+	}
+	ctx = workflow.WithActivityOptions(ctx, ao)
+
+	var result string
+	err := workflow.ExecuteActivity(ctx, DoPoll).Get(ctx, &result)
+	return result, err
+}
+```
+
+```java [Java]
 // InfrequentPollingWorkflowImpl.java
 public class InfrequentPollingWorkflowImpl implements PollingWorkflow {
   @Override
@@ -138,15 +342,34 @@ public class InfrequentPollingWorkflowImpl implements PollingWorkflow {
                 .setInitialInterval(Duration.ofSeconds(60))
                 .build())
         .build();
-    
+
     PollingActivities activities = Workflow.newActivityStub(PollingActivities.class, options);
     return activities.doPoll();
   }
 }
 ```
 
-Setting `setBackoffCoefficient(1)` creates a fixed retry interval.
-The `setInitialInterval(Duration.ofSeconds(60))` sets the polling frequency to 60 seconds.
+```typescript [TypeScript]
+// workflows.ts
+import { proxyActivities } from '@temporalio/workflow';
+import type * as activities from './activities';
+
+const { doPoll } = proxyActivities<typeof activities>({
+  startToCloseTimeout: '2s',
+  retry: {
+    backoffCoefficient: 1,
+    initialInterval: '60s',
+  },
+});
+
+export async function infrequentPollingWorkflow(): Promise<string> {
+  return await doPoll();
+}
+```
+:::
+
+Setting the backoff coefficient to 1 creates a fixed retry interval.
+The initial interval of 60 seconds sets the polling frequency.
 Retries do not add events to the Workflow history, keeping it small.
 
 ### Periodic sequence (complex polling)
@@ -154,7 +377,65 @@ Retries do not add events to the Workflow history, keeping it small.
 For polling that requires multiple Activities or changing parameters between attempts, use Child Workflows with Continue-As-New.
 The Child Workflow polls in a loop and calls Continue-As-New to prevent unbounded history:
 
-```java
+::: code-group
+```python [Python]
+# workflows.py
+from datetime import timedelta
+from temporalio import workflow
+
+with workflow.unsafe.imports_passed_through():
+    from activities import do_poll
+
+@workflow.defn
+class PollingChildWorkflow:
+    @workflow.run
+    async def run(self, polling_interval_seconds: int) -> str:
+        max_attempts = 10
+
+        for _ in range(max_attempts):
+            result = await workflow.execute_activity(
+                do_poll,
+                start_to_close_timeout=timedelta(seconds=10),
+            )
+
+            if result == "COMPLETED":
+                return result
+
+            await workflow.sleep(polling_interval_seconds)
+
+        # Continue-as-new to prevent unbounded history
+        workflow.continue_as_new(polling_interval_seconds)
+```
+
+```go [Go]
+// workflow.go
+func PollingChildWorkflow(ctx workflow.Context, pollingIntervalSeconds int) (string, error) {
+	ao := workflow.ActivityOptions{
+		StartToCloseTimeout: 10 * time.Second,
+	}
+	ctx = workflow.WithActivityOptions(ctx, ao)
+
+	maxAttempts := 10
+	for i := 0; i < maxAttempts; i++ {
+		var result string
+		err := workflow.ExecuteActivity(ctx, DoPoll).Get(ctx, &result)
+		if err != nil {
+			return "", err
+		}
+
+		if result == "COMPLETED" {
+			return result, nil
+		}
+
+		workflow.Sleep(ctx, time.Duration(pollingIntervalSeconds)*time.Second)
+	}
+
+	// Continue-as-new to prevent unbounded history
+	return "", workflow.NewContinueAsNewError(ctx, PollingChildWorkflow, pollingIntervalSeconds)
+}
+```
+
+```java [Java]
 // PeriodicPollingChildWorkflowImpl.java
 @WorkflowInterface
 public interface PollingChildWorkflow {
@@ -168,20 +449,20 @@ public class PeriodicPollingChildWorkflowImpl implements PollingChildWorkflow {
     ActivityOptions options = ActivityOptions.newBuilder()
         .setStartToCloseTimeout(Duration.ofSeconds(10))
         .build();
-    
+
     PollingActivities activities = Workflow.newActivityStub(PollingActivities.class, options);
-    
+
     int maxAttempts = 10;
     for (int i = 0; i < maxAttempts; i++) {
       String result = activities.doPoll();
-      
+
       if (result.equals("COMPLETED")) {
         return result;
       }
-      
+
       Workflow.sleep(Duration.ofSeconds(pollingIntervalInSeconds));
     }
-    
+
     // Continue-as-new to prevent unbounded history
     PollingChildWorkflow continueAsNew = Workflow.newContinueAsNewStub(PollingChildWorkflow.class);
     continueAsNew.exec(pollingIntervalInSeconds);
@@ -190,12 +471,73 @@ public class PeriodicPollingChildWorkflowImpl implements PollingChildWorkflow {
 }
 ```
 
+```typescript [TypeScript]
+// workflows.ts
+import { proxyActivities, sleep, continueAsNew } from '@temporalio/workflow';
+import type * as activities from './activities';
+
+const { doPoll } = proxyActivities<typeof activities>({
+  startToCloseTimeout: '10s',
+});
+
+export async function pollingChildWorkflow(
+  pollingIntervalSeconds: number
+): Promise<string> {
+  const maxAttempts = 10;
+
+  for (let i = 0; i < maxAttempts; i++) {
+    const result = await doPoll();
+
+    if (result === 'COMPLETED') {
+      return result;
+    }
+
+    await sleep(`${pollingIntervalSeconds}s`);
+  }
+
+  // Continue-as-new to prevent unbounded history
+  await continueAsNew<typeof pollingChildWorkflow>(pollingIntervalSeconds);
+  return ''; // unreachable
+}
+```
+:::
+
 The Child Workflow polls up to 10 times, sleeping between attempts.
 After 10 attempts, it calls Continue-As-New to start a fresh execution with the same parameters.
 
 The parent Workflow starts the Child Workflow and waits for its result:
 
-```java
+::: code-group
+```python [Python]
+# workflows.py
+from temporalio import workflow
+
+@workflow.defn
+class PeriodicPollingWorkflow:
+    @workflow.run
+    async def run(self) -> str:
+        return await workflow.execute_child_workflow(
+            PollingChildWorkflow.run,
+            5,
+            id="ChildWorkflowPoll",
+        )
+```
+
+```go [Go]
+// workflow.go
+func PeriodicPollingWorkflow(ctx workflow.Context) (string, error) {
+	cwo := workflow.ChildWorkflowOptions{
+		WorkflowID: "ChildWorkflowPoll",
+	}
+	ctx = workflow.WithChildOptions(ctx, cwo)
+
+	var result string
+	err := workflow.ExecuteChildWorkflow(ctx, PollingChildWorkflow, 5).Get(ctx, &result)
+	return result, err
+}
+```
+
+```java [Java]
 // PeriodicPollingWorkflowImpl.java
 public class PeriodicPollingWorkflowImpl implements PollingWorkflow {
   @Override
@@ -205,11 +547,25 @@ public class PeriodicPollingWorkflowImpl implements PollingWorkflow {
         ChildWorkflowOptions.newBuilder()
             .setWorkflowId("ChildWorkflowPoll")
             .build());
-    
+
     return childWorkflow.exec(5);
   }
 }
 ```
+
+```typescript [TypeScript]
+// workflows.ts
+import { executeChild } from '@temporalio/workflow';
+import { pollingChildWorkflow } from './polling-child-workflow';
+
+export async function periodicPollingWorkflow(): Promise<string> {
+  return await executeChild(pollingChildWorkflow, {
+    args: [5],
+    workflowId: 'ChildWorkflowPoll',
+  });
+}
+```
+:::
 
 The parent remains blocked and is unaware of the child's Continue-As-New calls.
 When the child completes, the parent receives the result.
@@ -280,6 +636,22 @@ Periodic sequence is the most flexible but adds complexity through Child Workflo
 
 ## Sample code
 
+### Java
 - [Frequent Polling](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/polling/frequent) — Fast polling with heartbeats.
 - [Infrequent Polling](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/polling/infrequent) — Efficient long-interval polling.
 - [Periodic Sequence](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/polling/periodicsequence) — Complex polling with Child Workflows.
+
+### TypeScript
+- [Frequent Polling](https://github.com/temporalio/samples-typescript/tree/main/polling/frequent) — Fast polling with heartbeats.
+- [Infrequent Polling](https://github.com/temporalio/samples-typescript/tree/main/polling/infrequent) — Efficient long-interval polling.
+- [Periodic Sequence](https://github.com/temporalio/samples-typescript/tree/main/polling/periodic-sequence) — Complex polling with Child Workflows.
+
+### Python
+- [Frequent Polling](https://github.com/temporalio/samples-python/tree/main/polling/frequent) — Fast polling with heartbeats.
+- [Infrequent Polling](https://github.com/temporalio/samples-python/tree/main/polling/infrequent) — Efficient long-interval polling.
+- [Periodic Sequence](https://github.com/temporalio/samples-python/tree/main/polling/periodic_sequence) — Complex polling with Child Workflows.
+
+### Go
+- [Frequent Polling](https://github.com/temporalio/samples-go/tree/main/polling/frequent) — Fast polling with heartbeats.
+- [Infrequent Polling](https://github.com/temporalio/samples-go/tree/main/polling/infrequent) — Efficient long-interval polling.
+- [Periodic Sequence](https://github.com/temporalio/samples-go/tree/main/polling/periodicsequence) — Complex polling with Child Workflows.

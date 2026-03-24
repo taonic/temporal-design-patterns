@@ -79,114 +79,78 @@ Each implementation defines Update handlers for synchronous operations, Signal h
 
 ::: code-group
 
-```java [Java]
-// UserAccountWorkflow.java
-@WorkflowInterface
-public interface UserAccountWorkflow {
-  @WorkflowMethod
-  void run(String userId);
-  
-  @UpdateMethod
-  void updateProfile(ProfileData data);
-  
-  @UpdateMethod
-  void changeEmail(String newEmail);
-  
-  @SignalMethod
-  void suspend();
-  
-  @SignalMethod
-  void reactivate();
-  
-  @SignalMethod
-  void delete();
-  
-  @QueryMethod
-  UserState getState();
-}
+```python [Python]
+# workflows.py
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from temporalio import workflow
 
-public class UserAccountWorkflowImpl implements UserAccountWorkflow {
-  private String userId;
-  private UserState state = new UserState();
-  private boolean deleted = false;
-  private int operationCount = 0;
-  private static final int CONTINUE_AS_NEW_THRESHOLD = 1000;
-  
-  @Override
-  public void run(String userId) {
-    this.userId = userId;
-    if (state.getStatus() == null) {
-      state.setStatus("ACTIVE");
-      state.setCreatedAt(Workflow.currentTimeMillis());
-    }
-    
-    // Run until deleted or Continue-As-New is needed
-    Workflow.await(() -> deleted || Workflow.getInfo().isContinueAsNewSuggested());
-    
-    if (!deleted && Workflow.getInfo().isContinueAsNewSuggested()) {
-      Workflow.continueAsNew(userId, state);
-    }
-    
-    state.setStatus("DELETED");
-    state.setDeletedAt(Workflow.currentTimeMillis());
-  }
-  
-  @Override
-  public void updateProfile(ProfileData data) {
-    validateNotDeleted();
-    Activities.validateProfile(data);
-    state.setProfile(data);
-    state.setUpdatedAt(Workflow.currentTimeMillis());
-    incrementOperationCount();
-  }
-  
-  @Override
-  public void changeEmail(String newEmail) {
-    validateNotDeleted();
-    Activities.sendVerificationEmail(userId, newEmail);
-    state.setPendingEmail(newEmail);
-    state.setUpdatedAt(Workflow.currentTimeMillis());
-    incrementOperationCount();
-  }
-  
-  @Override
-  public void suspend() {
-    if (!deleted && !"SUSPENDED".equals(state.getStatus())) {
-      state.setStatus("SUSPENDED");
-      state.setUpdatedAt(Workflow.currentTimeMillis());
-      incrementOperationCount();
-    }
-  }
-  
-  @Override
-  public void reactivate() {
-    if (!deleted && "SUSPENDED".equals(state.getStatus())) {
-      state.setStatus("ACTIVE");
-      state.setUpdatedAt(Workflow.currentTimeMillis());
-      incrementOperationCount();
-    }
-  }
-  
-  @Override
-  public void delete() {
-    deleted = true;
-  }
-  
-  @Override
-  public UserState getState() {
-    return state;
-  }
-  
-  private void validateNotDeleted() {
-    if (deleted) {
-      throw new IllegalStateException("User account is deleted");
-    }
-  }
-  
-  private void incrementOperationCount() {
-    operationCount++;
-  }
-}
+with workflow.unsafe.imports_passed_through():
+    from activities import validate_profile
+
+@dataclass
+class UserState:
+    status: str = "ACTIVE"
+    profile: ProfileData | None = None
+    pending_email: str | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+@workflow.defn
+class UserAccountWorkflow:
+    def __init__(self) -> None:
+        self.state = UserState(created_at=datetime.utcnow())
+        self.deleted = False
+        self.operation_count = 0
+
+    @workflow.run
+    async def run(self, user_id: str) -> None:
+        # Block until deleted or Continue-As-New is suggested
+        await workflow.wait_condition(
+            lambda: self.deleted or workflow.info().is_continue_as_new_suggested()
+        )
+
+        if not self.deleted and workflow.info().is_continue_as_new_suggested():
+            await workflow.wait_condition(workflow.all_handlers_finished)
+            workflow.continue_as_new(user_id)
+
+        self.state.status = "DELETED"
+
+    @workflow.update
+    async def update_profile(self, data: ProfileData) -> None:
+        if self.deleted:
+            raise ValueError("User account is deleted")
+
+        await workflow.execute_activity(
+            validate_profile, data,
+            start_to_close_timeout=timedelta(seconds=30),
+        )
+
+        self.state.profile = data
+        self.state.updated_at = datetime.utcnow()
+        self.operation_count += 1
+
+    @workflow.update
+    async def suspend(self) -> None:
+        if not self.deleted and self.state.status != "SUSPENDED":
+            self.state.status = "SUSPENDED"
+            self.state.updated_at = datetime.utcnow()
+            self.operation_count += 1
+
+    @workflow.update
+    async def reactivate(self) -> None:
+        if not self.deleted and self.state.status == "SUSPENDED":
+            self.state.status = "ACTIVE"
+            self.state.updated_at = datetime.utcnow()
+            self.operation_count += 1
+
+    @workflow.signal
+    def delete(self) -> None:
+        self.deleted = True
+
+    @workflow.query
+    def get_state(self) -> UserState:
+        return self.state
 ```
 
 ```go [Go]
@@ -208,26 +172,26 @@ func (w *UserAccountWorkflow) Run(ctx workflow.Context, userId string) error {
 	}
 	deleted := false
 	operationCount := 0
-	
+
 	err := workflow.SetUpdateHandler(ctx, "updateProfile", func(ctx workflow.Context, data ProfileData) error {
 		if deleted {
 			return errors.New("user account is deleted")
 		}
-		
+
 		if err := workflow.ExecuteActivity(ctx, ValidateProfile, data).Get(ctx, nil); err != nil {
 			return err
 		}
-		
+
 		state.Profile = data
 		state.UpdatedAt = workflow.Now(ctx)
 		operationCount++
-		
+
 		return nil
 	})
 	if err != nil {
 		return err
 	}
-	
+
 	err = workflow.SetUpdateHandler(ctx, "suspend", func(ctx workflow.Context) error {
 		if !deleted && state.Status != "SUSPENDED" {
 			state.Status = "SUSPENDED"
@@ -239,7 +203,7 @@ func (w *UserAccountWorkflow) Run(ctx workflow.Context, userId string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	// Block until deleted or Continue-As-New is suggested
 	for {
 		selector := workflow.NewSelector(ctx)
@@ -248,7 +212,7 @@ func (w *UserAccountWorkflow) Run(ctx workflow.Context, userId string) error {
 			deleted = true
 		})
 		selector.Select(ctx)
-		
+
 		if deleted {
 			state.Status = "DELETED"
 			return nil
@@ -260,9 +224,124 @@ func (w *UserAccountWorkflow) Run(ctx workflow.Context, userId string) error {
 }
 ```
 
+```java [Java]
+// UserAccountWorkflow.java
+@WorkflowInterface
+public interface UserAccountWorkflow {
+  @WorkflowMethod
+  void run(String userId);
+
+  @UpdateMethod
+  void updateProfile(ProfileData data);
+
+  @UpdateMethod
+  void changeEmail(String newEmail);
+
+  @SignalMethod
+  void suspend();
+
+  @SignalMethod
+  void reactivate();
+
+  @SignalMethod
+  void delete();
+
+  @QueryMethod
+  UserState getState();
+}
+
+public class UserAccountWorkflowImpl implements UserAccountWorkflow {
+  private String userId;
+  private UserState state = new UserState();
+  private boolean deleted = false;
+  private int operationCount = 0;
+  private static final int CONTINUE_AS_NEW_THRESHOLD = 1000;
+
+  @Override
+  public void run(String userId) {
+    this.userId = userId;
+    if (state.getStatus() == null) {
+      state.setStatus("ACTIVE");
+      state.setCreatedAt(Workflow.currentTimeMillis());
+    }
+
+    // Run until deleted or Continue-As-New is needed
+    Workflow.await(() -> deleted || Workflow.getInfo().isContinueAsNewSuggested());
+
+    if (!deleted && Workflow.getInfo().isContinueAsNewSuggested()) {
+      Workflow.continueAsNew(userId, state);
+    }
+
+    state.setStatus("DELETED");
+    state.setDeletedAt(Workflow.currentTimeMillis());
+  }
+
+  @Override
+  public void updateProfile(ProfileData data) {
+    validateNotDeleted();
+    Activities.validateProfile(data);
+    state.setProfile(data);
+    state.setUpdatedAt(Workflow.currentTimeMillis());
+    incrementOperationCount();
+  }
+
+  @Override
+  public void changeEmail(String newEmail) {
+    validateNotDeleted();
+    Activities.sendVerificationEmail(userId, newEmail);
+    state.setPendingEmail(newEmail);
+    state.setUpdatedAt(Workflow.currentTimeMillis());
+    incrementOperationCount();
+  }
+
+  @Override
+  public void suspend() {
+    if (!deleted && !"SUSPENDED".equals(state.getStatus())) {
+      state.setStatus("SUSPENDED");
+      state.setUpdatedAt(Workflow.currentTimeMillis());
+      incrementOperationCount();
+    }
+  }
+
+  @Override
+  public void reactivate() {
+    if (!deleted && "SUSPENDED".equals(state.getStatus())) {
+      state.setStatus("ACTIVE");
+      state.setUpdatedAt(Workflow.currentTimeMillis());
+      incrementOperationCount();
+    }
+  }
+
+  @Override
+  public void delete() {
+    deleted = true;
+  }
+
+  @Override
+  public UserState getState() {
+    return state;
+  }
+
+  private void validateNotDeleted() {
+    if (deleted) {
+      throw new IllegalStateException("User account is deleted");
+    }
+  }
+
+  private void incrementOperationCount() {
+    operationCount++;
+  }
+}
+```
+
 ```typescript [TypeScript]
 // workflow.ts
-import { condition, allHandlersFinished, defineUpdate, defineSignal, defineQuery, setHandler, continueAsNew, workflowInfo } from '@temporalio/workflow';
+import { condition, allHandlersFinished, defineUpdate, defineSignal, defineQuery, setHandler, continueAsNew, workflowInfo, proxyActivities } from '@temporalio/workflow';
+import type * as activities from './activities';
+
+const { validateProfile } = proxyActivities<typeof activities>({
+  startToCloseTimeout: '30s',
+});
 
 interface UserState {
   status: string;
@@ -272,7 +351,7 @@ interface UserState {
   updatedAt: number;
 }
 
-export const updateProfileUpdate = defineUpdate<ProfileData, void>('updateProfile');
+export const updateProfileUpdate = defineUpdate<void, [ProfileData]>('updateProfile');
 export const suspendSignal = defineSignal('suspend');
 export const deleteSignal = defineSignal('delete');
 export const getStateQuery = defineQuery<UserState>('getState');
@@ -292,7 +371,7 @@ export async function userAccountWorkflow(userId: string): Promise<void> {
       throw new Error('User account is deleted');
     }
     
-    await activities.validateProfile(data);
+    await validateProfile(data);
     
     state.profile = data;
     state.updatedAt = Date.now();
@@ -329,7 +408,7 @@ export async function userAccountWorkflow(userId: string): Promise<void> {
 
 :::
 
-The Workflow blocks on `Workflow.await(() -> deleted)` (or the equivalent in each SDK) until the delete Signal arrives.
+The Workflow blocks on `Workflow.await(() -> deleted)` (Java), `condition(() => deleted)` (TypeScript), `workflow.wait_condition(lambda: self.deleted)` (Python), or `selector.Select(ctx)` (Go) until the delete Signal arrives.
 All state transitions happen through Signal and Update handlers, ensuring that every operation on the entity goes through a single Workflow with no race conditions.
 Continue-As-New is triggered from the main Workflow method (not from handlers) when `isContinueAsNewSuggested()` returns true.
 All SDK docs explicitly warn: do not call Continue-As-New from Update or Signal handlers.
@@ -380,7 +459,7 @@ The first operation after an idle period may have latency.
 ## Common pitfalls
 
 - **Calling Continue-As-New from Signal or Update handlers.** Continue-As-New must be called from the main Workflow method, never from inside a handler. Calling it from a handler causes non-determinism errors.
-- **Not waiting for handlers to finish before Continue-As-New.** Use `allHandlersFinished` (TypeScript) or `Workflow.isEveryHandlerFinished()` (Java) to ensure in-flight handlers complete before transitioning.
+- **Not waiting for handlers to finish before Continue-As-New.** Use `allHandlersFinished` (TypeScript), `Workflow.isEveryHandlerFinished()` (Java), or `workflow.all_handlers_finished()` (Python) to ensure in-flight handlers complete before transitioning.
 - **Losing Update ID deduplication across Continue-As-New.** Update IDs are scoped to a single Workflow Execution. After Continue-As-New, the same Update ID can be accepted again. Carry processed IDs in the Continue-As-New input if deduplication is needed.
 - **Exceeding the 2 MB payload limit on Continue-As-New input.** State passed to Continue-As-New is subject to the same 2 MB blob size limit as Workflow inputs. Use external storage for large state.
 - **Using a hardcoded counter instead of `isContinueAsNewSuggested`.** The SDK provides `isContinueAsNewSuggested()` which accounts for actual history size. Hardcoded thresholds may be too aggressive or too lenient.
@@ -390,6 +469,20 @@ The first operation after an idle period may have latency.
 - **[Continue-As-New](continue-as-new.md)**: Essential for preventing unbounded history.
 - **[Request-Response via Updates](request-response-via-updates.md)**: Synchronous operations with validation.
 - **[Signal with Start](signal-with-start.md)**: Idempotent Workflow start with an initial Signal.
+
+## Sample code
+
+**Python:**
+- [Safe Message Handlers](https://github.com/temporalio/samples-python/tree/main/message_passing/safe_message_handlers) — Entity Workflow with Updates, Signals, and Continue-As-New.
+
+**Go:**
+- [Safe Message Handlers](https://github.com/temporalio/samples-go/tree/main/safe_message_handler) — Entity Workflow with Updates, Signals, and Continue-As-New.
+
+**Java:**
+- [Safe Message Handlers](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/safemessagehandler) — Entity Workflow with Updates, Signals, and Continue-As-New.
+
+**TypeScript:**
+- [Safe Message Handlers](https://github.com/temporalio/samples-typescript/tree/main/message-passing/safe-message-handlers) — Entity Workflow with Updates, Signals, and Continue-As-New.
 
 ## References
 

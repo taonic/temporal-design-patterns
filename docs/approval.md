@@ -19,7 +19,7 @@ You also risk losing approval context and metadata, and you must build custom au
 
 ## Solution
 
-The Approval pattern uses `Workflow.await()` to block execution until a Signal is received.
+The Approval pattern uses a blocking wait with timeout to pause execution until a Signal is received.
 The Signal carries custom data — the approval decision, approver details, and comments — that the Workflow captures and uses to determine next steps.
 
 ```mermaid
@@ -30,9 +30,9 @@ sequenceDiagram
 
     Requester->>+Workflow: Start approval request
     activate Workflow
-    Workflow->>Workflow: Workflow.await(timeout)
+    Workflow->>Workflow: Wait with timeout
     Note over Workflow: Waiting for approval...
-    
+
     alt Approval received
         Approver->>Workflow: Signal: submitApproval(data)
         Workflow->>Workflow: Process approval data
@@ -47,62 +47,191 @@ sequenceDiagram
 The following describes each step in the diagram:
 
 1. The requester starts the Workflow with an approval request.
-2. The Workflow calls `Workflow.await()` with a timeout duration and blocks execution.
+2. The Workflow blocks execution with a timeout — using `Workflow.await()` in Java, `condition()` in TypeScript, `workflow.wait_condition()` in Python, or `workflow.AwaitWithTimeout()` in Go.
 3. If an approver sends a Signal before the timeout expires, the Workflow receives the approval data, processes the decision, and returns the result to the requester.
 4. If the timeout expires before any Signal arrives, the Workflow unblocks and follows the timeout path, which typically results in rejection or escalation.
 
 The approval data object carries the decision context through the Workflow.
-Define a class to hold the approver's identity, the decision, any comments, and a timestamp:
+Define a type to hold the approver's identity, the decision, any comments, and a timestamp:
 
-```java
+::: code-group
+```python [Python]
+# models.py
+from dataclasses import dataclass
+
+@dataclass
+class ApprovalData:
+    approver: str
+    decision: str  # "APPROVED", "REJECTED", "ESCALATED"
+    comments: str
+    timestamp: int
+```
+
+```go [Go]
+// types.go
+type ApprovalData struct {
+    Approver  string
+    Decision  string // "APPROVED", "REJECTED", "ESCALATED"
+    Comments  string
+    Timestamp int64
+}
+```
+
+```java [Java]
 // ApprovalData.java
 public class ApprovalData {
   private String approver;
   private String decision; // "APPROVED", "REJECTED", "ESCALATED"
   private String comments;
   private long timestamp;
-  
+
   // Constructor, getters, setters
 }
 ```
 
-This class gives you a structured way to pass rich context through the Signal rather than a plain boolean.
+```typescript [TypeScript]
+// types.ts
+export interface ApprovalData {
+  approver: string;
+  decision: 'APPROVED' | 'REJECTED' | 'ESCALATED';
+  comments: string;
+  timestamp: number;
+}
+```
+:::
 
-Next, define the Workflow interface.
-The `@WorkflowMethod` accepts a request ID and a timeout duration.
-The `@SignalMethod` receives the approval data from an external system.
-The `@QueryMethod` exposes the current status without modifying Workflow state:
+This type gives you a structured way to pass rich context through the Signal rather than a plain boolean.
 
-```java
+Next, define the Workflow contract.
+The Workflow accepts a request ID and a timeout duration.
+A Signal receives the approval data from an external system.
+A Query exposes the current status without modifying Workflow state:
+
+::: code-group
+```python [Python]
+# workflows.py
+from temporalio import workflow
+from models import ApprovalData
+```
+
+```go [Go]
+// workflow.go
+// In Go, signals are received via named channels and
+// queries are registered with workflow.SetQueryHandler.
+// There is no separate interface definition.
+```
+
+```java [Java]
 // ApprovalWorkflow.java
 @WorkflowInterface
 public interface ApprovalWorkflow {
   @WorkflowMethod
   String execute(String requestId, Duration timeout);
-  
+
   @SignalMethod
   void submitApproval(ApprovalData approvalData);
-  
+
   @QueryMethod
   String getStatus();
 }
 ```
 
-These three methods form the contract for any approval Workflow implementation.
+```typescript [TypeScript]
+// workflows.ts
+import * as wf from '@temporalio/workflow';
+import { ApprovalData } from './types';
+
+export const submitApprovalSignal = wf.defineSignal<[ApprovalData]>('submitApproval');
+export const getStatusQuery = wf.defineQuery<string>('getStatus');
+```
+:::
+
+These definitions form the contract for any approval Workflow implementation.
 
 The implementation ties everything together.
-The Workflow blocks on `Workflow.await()` until either the approval data arrives via Signal or the timeout expires:
+The Workflow blocks until either the approval data arrives via Signal or the timeout expires:
 
-```java
+::: code-group
+```python [Python]
+# workflows.py
+import asyncio
+from datetime import timedelta
+from temporalio import workflow
+from models import ApprovalData
+
+@workflow.defn
+class ApprovalWorkflow:
+    def __init__(self) -> None:
+        self.approval_data: ApprovalData | None = None
+        self.status = "PENDING"
+
+    @workflow.run
+    async def run(self, request_id: str, timeout_seconds: int) -> str:
+        try:
+            await workflow.wait_condition(
+                lambda: self.approval_data is not None,
+                timeout=timedelta(seconds=timeout_seconds),
+            )
+            self.status = self.approval_data.decision
+            return f"Request {request_id} {self.status} by {self.approval_data.approver}"
+        except asyncio.TimeoutError:
+            self.status = "TIMEOUT"
+            return f"Request {request_id} timed out"
+
+    @workflow.signal
+    def submit_approval(self, data: ApprovalData) -> None:
+        self.approval_data = data
+
+    @workflow.query
+    def get_status(self) -> str:
+        return self.status
+```
+
+```go [Go]
+// workflow.go
+func ApprovalWorkflow(ctx workflow.Context, requestId string, timeout time.Duration) (string, error) {
+    var approvalData *ApprovalData
+    status := "PENDING"
+
+    err := workflow.SetQueryHandler(ctx, "getStatus", func() (string, error) {
+        return status, nil
+    })
+    if err != nil {
+        return "", err
+    }
+
+    // Listen for the approval signal in a goroutine
+    workflow.Go(ctx, func(ctx workflow.Context) {
+        signalChan := workflow.GetSignalChannel(ctx, "submitApproval")
+        signalChan.Receive(ctx, &approvalData)
+    })
+
+    approved, err := workflow.AwaitWithTimeout(ctx, timeout, func() bool {
+        return approvalData != nil
+    })
+    if err != nil {
+        return "", err
+    }
+
+    if approved {
+        status = approvalData.Decision
+        return fmt.Sprintf("Request %s %s by %s", requestId, status, approvalData.Approver), nil
+    }
+    status = "TIMEOUT"
+    return fmt.Sprintf("Request %s timed out", requestId), nil
+}
+```
+
+```java [Java]
 // ApprovalWorkflowImpl.java
 public class ApprovalWorkflowImpl implements ApprovalWorkflow {
   private ApprovalData approvalData;
   private String status = "PENDING";
-  
+
   @Override
   public String execute(String requestId, Duration timeout) {
     boolean approved = Workflow.await(timeout, () -> approvalData != null);
-    
+
     if (approved) {
       status = approvalData.getDecision();
       return "Request " + requestId + " " + status + " by " + approvalData.getApprover();
@@ -111,12 +240,12 @@ public class ApprovalWorkflowImpl implements ApprovalWorkflow {
       return "Request " + requestId + " timed out";
     }
   }
-  
+
   @Override
   public void submitApproval(ApprovalData data) {
     this.approvalData = data;
   }
-  
+
   @Override
   public String getStatus() {
     return status;
@@ -124,10 +253,48 @@ public class ApprovalWorkflowImpl implements ApprovalWorkflow {
 }
 ```
 
-The `Workflow.await()` call takes two arguments: the timeout duration and a condition lambda that checks whether `approvalData` has been set.
+```typescript [TypeScript]
+// workflows.ts
+import * as wf from '@temporalio/workflow';
+import { ApprovalData } from './types';
+
+export const submitApprovalSignal = wf.defineSignal<[ApprovalData]>('submitApproval');
+export const getStatusQuery = wf.defineQuery<string>('getStatus');
+
+export async function approvalWorkflow(
+  requestId: string,
+  timeout: string | number, // ms or Duration string
+): Promise<string> {
+  let approvalData: ApprovalData | undefined;
+  let status = 'PENDING';
+
+  wf.setHandler(submitApprovalSignal, (data: ApprovalData) => {
+    approvalData = data;
+  });
+
+  wf.setHandler(getStatusQuery, () => status);
+
+  const approved = await wf.condition(() => approvalData !== undefined, timeout);
+
+  if (approved) {
+    status = approvalData!.decision;
+    return `Request ${requestId} ${status} by ${approvalData!.approver}`;
+  } else {
+    status = 'TIMEOUT';
+    return `Request ${requestId} timed out`;
+  }
+}
+```
+:::
+
+Each SDK uses a different mechanism to block with a timeout, but the core pattern is the same.
+In Java, `Workflow.await()` takes a timeout and a condition lambda, returning `false` on timeout.
+In TypeScript, `condition()` takes a predicate and a timeout, returning `false` on timeout.
+In Python, `workflow.wait_condition()` takes a lambda and a timeout, raising `asyncio.TimeoutError` on timeout.
+In Go, `workflow.AwaitWithTimeout()` takes a timeout and a condition function, returning `ok=false` on timeout.
+
 The condition is evaluated on every state transition, so it must not call blocking operations, mutate Workflow state, or use time-based checks.
-When the Signal handler sets `approvalData`, the condition evaluates to `true` and the Workflow unblocks.
-If the timeout expires first, `Workflow.await()` returns `false` and the Workflow follows the timeout path.
+When the Signal handler sets the approval data, the condition evaluates to `true` and the Workflow unblocks.
 
 ## Implementation
 
@@ -136,23 +303,79 @@ If the timeout expires first, `Workflow.await()` returns `false` and the Workflo
 The following implementation shows the minimal version of the pattern.
 The Workflow waits for a boolean approval flag to be set via Signal, and falls back to auto-rejection on timeout:
 
-```java
+::: code-group
+```python [Python]
+# workflows.py
+import asyncio
+from datetime import timedelta
+from temporalio import workflow
+
+@workflow.defn
+class SimpleApprovalWorkflow:
+    def __init__(self) -> None:
+        self.approved = False
+        self.approver: str | None = None
+
+    @workflow.run
+    async def run(self, request_id: str, timeout_seconds: int) -> str:
+        try:
+            await workflow.wait_condition(
+                lambda: self.approved,
+                timeout=timedelta(seconds=timeout_seconds),
+            )
+            return f"Approved by {self.approver}"
+        except asyncio.TimeoutError:
+            return "Approval timeout - auto-rejected"
+
+    @workflow.signal
+    def submit_approval(self, approver_name: str) -> None:
+        self.approved = True
+        self.approver = approver_name
+```
+
+```go [Go]
+// workflow.go
+func SimpleApprovalWorkflow(ctx workflow.Context, requestId string, timeout time.Duration) (string, error) {
+    approved := false
+    var approver string
+
+    workflow.Go(ctx, func(ctx workflow.Context) {
+        signalChan := workflow.GetSignalChannel(ctx, "submitApproval")
+        signalChan.Receive(ctx, &approver)
+        approved = true
+    })
+
+    ok, err := workflow.AwaitWithTimeout(ctx, timeout, func() bool {
+        return approved
+    })
+    if err != nil {
+        return "", err
+    }
+
+    if ok {
+        return fmt.Sprintf("Approved by %s", approver), nil
+    }
+    return "Approval timeout - auto-rejected", nil
+}
+```
+
+```java [Java]
 // SimpleApprovalWorkflowImpl.java
 public class SimpleApprovalWorkflowImpl implements ApprovalWorkflow {
   private boolean approved = false;
   private String approver;
-  
+
   @Override
   public String execute(String requestId, Duration timeout) {
     Workflow.await(timeout, () -> approved);
-    
+
     if (approved) {
       return "Approved by " + approver;
     } else {
       return "Approval timeout - auto-rejected";
     }
   }
-  
+
   @Override
   public void submitApproval(String approverName) {
     this.approved = true;
@@ -161,15 +384,67 @@ public class SimpleApprovalWorkflowImpl implements ApprovalWorkflow {
 }
 ```
 
-The `submitApproval` Signal handler sets both the `approved` flag and the approver's name.
-When `Workflow.await()` unblocks, the Workflow checks the flag and returns the appropriate result.
+```typescript [TypeScript]
+// workflows.ts
+import * as wf from '@temporalio/workflow';
+
+export const submitApprovalSignal = wf.defineSignal<[string]>('submitApproval');
+
+export async function simpleApprovalWorkflow(
+  requestId: string,
+  timeout: string | number,
+): Promise<string> {
+  let approved = false;
+  let approver: string | undefined;
+
+  wf.setHandler(submitApprovalSignal, (approverName: string) => {
+    approved = true;
+    approver = approverName;
+  });
+
+  await wf.condition(() => approved, timeout);
+
+  if (approved) {
+    return `Approved by ${approver}`;
+  } else {
+    return 'Approval timeout - auto-rejected';
+  }
+}
+```
+:::
+
+The Signal handler sets both the approval flag and the approver's name.
+When the wait unblocks, the Workflow checks the flag and returns the appropriate result.
 
 ### Multi-level approval chain
 
 Some business processes require approvals from multiple levels of authority in sequence.
 The following implementation iterates through a list of required approval levels, waiting for a Signal at each level before proceeding to the next:
 
-```java
+::: code-group
+```python [Python]
+# models.py
+from dataclasses import dataclass
+
+@dataclass
+class MultiLevelApprovalData:
+    level: str  # "L1", "L2", "L3"
+    approver: str
+    decision: str
+    comments: str
+```
+
+```go [Go]
+// types.go
+type MultiLevelApprovalData struct {
+    Level    string // "L1", "L2", "L3"
+    Approver string
+    Decision string
+    Comments string
+}
+```
+
+```java [Java]
 // MultiLevelApprovalData.java
 public class MultiLevelApprovalData {
   private String level; // "L1", "L2", "L3"
@@ -179,43 +454,140 @@ public class MultiLevelApprovalData {
 }
 ```
 
-This data class extends the basic approval data with a `level` field that identifies which approval tier the decision belongs to.
+```typescript [TypeScript]
+// types.ts
+export interface MultiLevelApprovalData {
+  level: 'L1' | 'L2' | 'L3';
+  approver: string;
+  decision: string;
+  comments: string;
+}
+```
+:::
 
-```java
+This data type extends the basic approval data with a `level` field that identifies which approval tier the decision belongs to.
+
+::: code-group
+```python [Python]
+# workflows.py
+import asyncio
+from datetime import timedelta
+from temporalio import workflow
+from models import MultiLevelApprovalData
+
+@workflow.defn
+class MultiLevelApprovalWorkflow:
+    def __init__(self) -> None:
+        self.approvals: list[MultiLevelApprovalData] = []
+
+    @workflow.run
+    async def run(self, request_id: str, timeout_per_level_seconds: int) -> str:
+        required_levels = ["L1", "L2", "L3"]
+        timeout = timedelta(seconds=timeout_per_level_seconds)
+
+        for level in required_levels:
+            try:
+                await workflow.wait_condition(
+                    lambda lv=level: any(a.level == lv for a in self.approvals),
+                    timeout=timeout,
+                )
+            except asyncio.TimeoutError:
+                return f"Timeout at {level}"
+
+            approval = next(a for a in self.approvals if a.level == level)
+            if approval.decision == "REJECTED":
+                return f"Rejected at {level} by {approval.approver}"
+
+        return "Fully approved through all levels"
+
+    @workflow.signal
+    def submit_approval(self, data: MultiLevelApprovalData) -> None:
+        self.approvals.append(data)
+```
+
+```go [Go]
+// workflow.go
+func MultiLevelApprovalWorkflow(ctx workflow.Context, requestId string, timeoutPerLevel time.Duration) (string, error) {
+    var approvals []MultiLevelApprovalData
+    requiredLevels := []string{"L1", "L2", "L3"}
+
+    workflow.Go(ctx, func(ctx workflow.Context) {
+        signalChan := workflow.GetSignalChannel(ctx, "submitApproval")
+        for {
+            var data MultiLevelApprovalData
+            signalChan.Receive(ctx, &data)
+            approvals = append(approvals, data)
+        }
+    })
+
+    for _, level := range requiredLevels {
+        lv := level
+        ok, err := workflow.AwaitWithTimeout(ctx, timeoutPerLevel, func() bool {
+            for _, a := range approvals {
+                if a.Level == lv {
+                    return true
+                }
+            }
+            return false
+        })
+        if err != nil {
+            return "", err
+        }
+        if !ok {
+            return fmt.Sprintf("Timeout at %s", lv), nil
+        }
+
+        var approval MultiLevelApprovalData
+        for _, a := range approvals {
+            if a.Level == lv {
+                approval = a
+                break
+            }
+        }
+        if approval.Decision == "REJECTED" {
+            return fmt.Sprintf("Rejected at %s by %s", lv, approval.Approver), nil
+        }
+    }
+
+    return "Fully approved through all levels", nil
+}
+```
+
+```java [Java]
 // MultiLevelApprovalWorkflowImpl.java
 public class MultiLevelApprovalWorkflowImpl implements ApprovalWorkflow {
   private List<MultiLevelApprovalData> approvals = new ArrayList<>();
   private String[] requiredLevels = {"L1", "L2", "L3"};
-  
+
   @Override
   public String execute(String requestId, Duration timeoutPerLevel) {
     for (String level : requiredLevels) {
       boolean received = Workflow.await(
           timeoutPerLevel,
           () -> hasApprovalForLevel(level));
-      
+
       if (!received) {
         return "Timeout at " + level;
       }
-      
+
       MultiLevelApprovalData approval = getApprovalForLevel(level);
       if (approval.getDecision().equals("REJECTED")) {
         return "Rejected at " + level + " by " + approval.getApprover();
       }
     }
-    
+
     return "Fully approved through all levels";
   }
-  
+
   @Override
   public void submitApproval(MultiLevelApprovalData data) {
     approvals.add(data);
   }
-  
+
   private boolean hasApprovalForLevel(String level) {
     return approvals.stream().anyMatch(a -> a.getLevel().equals(level));
   }
-  
+
   private MultiLevelApprovalData getApprovalForLevel(String level) {
     return approvals.stream()
         .filter(a -> a.getLevel().equals(level))
@@ -225,8 +597,47 @@ public class MultiLevelApprovalWorkflowImpl implements ApprovalWorkflow {
 }
 ```
 
-The Workflow loops through each required level and calls `Workflow.await()` with a per-level timeout.
-The `hasApprovalForLevel` helper checks whether a Signal has arrived for the current level.
+```typescript [TypeScript]
+// workflows.ts
+import * as wf from '@temporalio/workflow';
+import { MultiLevelApprovalData } from './types';
+
+export const submitApprovalSignal = wf.defineSignal<[MultiLevelApprovalData]>('submitApproval');
+
+export async function multiLevelApprovalWorkflow(
+  requestId: string,
+  timeoutPerLevelMs: number,
+): Promise<string> {
+  const approvals: MultiLevelApprovalData[] = [];
+  const requiredLevels = ['L1', 'L2', 'L3'] as const;
+
+  wf.setHandler(submitApprovalSignal, (data: MultiLevelApprovalData) => {
+    approvals.push(data);
+  });
+
+  for (const level of requiredLevels) {
+    const received = await wf.condition(
+      () => approvals.some((a) => a.level === level),
+      timeoutPerLevelMs,
+    );
+
+    if (!received) {
+      return `Timeout at ${level}`;
+    }
+
+    const approval = approvals.find((a) => a.level === level)!;
+    if (approval.decision === 'REJECTED') {
+      return `Rejected at ${level} by ${approval.approver}`;
+    }
+  }
+
+  return 'Fully approved through all levels';
+}
+```
+:::
+
+The Workflow loops through each required level and waits with a per-level timeout.
+The helper logic checks whether a Signal has arrived for the current level.
 If a timeout occurs at any level, the Workflow exits with a timeout result.
 If any level returns a rejection, the Workflow exits immediately without proceeding to subsequent levels.
 
@@ -235,55 +646,205 @@ If any level returns a rejection, the Workflow exits immediately without proceed
 When an initial approval times out, you may want to escalate the request to a manager rather than rejecting it outright.
 The following implementation adds an escalation step with an extended timeout:
 
-```java
+::: code-group
+```python [Python]
+# workflows.py
+import asyncio
+from datetime import timedelta
+from temporalio import workflow
+from models import ApprovalData
+
+with workflow.unsafe.imports_passed_through():
+    from activities import send_escalation_email
+
+@workflow.defn
+class EscalatingApprovalWorkflow:
+    def __init__(self) -> None:
+        self.approval_data: ApprovalData | None = None
+        self.escalated = False
+
+    @workflow.run
+    async def run(self, request_id: str, initial_timeout_seconds: int) -> str:
+        try:
+            await workflow.wait_condition(
+                lambda: self.approval_data is not None,
+                timeout=timedelta(seconds=initial_timeout_seconds),
+            )
+        except asyncio.TimeoutError:
+            self.escalated = True
+            await workflow.execute_activity(
+                send_escalation_email,
+                start_to_close_timeout=timedelta(seconds=10),
+            )
+
+            try:
+                await workflow.wait_condition(
+                    lambda: self.approval_data is not None,
+                    timeout=timedelta(hours=24),
+                )
+            except asyncio.TimeoutError:
+                return "Escalation timeout - auto-rejected"
+
+        decision = self.approval_data.decision
+        approver = self.approval_data.approver
+        escalation_note = " (escalated)" if self.escalated else ""
+
+        return f"{decision} by {approver}{escalation_note}"
+
+    @workflow.signal
+    def submit_approval(self, data: ApprovalData) -> None:
+        self.approval_data = data
+```
+
+```go [Go]
+// workflow.go
+func EscalatingApprovalWorkflow(ctx workflow.Context, requestId string, initialTimeout time.Duration) (string, error) {
+    var approvalData *ApprovalData
+    escalated := false
+
+    workflow.Go(ctx, func(ctx workflow.Context) {
+        signalChan := workflow.GetSignalChannel(ctx, "submitApproval")
+        signalChan.Receive(ctx, &approvalData)
+    })
+
+    ok, err := workflow.AwaitWithTimeout(ctx, initialTimeout, func() bool {
+        return approvalData != nil
+    })
+    if err != nil {
+        return "", err
+    }
+
+    if !ok {
+        escalated = true
+
+        ao := workflow.ActivityOptions{
+            StartToCloseTimeout: 10 * time.Second,
+        }
+        actCtx := workflow.WithActivityOptions(ctx, ao)
+        err = workflow.ExecuteActivity(actCtx, SendEscalationEmail).Get(ctx, nil)
+        if err != nil {
+            return "", err
+        }
+
+        ok, err = workflow.AwaitWithTimeout(ctx, 24*time.Hour, func() bool {
+            return approvalData != nil
+        })
+        if err != nil {
+            return "", err
+        }
+        if !ok {
+            return "Escalation timeout - auto-rejected", nil
+        }
+    }
+
+    escalationNote := ""
+    if escalated {
+        escalationNote = " (escalated)"
+    }
+
+    return fmt.Sprintf("%s by %s%s", approvalData.Decision, approvalData.Approver, escalationNote), nil
+}
+```
+
+```java [Java]
 // EscalatingApprovalWorkflowImpl.java
 public class EscalatingApprovalWorkflowImpl implements ApprovalWorkflow {
   private ApprovalData approvalData;
   private boolean escalated = false;
-  
+
   @Override
   public String execute(String requestId, Duration initialTimeout) {
     boolean received = Workflow.await(initialTimeout, () -> approvalData != null);
-    
+
     if (!received) {
       escalated = true;
       sendEscalationNotification();
-      
+
       received = Workflow.await(
           Duration.ofHours(24),
           () -> approvalData != null);
-      
+
       if (!received) {
         return "Escalation timeout - auto-rejected";
       }
     }
-    
+
     String decision = approvalData.getDecision();
     String approver = approvalData.getApprover();
     String escalationNote = escalated ? " (escalated)" : "";
-    
+
     return decision + " by " + approver + escalationNote;
   }
-  
+
   @Override
   public void submitApproval(ApprovalData data) {
     this.approvalData = data;
   }
-  
+
   private void sendEscalationNotification() {
     ActivityOptions options = ActivityOptions.newBuilder()
         .setStartToCloseTimeout(Duration.ofSeconds(10))
         .build();
-    NotificationActivities activities = 
+    NotificationActivities activities =
         Workflow.newActivityStub(NotificationActivities.class, options);
     activities.sendEscalationEmail();
   }
 }
 ```
 
+```typescript [TypeScript]
+// workflows.ts
+import * as wf from '@temporalio/workflow';
+import type * as activities from './activities';
+import { ApprovalData } from './types';
+
+const { sendEscalationEmail } = wf.proxyActivities<typeof activities>({
+  startToCloseTimeout: '10 seconds',
+});
+
+export const submitApprovalSignal = wf.defineSignal<[ApprovalData]>('submitApproval');
+
+export async function escalatingApprovalWorkflow(
+  requestId: string,
+  initialTimeoutMs: number,
+): Promise<string> {
+  let approvalData: ApprovalData | undefined;
+  let escalated = false;
+
+  wf.setHandler(submitApprovalSignal, (data: ApprovalData) => {
+    approvalData = data;
+  });
+
+  let received = await wf.condition(
+    () => approvalData !== undefined,
+    initialTimeoutMs,
+  );
+
+  if (!received) {
+    escalated = true;
+    await sendEscalationEmail();
+
+    received = await wf.condition(
+      () => approvalData !== undefined,
+      '24 hours',
+    );
+
+    if (!received) {
+      return 'Escalation timeout - auto-rejected';
+    }
+  }
+
+  const { decision, approver } = approvalData!;
+  const escalationNote = escalated ? ' (escalated)' : '';
+
+  return `${decision} by ${approver}${escalationNote}`;
+}
+```
+:::
+
 The Workflow first waits for the initial timeout.
 If no Signal arrives, it sets the `escalated` flag, executes a notification Activity to alert the manager, and then waits again with a 24-hour extended timeout.
-The `sendEscalationNotification` method creates an Activity stub with a short start-to-close timeout, since sending an email should complete quickly.
+The notification Activity uses a short start-to-close timeout, since sending an email should complete quickly.
 The final result includes an escalation note so the caller knows the request was escalated before approval.
 
 ## When to use
@@ -336,7 +897,7 @@ If the approver's interface needs immediate confirmation that the approval was a
 - **No timeout.** Without a timeout, the Workflow waits indefinitely for an approval that may never arrive.
 - **Missing validation.** Accepting approvals from unauthorized users compromises the integrity of the process.
 - **Lost context.** Failing to capture the approver's identity or reason makes audit trails incomplete.
-- **Assuming non-deterministic races.** Temporal processes events in a deterministic, single-threaded order, so a Signal and a timer cannot truly "race." However, if the Signal arrives after the timer fires in the event history, `Workflow.await()` will have already returned `false`. Design your timeout path to account for late-arriving Signals.
+- **Assuming non-deterministic races.** Temporal processes events in a deterministic, single-threaded order, so a Signal and a timer cannot truly "race." However, if the Signal arrives after the timer fires in the event history, the wait will have already returned with a timeout result. Design your timeout path to account for late-arriving Signals.
 - **No audit trail.** Skipping approval logging makes it difficult to meet compliance requirements.
 - **Tight timeouts.** Setting the timeout too short causes legitimate approvals to be rejected.
 - **Boolean-only Signals.** Using a plain boolean instead of a rich data object limits your ability to capture decision context.
@@ -352,5 +913,18 @@ If the approver's interface needs immediate confirmation that the approval was a
 
 ## Sample code
 
+**Java**
 - [Hello Signal](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/hello/HelloSignal.java) — Basic Signal handling in a Workflow.
 - [Safe Message Passing](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/safemessagepassing) — Concurrent Signal handling with validation.
+
+**TypeScript**
+- [Signals and Queries](https://github.com/temporalio/samples-typescript/tree/main/signals-queries) — Signal and Query usage in a Workflow.
+- [Message Passing](https://github.com/temporalio/samples-typescript/tree/main/message-passing-intro) — Introduction to message passing with Signals, Queries, and Updates.
+
+**Python**
+- [Hello Signal](https://github.com/temporalio/samples-python/tree/main/hello/hello_signal.py) — Basic Signal handling in a Workflow.
+- [Message Passing](https://github.com/temporalio/samples-python/tree/main/message_passing/introduction) — Introduction to message passing with Signals, Queries, and Updates.
+
+**Go**
+- [Await Signals](https://github.com/temporalio/samples-go/tree/main/await-signals) — Waiting for Signals with timeout using `AwaitWithTimeout`.
+- [Message Passing](https://github.com/temporalio/samples-go/tree/message-passing/message-passing-intro) — Introduction to message passing with Signals, Queries, and Updates.

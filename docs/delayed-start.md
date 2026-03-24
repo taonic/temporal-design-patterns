@@ -14,7 +14,7 @@ Without delayed start, you must use external schedulers to trigger Workflow crea
 
 ## Solution
 
-The Delayed Start uses `setStartDelay()` in WorkflowOptions to defer the first Workflow Task.
+The Delayed Start uses a start delay option in WorkflowOptions to defer the first Workflow Task.
 The Workflow execution is created immediately with a `firstWorkflowTaskBackoff` set to the delay duration, but no Workflow code runs until the delay expires.
 
 ```mermaid
@@ -50,7 +50,33 @@ The following describes each step in the diagram:
 
 The following example creates a Workflow with a 30-second start delay:
 
-```java
+::: code-group
+```python [Python]
+# client.py
+from datetime import timedelta
+
+handle = await client.start_workflow(
+    DelayedStartWorkflow.run,
+    id=WORKFLOW_ID,
+    task_queue=TASK_QUEUE,
+    start_delay=timedelta(seconds=30),
+)
+# Created now, executes in 30 seconds
+```
+
+```go [Go]
+// starter/main.go
+workflowOptions := client.StartWorkflowOptions{
+    ID:         WorkflowID,
+    TaskQueue:  TaskQueue,
+    StartDelay: 30 * time.Second,
+}
+
+we, err := c.ExecuteWorkflow(context.Background(), workflowOptions, DelayedStartWorkflow)
+// Created now, executes in 30 seconds
+```
+
+```java [Java]
 // Client.java
 DelayedStartWorkflow workflow = client.newWorkflowStub(
     DelayedStartWorkflow.class,
@@ -63,7 +89,18 @@ DelayedStartWorkflow workflow = client.newWorkflowStub(
 workflow.start(); // Created now, executes in 30 seconds
 ```
 
-The `setStartDelay()` method sets the `firstWorkflowTaskBackoff` on the execution.
+```typescript [TypeScript]
+// client.ts
+const handle = await client.workflow.start(delayedStartWorkflow, {
+  workflowId: WORKFLOW_ID,
+  taskQueue: TASK_QUEUE,
+  startDelay: '30 seconds',
+});
+// Created now, executes in 30 seconds
+```
+:::
+
+The start delay option sets the `firstWorkflowTaskBackoff` on the execution.
 The Workflow is created and visible in the UI immediately, but the Worker does not receive a Task until the delay expires.
 
 ## Implementation
@@ -73,7 +110,48 @@ The Workflow is created and visible in the UI immediately, but the Worker does n
 The following implementation sends a notification after a one-hour delay.
 The Workflow code runs only after the delay expires:
 
-```java
+::: code-group
+```python [Python]
+# workflows.py
+from temporalio import workflow
+
+@workflow.defn
+class NotificationWorkflow:
+    @workflow.run
+    async def run(self, message: str) -> None:
+        workflow.logger.info(f"Sending notification: {message}")
+
+# client.py
+from datetime import timedelta
+
+handle = await client.start_workflow(
+    NotificationWorkflow.run,
+    "Your trial expires soon",
+    task_queue=TASK_QUEUE,
+    start_delay=timedelta(hours=1),
+)
+```
+
+```go [Go]
+// workflow.go
+func NotificationWorkflow(ctx workflow.Context, message string) error {
+    logger := workflow.GetLogger(ctx)
+    logger.Info("Sending notification: " + message)
+    return nil
+}
+
+// starter/main.go
+workflowOptions := client.StartWorkflowOptions{
+    TaskQueue:  TaskQueue,
+    StartDelay: 1 * time.Hour,
+}
+
+we, err := c.ExecuteWorkflow(
+    context.Background(), workflowOptions, NotificationWorkflow, "Your trial expires soon",
+)
+```
+
+```java [Java]
 // NotificationWorkflowImpl.java
 @WorkflowInterface
 public interface NotificationWorkflow {
@@ -100,23 +178,109 @@ NotificationWorkflow workflow = client.newWorkflowStub(
 workflow.sendNotification("Your trial expires soon");
 ```
 
-The Workflow is created immediately, but the `sendNotification` method does not execute until one hour later.
+```typescript [TypeScript]
+// workflows.ts
+import * as wf from '@temporalio/workflow';
+
+export async function notificationWorkflow(message: string): Promise<void> {
+  wf.log.info(`Sending notification: ${message}`);
+}
+
+// client.ts
+const handle = await client.workflow.start(notificationWorkflow, {
+  args: ['Your trial expires soon'],
+  taskQueue: TASK_QUEUE,
+  startDelay: '1 hour',
+});
+```
+:::
+
+The Workflow is created immediately, but the notification logic does not execute until one hour later.
 
 ### Cancellable delayed execution
 
 The following implementation adds Signal handlers for cancellation and a Query for status.
 You can cancel the Workflow before it runs or check its status during the delay:
 
-```java
+::: code-group
+```python [Python]
+# workflows.py
+from temporalio import workflow
+
+@workflow.defn
+class DelayedOrderWorkflow:
+    def __init__(self) -> None:
+        self._cancelled = False
+        self._status = "SCHEDULED"
+
+    @workflow.run
+    async def run(self, order_id: str) -> None:
+        if self._cancelled:
+            self._status = "CANCELLED"
+            return
+
+        self._status = "PROCESSING"
+        # Process order logic
+        self._status = "COMPLETED"
+
+    @workflow.signal
+    async def cancel(self) -> None:
+        self._cancelled = True
+
+    @workflow.query
+    def get_status(self) -> str:
+        return self._status
+```
+
+```go [Go]
+// workflow.go
+func DelayedOrderWorkflow(ctx workflow.Context, orderID string) error {
+    logger := workflow.GetLogger(ctx)
+    cancelled := false
+    status := "SCHEDULED"
+
+    // Register Signal handler for cancellation
+    cancelCh := workflow.GetSignalChannel(ctx, "cancel")
+    // Drain any pending signals without blocking
+    for {
+        var signal interface{}
+        ok := cancelCh.ReceiveAsync(&signal)
+        if !ok {
+            break
+        }
+        cancelled = true
+    }
+
+    // Register Query handler for status
+    err := workflow.SetQueryHandler(ctx, "getStatus", func() (string, error) {
+        return status, nil
+    })
+    if err != nil {
+        return err
+    }
+
+    if cancelled {
+        logger.Info("Order cancelled before processing", "orderId", orderID)
+        return nil
+    }
+
+    status = "PROCESSING"
+    // Process order logic
+    status = "COMPLETED"
+    return nil
+}
+```
+
+```java [Java]
 // DelayedOrderWorkflowImpl.java
 @WorkflowInterface
 public interface DelayedOrderWorkflow {
   @WorkflowMethod
   void processOrder(String orderId);
-  
+
   @SignalMethod
   void cancel();
-  
+
   @QueryMethod
   String getStatus();
 }
@@ -124,30 +288,59 @@ public interface DelayedOrderWorkflow {
 public class DelayedOrderWorkflowImpl implements DelayedOrderWorkflow {
   private boolean cancelled = false;
   private String status = "SCHEDULED";
-  
+
   @Override
   public void processOrder(String orderId) {
     if (cancelled) {
       status = "CANCELLED";
       return;
     }
-    
+
     status = "PROCESSING";
     // Process order logic
     status = "COMPLETED";
   }
-  
+
   @Override
   public void cancel() {
     cancelled = true;
   }
-  
+
   @Override
   public String getStatus() {
     return status;
   }
 }
 ```
+
+```typescript [TypeScript]
+// workflows.ts
+import * as wf from '@temporalio/workflow';
+
+const cancelSignal = wf.defineSignal('cancel');
+const getStatusQuery = wf.defineQuery<string>('getStatus');
+
+export async function delayedOrderWorkflow(orderId: string): Promise<void> {
+  let cancelled = false;
+  let status = 'SCHEDULED';
+
+  wf.setHandler(cancelSignal, () => {
+    cancelled = true;
+  });
+
+  wf.setHandler(getStatusQuery, () => status);
+
+  if (cancelled) {
+    status = 'CANCELLED';
+    return;
+  }
+
+  status = 'PROCESSING';
+  // Process order logic
+  status = 'COMPLETED';
+}
+```
+:::
 
 The `cancel` Signal handler sets a flag that the Workflow checks when it starts executing.
 Note that Signal handlers and Query handlers only run after the delay expires and the first Workflow Task is dispatched.
@@ -157,7 +350,7 @@ To cancel before execution, use `Signal-With-Start` to bypass the delay, or canc
 
 The Delayed Start pattern is a good fit for scheduled one-time operations (send a reminder in 24 hours), grace periods before processing (cancel a subscription in 7 days), delayed notifications and alerts, deferred batch processing, and trial expiration Workflows.
 
-It is not a good fit for recurring Schedules (use Temporal Schedules), immediate execution with internal delays (use `Workflow.sleep()`), complex scheduling logic (use Schedules with cron), or sub-second delays (minimal benefit).
+It is not a good fit for recurring Schedules (use Temporal Schedules), immediate execution with internal delays (use Workflow sleep — `Workflow.sleep()` in Java, `wf.sleep()` in TypeScript, `workflow.sleep()` in Python, `workflow.Sleep()` in Go), complex scheduling logic (use Schedules with cron), or sub-second delays (minimal benefit).
 
 ## Benefits and trade-offs
 
@@ -180,7 +373,7 @@ Regular Signals sent during the delay are not delivered until the first Workflow
 | Approach | Immediate visibility | Resource usage | Cancellable | Use case |
 | :--- | :--- | :--- | :--- | :--- |
 | Delayed Start | Yes | None during delay | Yes | One-time future execution |
-| Workflow.sleep() | Yes | Worker resources | Yes | Internal delays |
+| Workflow sleep | Yes | Worker resources | Yes | Internal delays |
 | Temporal Schedules | Yes | None | Yes | Recurring Schedules |
 | External Scheduler | No | External system | Depends | Complex scheduling |
 
@@ -210,4 +403,7 @@ Regular Signals sent during the delay are not delivered until the first Workflow
 
 ## Sample code
 
-- [Full Java Sample](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/hello/HelloDelayedStart.java) — Complete implementation with delayed start.
+- [Java Sample](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/hello/HelloDelayedStart.java) — Delayed start with `setStartDelay()`.
+- [TypeScript Sample](https://github.com/temporalio/samples-typescript/tree/main/start-delay) — Delayed start with `startDelay` option.
+- [Python Sample](https://github.com/temporalio/samples-python/tree/main/start_delay) — Delayed start with `start_delay` parameter.
+- [Go Sample](https://github.com/temporalio/samples-go/tree/main/start-delay) — Delayed start with `StartDelay` option.

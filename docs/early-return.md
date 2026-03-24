@@ -46,6 +46,104 @@ The Workflow registers an Update handler that blocks until initialization comple
 The client receives the initialization result in a single round trip while the Workflow continues processing.
 
 ::: code-group
+```python [Python]
+# workflow.py
+from dataclasses import dataclass
+from datetime import timedelta
+
+from temporalio import workflow
+
+with workflow.unsafe.imports_passed_through():
+    from activities import init_transaction, complete_transaction, cancel_transaction
+
+
+@dataclass
+class TransactionRequest:
+    amount: float
+    currency: str
+
+
+@dataclass
+class Transaction:
+    id: str
+    status: str
+
+
+@workflow.defn
+class TransactionWorkflow:
+    def __init__(self) -> None:
+        self.tx: Transaction | None = None
+        self.init_done = False
+        self.init_err: Exception | None = None
+
+    @workflow.run
+    async def run(self, tx_request: TransactionRequest) -> Transaction | None:
+        # Phase 1: Fast synchronous initialization (local activity)
+        try:
+            self.tx = await workflow.execute_local_activity(
+                init_transaction,
+                tx_request,
+                schedule_to_close_timeout=timedelta(seconds=5),
+            )
+        except Exception as e:
+            self.init_err = e
+        finally:
+            self.init_done = True  # Signal update handler
+
+        # Phase 2: Slow asynchronous completion
+        if self.init_err is not None:
+            await workflow.execute_activity(
+                cancel_transaction,
+                self.tx,
+                start_to_close_timeout=timedelta(seconds=30),
+            )
+            return None
+
+        await workflow.execute_activity(
+            complete_transaction,
+            self.tx,
+            start_to_close_timeout=timedelta(seconds=30),
+        )
+        return self.tx
+
+    @workflow.update
+    async def return_init_result(self) -> Transaction:
+        await workflow.wait_condition(lambda: self.init_done)
+        if self.init_err is not None:
+            raise self.init_err
+        return self.tx
+
+
+# client.py
+from temporalio.client import (
+    Client,
+    WithStartWorkflowOperation,
+    WorkflowUpdateStage,
+)
+
+client = await Client.connect("localhost:7233")
+
+start_op = WithStartWorkflowOperation(
+    TransactionWorkflow.run,
+    tx_request,
+    id="transaction-123",
+    task_queue="transactions",
+    id_conflict_policy=common_pb2.WORKFLOW_ID_CONFLICT_POLICY_FAIL,
+)
+
+update_handle = await client.start_update_with_start_workflow(
+    TransactionWorkflow.return_init_result,
+    wait_for_stage=WorkflowUpdateStage.COMPLETED,
+    start_workflow_operation=start_op,
+)
+
+# Get initialization result immediately
+tx = await update_handle.result()
+
+# Use transaction ID immediately while workflow continues
+print(f"Transaction initialized: {tx.id}")
+```
+
 ```go [Go]
 // workflow.go
 func Workflow(ctx workflow.Context, txRequest TransactionRequest) (*Transaction, error) {
@@ -114,76 +212,6 @@ if err != nil {
 fmt.Printf("Transaction initialized: %s\n", tx.ID)
 ```
 
-```typescript [TypeScript]
-// workflow.ts
-import { defineUpdate, setHandler, condition } from '@temporalio/workflow';
-import * as activities from './activities';
-
-const { initTransaction, completeTransaction, cancelTransaction } = 
-  proxyLocalActivities<typeof activities>({
-    startToCloseTimeout: '5s',
-  });
-
-export const returnInitResultUpdate = defineUpdate<Transaction>('returnInitResult');
-
-export async function transactionWorkflow(txRequest: TransactionRequest): Promise<Transaction> {
-  let tx: Transaction | undefined;
-  let initDone = false;
-  let initError: Error | undefined;
-
-  // Register update handler that waits for initialization
-  setHandler(returnInitResultUpdate, async () => {
-    await condition(() => initDone);
-    if (initError) {
-      throw initError;
-    }
-    return tx!;
-  });
-
-  // Phase 1: Fast synchronous initialization (local activity)
-  try {
-    tx = await initTransaction(txRequest);
-  } catch (err) {
-    initError = err as Error;
-  } finally {
-    initDone = true; // Signal update handler
-  }
-
-  // Phase 2: Slow asynchronous completion
-  if (initError) {
-    await cancelTransaction(tx!);
-    throw initError;
-  }
-
-  await completeTransaction(tx);
-  return tx;
-}
-
-// client.ts
-const startWorkflowOperation = new WithStartWorkflowOperation(
-  transactionWorkflow,
-  {
-    workflowId: 'transaction-123',
-    args: [txRequest],
-    taskQueue: 'transactions',
-    workflowIdConflictPolicy: 'FAIL',
-  },
-);
-
-const tx = await client.workflow.executeUpdateWithStart(
-  returnInitResultUpdate,
-  { startWorkflowOperation },
-);
-
-const wfHandle = await startWorkflowOperation.workflowHandle();
-
-// Use transaction ID immediately while workflow continues
-console.log(`Transaction initialized: ${tx.id}`);
-
-// Optionally wait for the workflow to complete
-const finalResult = await wfHandle.result();
-```
-
 ```java [Java]
 // TransactionWorkflowImpl.java
 public class TransactionWorkflowImpl implements TransactionWorkflow {
@@ -246,6 +274,76 @@ TxResult result = updateHandle.getResultAsync().get();
 // Use transaction ID immediately while workflow continues
 System.out.println("Transaction initialized: " + result.getId());
 ```
+
+```typescript [TypeScript]
+// workflow.ts
+import { defineUpdate, setHandler, condition } from '@temporalio/workflow';
+import * as activities from './activities';
+
+const { initTransaction, completeTransaction, cancelTransaction } =
+  proxyLocalActivities<typeof activities>({
+    scheduleToCloseTimeout: '5s',
+  });
+
+export const returnInitResultUpdate = defineUpdate<Transaction>('returnInitResult');
+
+export async function transactionWorkflow(txRequest: TransactionRequest): Promise<Transaction> {
+  let tx: Transaction | undefined;
+  let initDone = false;
+  let initError: Error | undefined;
+
+  // Register update handler that waits for initialization
+  setHandler(returnInitResultUpdate, async () => {
+    await condition(() => initDone);
+    if (initError) {
+      throw initError;
+    }
+    return tx!;
+  });
+
+  // Phase 1: Fast synchronous initialization (local activity)
+  try {
+    tx = await initTransaction(txRequest);
+  } catch (err) {
+    initError = err as Error;
+  } finally {
+    initDone = true; // Signal update handler
+  }
+
+  // Phase 2: Slow asynchronous completion
+  if (initError) {
+    await cancelTransaction(tx!);
+    throw initError;
+  }
+
+  await completeTransaction(tx);
+  return tx;
+}
+
+// client.ts
+const startWorkflowOperation = new WithStartWorkflowOperation(
+  transactionWorkflow,
+  {
+    workflowId: 'transaction-123',
+    args: [txRequest],
+    taskQueue: 'transactions',
+    workflowIdConflictPolicy: 'FAIL',
+  },
+);
+
+const tx = await client.workflow.executeUpdateWithStart(
+  returnInitResultUpdate,
+  { startWorkflowOperation },
+);
+
+const wfHandle = await startWorkflowOperation.workflowHandle();
+
+// Use transaction ID immediately while workflow continues
+console.log(`Transaction initialized: ${tx.id}`);
+
+// Optionally wait for the workflow to complete
+const finalResult = await wfHandle.result();
+```
 :::
 
 The key points across all SDKs are:
@@ -287,7 +385,7 @@ The pattern is limited to operations that you can split into fast and slow phase
 ## Best practices
 
 - **Set WorkflowIdConflictPolicy to FAIL.** For early return, use `FAIL` to assert a new Workflow is created per request. Use `USE_EXISTING` only for lazy initialization patterns.
-- **Use Workflow.await in the Update handler.** Keep the Update handler lightweight — block on a condition flag and let the main Workflow method do the real work.
+- **Use Workflow.await in the Update handler.** Keep the Update handler lightweight — block on a condition flag (`workflow.Await` in Go, `Workflow.await` in Java, `condition` in TypeScript, `workflow.wait_condition` in Python) and let the main Workflow method do the real work.
 - **Use local Activities for initialization.** Local Activities avoid extra server roundtrips, keeping the synchronous phase fast (under 5 seconds).
 - **Handle Update-with-Start non-atomicity.** Update-with-Start is not atomic. The Workflow may start even if the Update fails. Ensure Workers are running and handle the case where the Update is not delivered.
 - **Set a timeout on the Update result.** Use a timeout when waiting for the Update result to avoid blocking the client indefinitely if the Worker is unavailable.
@@ -310,6 +408,7 @@ The pattern is limited to operations that you can split into fast and slow phase
 
 ## Sample code
 
+- [Python Sample](https://github.com/temporalio/samples-python/tree/main/early_return) — Early return with Update-with-Start.
 - [Go Sample](https://github.com/temporalio/samples-go/tree/main/early-return) — Early return with Update-with-Start.
 - [TypeScript Sample](https://github.com/temporalio/samples-typescript/tree/main/early-return) — Early return with local Activities.
 - [Java Sample](https://github.com/temporalio/samples-java/tree/main/core/src/main/java/io/temporal/samples/earlyreturn) — Early return with Update handler.

@@ -54,6 +54,60 @@ The following examples show how each SDK implements the Saga pattern.
 Each language uses a different mechanism to register and execute compensations, but the core principle is the same: register a compensation before or after each step, and run all compensations in reverse order on failure.
 
 ::: code-group
+```python [Python]
+# workflows.py
+from temporalio import workflow
+
+@workflow.defn
+class TransferMoneyWorkflow:
+    @workflow.run
+    async def run(self, details: TransferDetails) -> None:
+        compensations = []
+
+        try:
+            # Register compensation for Step 1 BEFORE execution
+            compensations.append(
+                lambda: workflow.execute_activity(
+                    withdraw_compensation,
+                    details,
+                    start_to_close_timeout=timedelta(seconds=10),
+                )
+            )
+            # Step 1: Withdraw from source account
+            await workflow.execute_activity(
+                withdraw,
+                details,
+                start_to_close_timeout=timedelta(seconds=10),
+            )
+
+            # Register compensation for Step 2 BEFORE execution
+            compensations.append(
+                lambda: workflow.execute_activity(
+                    deposit_compensation,
+                    details,
+                    start_to_close_timeout=timedelta(seconds=10),
+                )
+            )
+            # Step 2: Deposit to target account
+            await workflow.execute_activity(
+                deposit,
+                details,
+                start_to_close_timeout=timedelta(seconds=10),
+            )
+
+            # Step 3: Additional operation
+            await workflow.execute_activity(
+                step_with_error,
+                details,
+                start_to_close_timeout=timedelta(seconds=10),
+            )
+        except Exception as e:
+            # On error, run compensations in reverse order
+            for compensation in reversed(compensations):
+                await compensation()
+            raise
+```
+
 ```go [Go]
 // saga_workflow.go
 func TransferMoney(ctx workflow.Context, details TransferDetails) error {
@@ -63,29 +117,86 @@ func TransferMoney(ctx workflow.Context, details TransferDetails) error {
             _ = workflow.ExecuteActivity(ctx, WithdrawCompensation, details).Get(ctx, nil)
         }
     }()
-    
+
     // Step 1: Withdraw from source account
     err := workflow.ExecuteActivity(ctx, Withdraw, details).Get(ctx, nil)
     if err != nil {
         return err
     }
-    
+
     // Register compensation for Step 2 BEFORE execution
     defer func() {
         if err != nil {
             _ = workflow.ExecuteActivity(ctx, DepositCompensation, details).Get(ctx, nil)
         }
     }()
-    
+
     // Step 2: Deposit to target account
     err = workflow.ExecuteActivity(ctx, Deposit, details).Get(ctx, nil)
     if err != nil {
         return err // Triggers defer, which runs both compensations
     }
-    
+
     // Step 3: Additional operation
     err = workflow.ExecuteActivity(ctx, StepWithError, details).Get(ctx, nil)
     return err // If error, both compensations run in reverse order
+}
+```
+
+```java [Java]
+// HelloSaga.java
+public class HelloSaga {
+    @WorkflowInterface
+    public interface GreetingWorkflow {
+        @WorkflowMethod
+        String getGreeting(String name);
+    }
+
+    public static class GreetingWorkflowImpl implements GreetingWorkflow {
+        @Override
+        public String getGreeting(String name) {
+            // Create a Saga instance with compensation options
+            Saga saga = new Saga(new Saga.Options.Builder()
+                .setParallelCompensation(false) // Run compensations sequentially
+                .build());
+
+            try {
+                // Register compensation for Step 1 BEFORE execution
+                saga.addCompensation(activities::cleanupHello, name);
+                // Step 1: Execute activity
+                String hello = Workflow.executeActivity(
+                    activities::hello,
+                    String.class,
+                    name
+                ).get();
+
+                // Register compensation for Step 2 BEFORE execution
+                saga.addCompensation(activities::cleanupBye, name);
+                // Step 2: Execute activity
+                String bye = Workflow.executeActivity(
+                    activities::bye,
+                    String.class,
+                    name
+                ).get();
+
+                // Register compensation for Step 3 BEFORE execution
+                saga.addCompensation(activities::cleanupFile, name);
+                // Step 3: This might fail
+                Workflow.executeActivity(
+                    activities::processFile,
+                    Void.class,
+                    name
+                ).get();
+
+                return hello + "; " + bye;
+
+            } catch (Exception e) {
+                // On any error, run all registered compensations in reverse order
+                saga.compensate();
+                throw e;
+            }
+        }
+    }
 }
 ```
 
@@ -134,117 +245,6 @@ export async function openAccount(params: OpenAccount): Promise<void> {
     }
     throw err;
   }
-}
-```
-
-```python [Python]
-# workflows.py
-from temporalio import workflow
-
-@workflow.defn
-class TransferMoneyWorkflow:
-    @workflow.run
-    async def run(self, details: TransferDetails) -> None:
-        compensations = []
-        
-        try:
-            # Register compensation for Step 1 BEFORE execution
-            compensations.append(
-                lambda: workflow.execute_activity(
-                    withdraw_compensation,
-                    details,
-                    start_to_close_timeout=timedelta(seconds=10),
-                )
-            )
-            # Step 1: Withdraw from source account
-            await workflow.execute_activity(
-                withdraw,
-                details,
-                start_to_close_timeout=timedelta(seconds=10),
-            )
-            
-            # Register compensation for Step 2 BEFORE execution
-            compensations.append(
-                lambda: workflow.execute_activity(
-                    deposit_compensation,
-                    details,
-                    start_to_close_timeout=timedelta(seconds=10),
-                )
-            )
-            # Step 2: Deposit to target account
-            await workflow.execute_activity(
-                deposit,
-                details,
-                start_to_close_timeout=timedelta(seconds=10),
-            )
-            
-            # Step 3: Additional operation
-            await workflow.execute_activity(
-                step_with_error,
-                details,
-                start_to_close_timeout=timedelta(seconds=10),
-            )
-        except Exception as e:
-            # On error, run compensations in reverse order
-            for compensation in reversed(compensations):
-                await compensation()
-            raise
-```
-
-```java [Java]
-// HelloSaga.java
-public class HelloSaga {
-    @WorkflowInterface
-    public interface GreetingWorkflow {
-        @WorkflowMethod
-        String getGreeting(String name);
-    }
-
-    public static class GreetingWorkflowImpl implements GreetingWorkflow {
-        @Override
-        public String getGreeting(String name) {
-            // Create a Saga instance with compensation options
-            Saga saga = new Saga(new Saga.Options.Builder()
-                .setParallelCompensation(false) // Run compensations sequentially
-                .build());
-            
-            try {
-                // Register compensation for Step 1 BEFORE execution
-                saga.addCompensation(activities::cleanupHello, name);
-                // Step 1: Execute activity
-                String hello = Workflow.executeActivity(
-                    activities::hello, 
-                    String.class, 
-                    name
-                ).get();
-                
-                // Register compensation for Step 2 BEFORE execution
-                saga.addCompensation(activities::cleanupBye, name);
-                // Step 2: Execute activity
-                String bye = Workflow.executeActivity(
-                    activities::bye, 
-                    String.class, 
-                    name
-                ).get();
-                
-                // Register compensation for Step 3 BEFORE execution
-                saga.addCompensation(activities::cleanupFile, name);
-                // Step 3: This might fail
-                Workflow.executeActivity(
-                    activities::processFile, 
-                    Void.class, 
-                    name
-                ).get();
-                
-                return hello + "; " + bye;
-                
-            } catch (Exception e) {
-                // On any error, run all registered compensations in reverse order
-                saga.compensate();
-                throw e;
-            }
-        }
-    }
 }
 ```
 :::
