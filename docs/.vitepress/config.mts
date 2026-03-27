@@ -16,7 +16,8 @@ export default withMermaid(defineConfig({
         items: [
           { text: 'Overview', link: '/distributed-transaction-patterns' },
           { text: 'Saga Pattern', link: '/saga-pattern' },
-          { text: 'Early Return', link: '/early-return' }
+          { text: 'Early Return', link: '/early-return' },
+          { text: 'Idempotent Distributed Transactions', link: '/idempotent-distributed-transactions' }
         ]
       },
       {
