@@ -31,7 +31,7 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 </div>
 </div>
 
-## Stateful / lifecycle patterns {.pattern-section-title}
+## Entity & lifecycle patterns {.pattern-section-title}
 
 <div class="pattern-grid">
 <div class="pattern-tile">
@@ -41,16 +41,6 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 <span>Entity Workflow</span>
 </div>
 <p>Models long-lived business entities as individual Workflows that persist for the entity's entire lifetime, handling all state transitions through Signals and Updates.</p>
-</a>
-</div>
-
-<div class="pattern-tile">
-<a href="request-response-via-updates">
-<div class="pattern-tile-header">
-<img src="/images/request-response-icon.png" alt="Request-Response via Updates">
-<span>Request-Response via Updates</span>
-</div>
-<p>Synchronous request-response with validation. Updates modify state and return results directly.</p>
 </a>
 </div>
 
@@ -65,17 +55,17 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 </div>
 
 <div class="pattern-tile">
-<a href="child-workflows">
+<a href="updatable-timer">
 <div class="pattern-tile-header">
-<img src="/images/child-workflows-icon.png" alt="Child Workflows">
-<span>Child Workflows</span>
+<img src="/images/updatable-timer-icon.png" alt="Updatable Timer">
+<span>Updatable Timer</span>
 </div>
-<p>Decomposes complex Workflows into smaller, reusable units. Each child has an independent Workflow ID, history, and lifecycle.</p>
+<p>Dynamically adjustable timers that respond to Signals or Updates. Extend, shorten, or cancel timers based on external events.</p>
 </a>
 </div>
 </div>
 
-## Event-driven patterns {.pattern-section-title}
+## Workflow messaging patterns {.pattern-section-title}
 
 <div class="pattern-grid">
 <div class="pattern-tile">
@@ -89,41 +79,51 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 </div>
 
 <div class="pattern-tile">
-<a href="updatable-timer">
+<a href="request-response-via-updates">
 <div class="pattern-tile-header">
-<img src="/images/updatable-timer-icon.png" alt="Updatable Timer">
-<span>Updatable Timer</span>
+<img src="/images/request-response-icon.png" alt="Request-Response via Updates">
+<span>Request-Response via Updates</span>
 </div>
-<p>Dynamically adjustable timers that respond to Signals or Updates. Extend, shorten, or cancel timers based on external events.</p>
+<p>Synchronous request-response with validation. Updates modify state and return results directly.</p>
 </a>
 </div>
 </div>
 
-## Business process patterns {.pattern-section-title}
+## Task orchestration patterns {.pattern-section-title}
 
 <div class="pattern-grid">
 <div class="pattern-tile">
-<a href="approval">
+<a href="child-workflows">
 <div class="pattern-tile-header">
-<img src="/images/approval-icon.png" alt="Approval">
-<span>Approval</span>
+<img src="/images/child-workflows-icon.png" alt="Child Workflows">
+<span>Child Workflows</span>
 </div>
-<p>Human-in-the-loop Workflows that block until external approval decisions are made. Uses Signals to capture approval data with metadata.</p>
+<p>Decomposes complex Workflows into smaller, reusable units. Each child has an independent Workflow ID, history, and lifecycle.</p>
 </a>
 </div>
 
 <div class="pattern-tile">
-<a href="delayed-start">
+<a href="parallel-execution">
 <div class="pattern-tile-header">
-<img src="/images/delayed-start-icon.png" alt="Delayed Start">
-<span>Delayed Start</span>
+<img src="/images/parallel-execution-icon.png" alt="Parallel Execution">
+<span>Parallel Execution</span>
 </div>
-<p>Creates Workflows immediately but defers execution until a specified delay expires. Fits one-time scheduled operations and grace periods.</p>
+<p>Executes multiple Activities concurrently for maximum throughput with error handling and controlled parallelism.</p>
+</a>
+</div>
+
+<div class="pattern-tile">
+<a href="pick-first">
+<div class="pattern-tile-header">
+<img src="/images/pick-first-icon.png" alt="Pick First">
+<span>Pick First (Race)</span>
+</div>
+<p>Starts multiple Activities in parallel and uses the first result, cancelling the rest.</p>
 </a>
 </div>
 </div>
 
-## Long-running patterns {.pattern-section-title}
+## External interaction patterns {.pattern-section-title}
 
 <div class="pattern-grid">
 <div class="pattern-tile">
@@ -147,25 +147,29 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 </div>
 
 <div class="pattern-tile">
-<a href="parallel-execution">
+<a href="approval">
 <div class="pattern-tile-header">
-<img src="/images/parallel-execution-icon.png" alt="Parallel Execution">
-<span>Parallel Execution</span>
+<img src="/images/approval-icon.png" alt="Approval">
+<span>Approval</span>
 </div>
-<p>Executes multiple Activities concurrently for maximum throughput with error handling and controlled parallelism.</p>
+<p>Human-in-the-loop Workflows that block until external approval decisions are made. Uses Signals to capture approval data with metadata.</p>
 </a>
 </div>
 
 <div class="pattern-tile">
-<a href="pick-first">
+<a href="delayed-start">
 <div class="pattern-tile-header">
-<img src="/images/pick-first-icon.png" alt="Pick First">
-<span>Pick First (Race)</span>
+<img src="/images/delayed-start-icon.png" alt="Delayed Start">
+<span>Delayed Start</span>
 </div>
-<p>Starts multiple Activities in parallel and uses the first result, cancelling the rest.</p>
+<p>Creates Workflows immediately but defers execution until a specified delay expires. Fits one-time scheduled operations and grace periods.</p>
 </a>
 </div>
+</div>
 
+## Worker configuration patterns {.pattern-section-title}
+
+<div class="pattern-grid">
 <div class="pattern-tile">
 <a href="worker-specific-taskqueue">
 <div class="pattern-tile-header">
@@ -173,6 +177,16 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 <span>Worker-Specific Task Queues</span>
 </div>
 <p>Routes Activities to specific Workers using unique Task Queues for Worker affinity and host-specific processing.</p>
+</a>
+</div>
+
+<div class="pattern-tile">
+<a href="activity-dependency-injection">
+<div class="pattern-tile-header">
+<img src="/images/activity-dependency-injection-icon.png" alt="Activity Dependency Injection">
+<span>Activity Dependency Injection</span>
+</div>
+<p>Injects external dependencies into Activities at Worker startup, keeping Workflow code deterministic and Activities testable.</p>
 </a>
 </div>
 </div>
