@@ -1,7 +1,7 @@
 
-# Event-driven patterns
+# Workflow messaging patterns
 
-Patterns for handling Signals and event-driven Workflows.
+Patterns for sending data into running Workflows and receiving responses or triggering behavior changes.
 
 <div class="pattern-grid">
 <div class="pattern-tile">
@@ -15,12 +15,13 @@ Patterns for handling Signals and event-driven Workflows.
 </div>
 
 <div class="pattern-tile">
-<a href="updatable-timer">
+<a href="request-response-via-updates">
 <div class="pattern-tile-header">
-<img src="/images/updatable-timer-icon.png" alt="Updatable Timer">
-<span>Updatable Timer</span>
+<img src="/images/request-response-icon.png" alt="Request-Response via Updates">
+<span>Request-Response via Updates</span>
 </div>
-<p>Dynamically adjustable timers that respond to Signals or Updates. Extend, shorten, or cancel timers based on external events.</p>
+<p>Synchronous request-response with validation. Updates modify state and return results directly.</p>
 </a>
 </div>
+
 </div>

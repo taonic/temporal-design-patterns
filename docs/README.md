@@ -19,7 +19,7 @@ Each step has a compensation that undoes its effects if subsequent steps fail.
 Synchronous initialization with asynchronous completion.
 Returns results immediately while processing continues in the background.
 
-## Stateful / lifecycle patterns
+## Entity & lifecycle patterns
 
 ### [Entity Workflow](entity-workflow.md)
 
@@ -30,41 +30,28 @@ Each entity gets its own Workflow instance handling all state transitions throug
 
 Prevents unbounded history growth by starting a new execution with fresh history.
 
+### [Updatable Timer](updatable-timer.md)
+
+Dynamically adjustable timers that respond to Signals or Updates.
+Extend, shorten, or cancel timers based on external events.
+
+## Workflow messaging patterns
+
+### [Signal with Start](signal-with-start.md)
+
+Starts a Workflow when Signaling it if it does not already exist.
+If already running, it receives the Signal directly.
+
+### [Request-Response via Updates](request-response-via-updates.md)
+
+Synchronous state modification with validation and direct result return.
+
+## Task orchestration patterns
+
 ### [Child Workflows](child-workflows.md)
 
 Decomposes complex Workflows into smaller, reusable Workflow units.
 Each child has an independent Workflow ID, history, and lifecycle with flexible parent-child coordination.
-
-### Query for state inspection
-
-Read-only operations that expose Workflow state without modification.
-
-### Workflow Updates
-
-Synchronous state modification with validation and direct result return.
-
-### Memo and Search Attributes
-
-Attaches metadata for filtering and discovery.
-Memos store data; Search Attributes enable querying.
-
-## Long-running and operational patterns
-
-### [Polling External Services](polling.md)
-
-Strategies for polling external resources with varying frequencies.
-
-### Retry policies
-
-Automatic retry with exponential backoff and non-retryable error types.
-
-### [Long-running Activity - tracking progress and handling cancellation with heartbeats](long-running-activity.md)
-
-Long-running Activities report progress and enable resumption after failures.
-
-### Cancellation handling
-
-Graceful Workflow and Activity cancellation with cleanup.
 
 ### [Parallel Execution](parallel-execution.md)
 
@@ -74,14 +61,31 @@ Executes multiple Activities concurrently for maximum throughput.
 
 Starts multiple Activities in parallel and uses the first result.
 
-### Batch processing
+## External interaction patterns
 
-Processes large datasets efficiently with various strategies.
+### [Polling External Services](polling.md)
+
+Strategies for polling external resources with varying frequencies.
+
+### [Long-running Activity](long-running-activity.md)
+
+Long-running Activities report progress via heartbeats and enable resumption after failures.
+
+### [Approval](approval.md)
+
+Human-in-the-loop Workflows that block until external approval decisions are made.
+
+### [Delayed Start](delayed-start.md)
+
+Creates Workflows immediately but defers execution until a specified delay expires.
+
+## Worker configuration patterns
 
 ### [Worker-Specific Task Queues](worker-specific-taskqueue.md)
 
 Routes Activities to specific Workers using unique Task Queues for Worker affinity.
 
-### Worker versioning
+### [Activity Dependency Injection](activity-dependency-injection.md)
 
-Manages Workflow code changes safely using build IDs and version sets.
+Injects external dependencies (database connections, API clients) into Activities at Worker startup.
+Keeps Workflow code deterministic and makes Activities testable with mock implementations.

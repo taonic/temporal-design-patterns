@@ -20,49 +20,49 @@ export default withMermaid(defineConfig({
         ]
       },
       {
-        text: 'Stateful / Lifecycle Patterns',
+        text: 'Entity & Lifecycle Patterns',
         items: [
-          { text: 'Overview', link: '/stateful-lifecycle-patterns' },
+          { text: 'Overview', link: '/entity-lifecycle-patterns' },
           { text: 'Entity Workflow', link: '/entity-workflow' },
-          { text: 'Request-Response via Updates', link: '/request-response-via-updates' },
           { text: 'Continue-As-New', link: '/continue-as-new' },
-          { text: 'Child Workflows', link: '/child-workflows' }
-        ]
-      },
-      {
-        text: 'Event-Driven Patterns',
-        items: [
-          { text: 'Overview', link: '/event-driven-patterns' },
-          { text: 'Signal with Start', link: '/signal-with-start' },
           { text: 'Updatable Timer', link: '/updatable-timer' }
         ]
       },
       {
-        text: 'Business Process Patterns',
+        text: 'Workflow Messaging Patterns',
         items: [
-          { text: 'Overview', link: '/business-process-patterns' },
+          { text: 'Overview', link: '/workflow-messaging-patterns' },
+          { text: 'Signal with Start', link: '/signal-with-start' },
+          { text: 'Request-Response via Updates', link: '/request-response-via-updates' }
+        ]
+      },
+      {
+        text: 'Task Orchestration Patterns',
+        items: [
+          { text: 'Overview', link: '/task-orchestration-patterns' },
+          { text: 'Child Workflows', link: '/child-workflows' },
+          { text: 'Parallel Execution', link: '/parallel-execution' },
+          { text: 'Pick First (Race)', link: '/pick-first' }
+        ]
+      },
+      {
+        text: 'External Interaction Patterns',
+        items: [
+          { text: 'Overview', link: '/external-interaction-patterns' },
+          { text: 'Polling External Services', link: '/polling' },
+          { text: 'Long Running Activity', link: '/long-running-activity' },
           { text: 'Approval', link: '/approval' },
           { text: 'Delayed Start', link: '/delayed-start' }
         ]
       },
       {
-        text: 'Long-Running Patterns',
+        text: 'Worker Configuration Patterns',
         items: [
-          { text: 'Overview', link: '/long-running-patterns' },
-          { text: 'Polling External Services', link: '/polling' },
-          { text: 'Long Running Activity', link: '/long-running-activity' },
-          { text: 'Parallel Execution', link: '/parallel-execution' },
-          { text: 'Pick First (Race)', link: '/pick-first' },
-          { text: 'Worker-Specific Task Queues', link: '/worker-specific-taskqueue' }
+          { text: 'Overview', link: '/worker-configuration-patterns' },
+          { text: 'Worker-Specific Task Queues', link: '/worker-specific-taskqueue' },
+          { text: 'Activity Dependency Injection', link: '/activity-dependency-injection' }
         ]
       },
-      {
-        text: 'SDK Examples',
-        items: [
-          { text: 'Java', link: '/java' },
-          { text: 'Go', link: '/go' }
-        ]
-      }
     ],
     socialLinks: [
       { icon: 'github', link: 'https://github.com/taonic/temporal-design-patterns' }
