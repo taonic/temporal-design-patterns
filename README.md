@@ -3,6 +3,7 @@
 > **Warning:** This catalog is under active development. Content and structure may change.
 >
 > **Personal project by [@taonic](https://github.com/taonic).**
+>
 
 A catalog of design patterns for Temporal Workflows.
 
@@ -40,3 +41,8 @@ npm run docs:preview
 ## Deployment
 
 The site deploys to GitHub Pages automatically when you push changes to the main branch.
+
+## Contributors
+
+- [@taonic](https://github.com/taonic)
+- [@darshitvvora](https://github.com/darshitvvora)
