@@ -50,6 +50,8 @@ The following describes each step in the diagram:
 
 ## Implementation
 
+<DaytonaRunner pattern="saga" />
+
 The following examples show how each SDK implements the Saga pattern.
 Each language uses a different mechanism to register and execute compensations, but the core principle is the same: register a compensation before or after each step, and run all compensations in reverse order on failure.
 

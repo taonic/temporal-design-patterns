@@ -4,7 +4,7 @@ import { withMermaid } from 'vitepress-plugin-mermaid'
 export default withMermaid(defineConfig({
   title: 'Temporal Patterns',
   description: 'Common catalog of reusable patterns for Temporal workflows',
-  base: '/temporal-design-patterns/',
+  base: process.env.VITEPRESS_BASE ?? '/temporal-design-patterns/',
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
@@ -75,5 +75,15 @@ export default withMermaid(defineConfig({
       message: 'Temporal Design Patterns Catalog'
     }
   },
-  mermaid: {}
+  mermaid: {},
+  vite: {
+    server: {
+      proxy: {
+        '/api': {
+          target: 'http://localhost:8787',
+          changeOrigin: true,
+        },
+      },
+    },
+  },
 }))

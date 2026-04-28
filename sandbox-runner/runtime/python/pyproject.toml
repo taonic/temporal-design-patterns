@@ -1,0 +1,8 @@
+[project]
+name = "continue-as-new-python"
+version = "0.1.0"
+description = "Continue-As-New pattern demo (Python)"
+requires-python = ">=3.12"
+dependencies = [
+    "temporalio==1.9.0",
+]

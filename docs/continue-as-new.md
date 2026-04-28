@@ -196,6 +196,8 @@ If the batch is smaller than `BATCH_SIZE`, no more data remains and the Workflow
 
 Instead of tracking iteration counts manually, you can use the SDK's built-in suggestion to let Temporal tell you when the history is getting large:
 
+<DaytonaRunner pattern="continue-as-new" />
+
 ::: code-group
 ```python [Python]
 # workflows.py

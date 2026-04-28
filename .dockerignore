@@ -1,0 +1,25 @@
+.git
+.github
+.vscode
+.idea
+*.log
+node_modules
+docs/.vitepress/dist
+docs/.vitepress/cache
+sandbox-runner/node_modules
+# Per-language toolchain caches and IDE artifacts. The runtime/ deps files
+# (package.json, pyproject.toml, go.mod/go.sum, pom.xml, warmup stubs) are
+# still copied because manager.ts reads them when building Daytona snapshots.
+sandbox-runner/runtime/typescript/node_modules
+sandbox-runner/runtime/python/.venv
+sandbox-runner/runtime/python/uv.lock
+sandbox-runner/runtime/java/target
+sandbox-runner/runtime/java/.mvn
+sandbox-runner/patterns/*/typescript/node_modules
+sandbox-runner/patterns/*/typescript/package-lock.json
+sandbox-runner/patterns/*/python/.venv
+sandbox-runner/patterns/*/python/uv.lock
+sandbox-runner/patterns/*/java/target
+Dockerfile
+fly.toml
+.dockerignore

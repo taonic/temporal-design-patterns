@@ -45,6 +45,8 @@ The following examples show how each SDK implements this pattern.
 The Workflow registers an Update handler that blocks until initialization completes, then returns the result to the caller.
 The client receives the initialization result in a single round trip while the Workflow continues processing.
 
+<DaytonaRunner pattern="early-return" />
+
 ::: code-group
 ```python [Python]
 # workflow.py

@@ -1,0 +1,45 @@
+{
+  "name": "Saga Pattern",
+  "languages": {
+    "typescript": {
+      "label": "TypeScript",
+      "files": ["starter.ts", "worker.ts", "workflows.ts", "activities.ts", "shared.ts"],
+      "worker": "npx tsx worker.ts",
+      "starter": "npx tsx starter.ts",
+      "workerProcessPattern": "tsx worker.ts",
+      "diskGib": 1
+    },
+    "python": {
+      "label": "Python",
+      "files": ["starter.py", "worker.py", "workflows.py", "activities.py", "shared.py"],
+      "worker": "uv run python worker.py",
+      "starter": "uv run python starter.py",
+      "workerProcessPattern": "python worker.py",
+      "diskGib": 1
+    },
+    "go": {
+      "label": "Go",
+      "files": ["starter.go", "worker.go", "workflows.go", "activities.go", "shared.go"],
+      "worker": "go run worker.go workflows.go activities.go shared.go",
+      "starter": "go run starter.go workflows.go activities.go shared.go",
+      "workerProcessPattern": "go run worker.go",
+      "diskGib": 2,
+      "memoryGib": 2
+    },
+    "java": {
+      "label": "Java",
+      "files": [
+        "src/main/java/Starter.java",
+        "src/main/java/Worker.java",
+        "src/main/java/TransferMoneyWorkflow.java",
+        "src/main/java/Activities.java",
+        "src/main/java/Shared.java"
+      ],
+      "worker": "mvn -q -B compile exec:java -Dexec.mainClass=Worker",
+      "starter": "mvn -q -B compile exec:java -Dexec.mainClass=Starter",
+      "workerProcessPattern": "exec.mainClass=Worker",
+      "diskGib": 3,
+      "memoryGib": 3
+    }
+  }
+}
