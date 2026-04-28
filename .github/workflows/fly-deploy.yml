@@ -28,3 +28,20 @@ jobs:
       - run: flyctl deploy --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+  warmup:
+    name: Warm up sandboxes
+    needs: deploy
+    runs-on: ubuntu-latest
+    # First-time snapshot bakes per language can take 10+ minutes (Go SDK
+    # compile, Java mvn dependency:go-offline + compile). Run all languages
+    # in parallel inside the script; this timeout is a hard ceiling for the job.
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: node scripts/warmup-sandboxes.mjs
+        env:
+          WARMUP_BASE_URL: https://temporal-design-patterns.fly.dev
