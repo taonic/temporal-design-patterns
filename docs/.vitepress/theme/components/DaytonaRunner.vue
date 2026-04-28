@@ -215,6 +215,10 @@ function close(): void {
   open.value = false;
 }
 
+function handleEscape(e: KeyboardEvent): void {
+  if (e.key === "Escape" && open.value) close();
+}
+
 function runOrLaunch(): void {
   if (runDisabled.value) return;
   if (sandboxId.value) {
@@ -435,12 +439,14 @@ watch(open, (val) => {
 
 onMounted(() => {
   isClient.value = true;
+  window.addEventListener("keydown", handleEscape);
 });
 
 onBeforeUnmount(() => {
   editor?.destroy();
   editor = null;
   currentEventSource?.close();
+  window.removeEventListener("keydown", handleEscape);
 });
 </script>
 

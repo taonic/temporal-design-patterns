@@ -101,13 +101,24 @@ for (const p of patterns) {
     tasks.push({ pattern: p.id, language: l.id });
   }
 }
-console.log(`Warming ${tasks.length} language(s):`, tasks);
+console.log(`Warming ${tasks.length} language(s) sequentially:`, tasks);
 
-const results = await Promise.allSettled(tasks.map(warmup));
-const failed = results.filter((r) => r.status === "rejected");
-for (const r of failed) console.error(r.reason?.message ?? r.reason);
-if (failed.length) {
-  console.error(`${failed.length}/${tasks.length} warmups failed`);
+// Sequential, not parallel: Daytona caps total live-sandbox memory at 10 GiB
+// per account. TS+Python+Go+Java in parallel = 2+2+2+3 = 9 GiB before any
+// snapshot-bake overhead, which pushes us over the cap. Running one at a time
+// keeps the peak at 3 GiB (Java) and frees memory between stages — at the
+// cost of wall-clock, which is fine inside the 40-minute job ceiling.
+const failures = [];
+for (const t of tasks) {
+  try {
+    await warmup(t);
+  } catch (err) {
+    failures.push(err);
+    console.error(err?.message ?? err);
+  }
+}
+if (failures.length) {
+  console.error(`${failures.length}/${tasks.length} warmups failed`);
   process.exit(1);
 }
 console.log(`All ${tasks.length} warmups completed`);
