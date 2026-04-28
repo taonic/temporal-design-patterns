@@ -31,7 +31,7 @@
       "files": [
         "src/main/java/Starter.java",
         "src/main/java/Worker.java",
-        "src/main/java/TransferMoneyWorkflow.java",
+        "src/main/java/OpenAccountWorkflow.java",
         "src/main/java/Activities.java",
         "src/main/java/Shared.java"
       ],

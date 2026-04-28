@@ -17,36 +17,45 @@ You implement each step as a local transaction with a corresponding compensation
 If any step fails, you execute compensation transactions in reverse order to undo the effects of all completed steps.
 You register compensations as each step completes, then automatically trigger them when errors occur to ensure cleanup happens reliably.
 
+The following diagram shows the worked example used by the runner: opening a customer account in four steps, where `addBankAccount` simulates a downstream failure to trigger compensation.
+
 ```mermaid
 flowchart TD
-    Start([Start Saga]) --> Step1[Step 1: Execute]
-    Step1 -->|Success| Step2[Step 2: Execute]
+    Start([Start Saga]) --> Step1[Step 1: createAccount]
+    Step1 -->|Success| Step2[Step 2: addAddress]
     Step1 -->|Failure| End([End: Failed])
-    
-    Step2 -->|Success| Step3[Step 3: Execute]
-    Step2 -->|Failure| Comp1[Compensate Step 1]
-    
-    Step3 -->|Success| Complete([End: Success])
-    Step3 -->|Failure| Comp2[Compensate Step 2]
-    
-    Comp1 --> End
+
+    Step2 -->|Success| Step3[Step 3: addClient]
+    Step2 -->|Failure| Comp1[clearPostalAddresses]
+
+    Step3 -->|Success| Step4[Step 4: addBankAccount]
+    Step3 -->|Failure| Comp2[removeClient]
+
+    Step4 -->|Success| Complete([End: Success])
+    Step4 -->|Failure| Comp3[disconnectBankAccounts]
+
+    Comp3 --> Comp2
     Comp2 --> Comp1
-    
+    Comp1 --> End
+
     style Step1 fill:#90EE90,color:#000
     style Step2 fill:#90EE90,color:#000
     style Step3 fill:#90EE90,color:#000
+    style Step4 fill:#90EE90,color:#000
     style Comp1 fill:#FFB6C6,color:#000
     style Comp2 fill:#FFB6C6,color:#000
+    style Comp3 fill:#FFB6C6,color:#000
     style Complete fill:#4169E1,color:#fff
     style End fill:#DC143C,color:#fff
 ```
 
 The following describes each step in the diagram:
 
-1. The Saga begins by executing Step 1.
-2. If Step 1 succeeds, the Workflow proceeds to Step 2. If it fails, the Saga ends immediately.
-3. If Step 2 succeeds, the Workflow proceeds to Step 3. If it fails, the Workflow runs the compensation for Step 1.
-4. If Step 3 succeeds, the Saga completes. If it fails, the Workflow runs compensations in reverse order: Step 2 first, then Step 1.
+1. The Saga begins by executing Step 1 (`createAccount`).
+2. If Step 1 succeeds, the Workflow proceeds to Step 2 (`addAddress`). If it fails, the Saga ends immediately — no compensations are registered yet.
+3. If Step 2 succeeds, the Workflow proceeds to Step 3 (`addClient`). If it fails, the Workflow runs `clearPostalAddresses`.
+4. If Step 3 succeeds, the Workflow proceeds to Step 4 (`addBankAccount`). If it fails, the Workflow runs `removeClient`, then `clearPostalAddresses`.
+5. If Step 4 succeeds, the Saga completes. If it fails, the Workflow runs all three compensations in reverse: `disconnectBankAccounts`, `removeClient`, `clearPostalAddresses`. Note that `disconnectBankAccounts` is registered before `addBankAccount` runs, so it executes even if `addBankAccount` failed mid-flight — its implementation must be idempotent.
 
 ## Implementation
 
@@ -61,49 +70,58 @@ Each language uses a different mechanism to register and execute compensations, 
 from temporalio import workflow
 
 @workflow.defn
-class TransferMoneyWorkflow:
+class OpenAccountWorkflow:
     @workflow.run
-    async def run(self, details: TransferDetails) -> None:
+    async def run(self, req: OpenAccountRequest) -> str:
         compensations = []
 
         try:
-            # Register compensation for Step 1 BEFORE execution
-            compensations.append(
-                lambda: workflow.execute_activity(
-                    withdraw_compensation,
-                    details,
-                    start_to_close_timeout=timedelta(seconds=10),
-                )
-            )
-            # Step 1: Withdraw from source account
+            # Step 1: createAccount has no compensation — leaving an empty
+            # account stub on later failure is acceptable.
             await workflow.execute_activity(
-                withdraw,
-                details,
+                create_account, req,
                 start_to_close_timeout=timedelta(seconds=10),
             )
 
             # Register compensation for Step 2 BEFORE execution
             compensations.append(
                 lambda: workflow.execute_activity(
-                    deposit_compensation,
-                    details,
+                    clear_postal_addresses, req,
                     start_to_close_timeout=timedelta(seconds=10),
                 )
             )
-            # Step 2: Deposit to target account
+            # Step 2: Add postal address
             await workflow.execute_activity(
-                deposit,
-                details,
+                add_address, req,
                 start_to_close_timeout=timedelta(seconds=10),
             )
 
-            # Step 3: Additional operation
+            # Register compensation for Step 3 BEFORE execution
+            compensations.append(
+                lambda: workflow.execute_activity(
+                    remove_client, req,
+                    start_to_close_timeout=timedelta(seconds=10),
+                )
+            )
+            # Step 3: Add client record
             await workflow.execute_activity(
-                step_with_error,
-                details,
+                add_client, req,
                 start_to_close_timeout=timedelta(seconds=10),
             )
-        except Exception as e:
+
+            # Register compensation for Step 4 BEFORE execution
+            compensations.append(
+                lambda: workflow.execute_activity(
+                    disconnect_bank_accounts, req,
+                    start_to_close_timeout=timedelta(seconds=10),
+                )
+            )
+            # Step 4: Link bank account (this step fails in the demo)
+            await workflow.execute_activity(
+                add_bank_account, req,
+                start_to_close_timeout=timedelta(seconds=10),
+            )
+        except Exception:
             # On error, run compensations in reverse order
             for compensation in reversed(compensations):
                 await compensation()
@@ -111,92 +129,97 @@ class TransferMoneyWorkflow:
 ```
 
 ```go [Go]
-// saga_workflow.go
-func TransferMoney(ctx workflow.Context, details TransferDetails) error {
-    // Register compensation for Step 1 BEFORE execution
-    defer func() {
-        if err != nil {
-            _ = workflow.ExecuteActivity(ctx, WithdrawCompensation, details).Get(ctx, nil)
+// open_account_workflow.go
+func OpenAccountWorkflow(ctx workflow.Context, req OpenAccountRequest) error {
+    var compensations []func()
+    runCompensations := func() {
+        for i := len(compensations) - 1; i >= 0; i-- {
+            compensations[i]()
         }
-    }()
+    }
 
-    // Step 1: Withdraw from source account
-    err := workflow.ExecuteActivity(ctx, Withdraw, details).Get(ctx, nil)
-    if err != nil {
+    // Step 1: CreateAccount has no compensation — leaving an empty account
+    // stub on later failure is acceptable.
+    if err := workflow.ExecuteActivity(ctx, CreateAccount, req).Get(ctx, nil); err != nil {
         return err
     }
 
     // Register compensation for Step 2 BEFORE execution
-    defer func() {
-        if err != nil {
-            _ = workflow.ExecuteActivity(ctx, DepositCompensation, details).Get(ctx, nil)
-        }
-    }()
-
-    // Step 2: Deposit to target account
-    err = workflow.ExecuteActivity(ctx, Deposit, details).Get(ctx, nil)
-    if err != nil {
-        return err // Triggers defer, which runs both compensations
+    compensations = append(compensations, func() {
+        _ = workflow.ExecuteActivity(ctx, ClearPostalAddresses, req).Get(ctx, nil)
+    })
+    if err := workflow.ExecuteActivity(ctx, AddAddress, req).Get(ctx, nil); err != nil {
+        runCompensations()
+        return err
     }
 
-    // Step 3: Additional operation
-    err = workflow.ExecuteActivity(ctx, StepWithError, details).Get(ctx, nil)
-    return err // If error, both compensations run in reverse order
+    // Register compensation for Step 3 BEFORE execution
+    compensations = append(compensations, func() {
+        _ = workflow.ExecuteActivity(ctx, RemoveClient, req).Get(ctx, nil)
+    })
+    if err := workflow.ExecuteActivity(ctx, AddClient, req).Get(ctx, nil); err != nil {
+        runCompensations()
+        return err
+    }
+
+    // Register compensation for Step 4 BEFORE execution
+    compensations = append(compensations, func() {
+        _ = workflow.ExecuteActivity(ctx, DisconnectBankAccounts, req).Get(ctx, nil)
+    })
+    if err := workflow.ExecuteActivity(ctx, AddBankAccount, req).Get(ctx, nil); err != nil {
+        runCompensations()
+        return err
+    }
+
+    return nil
 }
 ```
 
 ```java [Java]
-// HelloSaga.java
-public class HelloSaga {
-    @WorkflowInterface
-    public interface GreetingWorkflow {
-        @WorkflowMethod
-        String getGreeting(String name);
-    }
+// OpenAccountWorkflow.java
+@WorkflowInterface
+public interface OpenAccountWorkflow {
+    @WorkflowMethod
+    String openAccount(OpenAccountRequest req);
+}
 
-    public static class GreetingWorkflowImpl implements GreetingWorkflow {
-        @Override
-        public String getGreeting(String name) {
-            // Create a Saga instance with compensation options
-            Saga saga = new Saga(new Saga.Options.Builder()
-                .setParallelCompensation(false) // Run compensations sequentially
-                .build());
+public class OpenAccountWorkflowImpl implements OpenAccountWorkflow {
+    private final Activities activities = Workflow.newActivityStub(
+        Activities.class,
+        ActivityOptions.newBuilder()
+            .setStartToCloseTimeout(Duration.ofSeconds(10))
+            .build());
 
-            try {
-                // Register compensation for Step 1 BEFORE execution
-                saga.addCompensation(activities::cleanupHello, name);
-                // Step 1: Execute activity
-                String hello = Workflow.executeActivity(
-                    activities::hello,
-                    String.class,
-                    name
-                ).get();
+    @Override
+    public String openAccount(OpenAccountRequest req) {
+        // Create a Saga instance with compensation options
+        Saga saga = new Saga(new Saga.Options.Builder()
+            .setParallelCompensation(false) // Run compensations sequentially
+            .build());
 
-                // Register compensation for Step 2 BEFORE execution
-                saga.addCompensation(activities::cleanupBye, name);
-                // Step 2: Execute activity
-                String bye = Workflow.executeActivity(
-                    activities::bye,
-                    String.class,
-                    name
-                ).get();
+        try {
+            // Step 1: createAccount has no compensation — leaving an empty
+            // account stub on later failure is acceptable.
+            activities.createAccount(req);
 
-                // Register compensation for Step 3 BEFORE execution
-                saga.addCompensation(activities::cleanupFile, name);
-                // Step 3: This might fail
-                Workflow.executeActivity(
-                    activities::processFile,
-                    Void.class,
-                    name
-                ).get();
+            // Register compensation for Step 2 BEFORE execution
+            saga.addCompensation(activities::clearPostalAddresses, req);
+            activities.addAddress(req);
 
-                return hello + "; " + bye;
+            // Register compensation for Step 3 BEFORE execution
+            saga.addCompensation(activities::removeClient, req);
+            activities.addClient(req);
 
-            } catch (Exception e) {
-                // On any error, run all registered compensations in reverse order
-                saga.compensate();
-                throw e;
-            }
+            // Register compensation for Step 4 BEFORE execution
+            saga.addCompensation(activities::disconnectBankAccounts, req);
+            activities.addBankAccount(req);
+
+            return "Account " + req.accountId() + " opened";
+
+        } catch (Exception e) {
+            // On any error, run all registered compensations in reverse order
+            saga.compensate();
+            throw e;
         }
     }
 }
@@ -204,46 +227,33 @@ public class HelloSaga {
 
 ```typescript [TypeScript]
 // workflows.ts
-export async function openAccount(params: OpenAccount): Promise<void> {
+type Compensation = () => Promise<void>;
+
+export async function openAccount(req: OpenAccountRequest): Promise<string> {
   const compensations: Compensation[] = [];
 
   try {
-    // Step 1: Create account
-    await createAccount({ accountId: params.accountId });
+    // Step 1: createAccount has no compensation — leaving an empty account
+    // stub on later failure is acceptable.
+    await acts.createAccount(req);
 
     // Register compensation for Step 2 BEFORE execution
-    compensations.unshift({
-      fn: () => clearPostalAddresses({ accountId: params.accountId }),
-    });
-    // Step 2: Add address
-    await addAddress({
-      accountId: params.accountId,
-      address: params.address,
-    });
+    compensations.unshift(() => acts.clearPostalAddresses(req));
+    await acts.addAddress(req);
 
     // Register compensation for Step 3 BEFORE execution
-    compensations.unshift({
-      fn: () => removeClient({ accountId: params.accountId }),
-    });
-    // Step 3: Add client
-    await addClient({
-      accountId: params.accountId,
-      clientEmail: params.clientEmail,
-    });
+    compensations.unshift(() => acts.removeClient(req));
+    await acts.addClient(req);
 
     // Register compensation for Step 4 BEFORE execution
-    compensations.unshift({
-      fn: () => disconnectBankAccounts({ accountId: params.accountId }),
-    });
-    // Step 4: Add bank account
-    await addBankAccount({
-      accountId: params.accountId,
-      details: params.bankDetails,
-    });
+    compensations.unshift(() => acts.disconnectBankAccounts(req));
+    await acts.addBankAccount(req);
+
+    return `Account ${req.accountId} opened`;
   } catch (err) {
-    // On error, run all compensations in reverse order
-    for (const comp of compensations) {
-      await comp.fn();
+    // On error, run all compensations in reverse order (unshift keeps them in LIFO already)
+    for (const compensate of compensations) {
+      await compensate();
     }
     throw err;
   }
@@ -253,10 +263,10 @@ export async function openAccount(params: OpenAccount): Promise<void> {
 
 The key differences between SDKs are:
 
-- **Go**: Uses `defer` statements that execute in LIFO order when the function returns.
+- **Go**: Uses a slice of closures and iterates from the end on error. (Some samples use `defer` instead — both achieve LIFO; the slice form makes the rollback trigger explicit.)
 - **Python**: Uses a list with `reversed()` to iterate compensations in LIFO order on error.
 - **TypeScript**: Uses an array with `unshift()` to maintain LIFO order, and manually iterates on error.
-- **Java**: Uses an explicit `Saga` object to track and trigger compensations.
+- **Java**: Uses the SDK's `Saga` helper to track compensations and trigger them with `saga.compensate()`.
 
 In all SDKs, compensations are registered before Activity execution and run in reverse order of registration.
 All compensations must be idempotent and able to handle cases where the forward Activity never executed.

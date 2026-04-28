@@ -4,14 +4,16 @@ from temporalio.client import Client
 from temporalio.worker import Worker
 
 from activities import (
-    deposit,
-    deposit_compensation,
-    notify_downstream,
-    withdraw,
-    withdraw_compensation,
+    add_address,
+    add_bank_account,
+    add_client,
+    clear_postal_addresses,
+    create_account,
+    disconnect_bank_accounts,
+    remove_client,
 )
 from shared import TASK_QUEUE
-from workflows import TransferMoneyWorkflow
+from workflows import OpenAccountWorkflow
 
 
 async def main() -> None:
@@ -19,13 +21,15 @@ async def main() -> None:
     worker = Worker(
         client,
         task_queue=TASK_QUEUE,
-        workflows=[TransferMoneyWorkflow],
+        workflows=[OpenAccountWorkflow],
         activities=[
-            withdraw,
-            deposit,
-            notify_downstream,
-            withdraw_compensation,
-            deposit_compensation,
+            create_account,
+            add_address,
+            add_client,
+            add_bank_account,
+            clear_postal_addresses,
+            remove_client,
+            disconnect_bank_accounts,
         ],
     )
     print(f"Worker listening on task queue '{TASK_QUEUE}'", flush=True)

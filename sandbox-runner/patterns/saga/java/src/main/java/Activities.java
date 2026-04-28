@@ -2,45 +2,58 @@ import io.temporal.activity.ActivityInterface;
 
 @ActivityInterface
 public interface Activities {
-    void withdraw(Shared.TransferDetails details);
+    void createAccount(Shared.OpenAccountRequest req);
 
-    void deposit(Shared.TransferDetails details);
+    void addAddress(Shared.OpenAccountRequest req);
 
-    void notifyDownstream(Shared.TransferDetails details);
+    void addClient(Shared.OpenAccountRequest req);
 
-    void withdrawCompensation(Shared.TransferDetails details);
+    void addBankAccount(Shared.OpenAccountRequest req);
 
-    void depositCompensation(Shared.TransferDetails details);
+    void clearPostalAddresses(Shared.OpenAccountRequest req);
+
+    void removeClient(Shared.OpenAccountRequest req);
+
+    void disconnectBankAccounts(Shared.OpenAccountRequest req);
 
     final class Impl implements Activities {
         @Override
-        public void withdraw(Shared.TransferDetails details) {
-            System.out.printf("Withdrew $%d from %s%n", details.amount(), details.fromAccount());
+        public void createAccount(Shared.OpenAccountRequest req) {
+            System.out.printf("Created account %s for %s%n", req.accountId(), req.clientName());
         }
 
         @Override
-        public void deposit(Shared.TransferDetails details) {
-            System.out.printf("Deposited $%d to %s%n", details.amount(), details.toAccount());
+        public void addAddress(Shared.OpenAccountRequest req) {
+            System.out.printf("Added address '%s' to %s%n", req.address(), req.accountId());
         }
 
         @Override
-        public void notifyDownstream(Shared.TransferDetails details) {
+        public void addClient(Shared.OpenAccountRequest req) {
+            System.out.printf("Added client %s to %s%n", req.clientEmail(), req.accountId());
+        }
+
+        @Override
+        public void addBankAccount(Shared.OpenAccountRequest req) {
             System.out.printf(
-                    "Notify: simulating downstream failure for transfer %s%n",
-                    details.transferId());
+                    "Linking bank account %s: simulating downstream failure%n",
+                    req.bankAccount());
             // Comment out the throw to watch the saga succeed end-to-end:
-            throw new RuntimeException("notification service down");
+            throw new RuntimeException("bank link service down");
         }
 
         @Override
-        public void withdrawCompensation(Shared.TransferDetails details) {
-            System.out.printf("Refunded $%d to %s%n", details.amount(), details.fromAccount());
+        public void clearPostalAddresses(Shared.OpenAccountRequest req) {
+            System.out.printf("Cleared postal addresses for %s%n", req.accountId());
         }
 
         @Override
-        public void depositCompensation(Shared.TransferDetails details) {
-            System.out.printf(
-                    "Reversed deposit of $%d from %s%n", details.amount(), details.toAccount());
+        public void removeClient(Shared.OpenAccountRequest req) {
+            System.out.printf("Removed client from %s%n", req.accountId());
+        }
+
+        @Override
+        public void disconnectBankAccounts(Shared.OpenAccountRequest req) {
+            System.out.printf("Disconnected any bank accounts from %s%n", req.accountId());
         }
     }
 }

@@ -2,12 +2,13 @@ package main
 
 const (
 	TaskQueue        = "saga-task-queue"
-	WorkflowIDPrefix = "transfer"
+	WorkflowIDPrefix = "open-account"
 )
 
-type TransferDetails struct {
-	TransferID  string `json:"transferId"`
-	FromAccount string `json:"fromAccount"`
-	ToAccount   string `json:"toAccount"`
-	Amount      int    `json:"amount"`
+type OpenAccountRequest struct {
+	AccountID   string `json:"accountId"`
+	ClientName  string `json:"clientName"`
+	ClientEmail string `json:"clientEmail"`
+	Address     string `json:"address"`
+	BankAccount string `json:"bankAccount"`
 }

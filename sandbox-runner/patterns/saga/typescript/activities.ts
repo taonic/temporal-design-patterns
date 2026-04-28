@@ -1,23 +1,31 @@
-import type { TransferDetails } from "./shared";
+import type { OpenAccountRequest } from "./shared";
 
-export async function withdraw(details: TransferDetails): Promise<void> {
-  console.log(`Withdrew $${details.amount} from ${details.fromAccount}`);
+export async function createAccount(req: OpenAccountRequest): Promise<void> {
+  console.log(`Created account ${req.accountId} for ${req.clientName}`);
 }
 
-export async function deposit(details: TransferDetails): Promise<void> {
-  console.log(`Deposited $${details.amount} to ${details.toAccount}`);
+export async function addAddress(req: OpenAccountRequest): Promise<void> {
+  console.log(`Added address '${req.address}' to ${req.accountId}`);
 }
 
-export async function notifyDownstream(details: TransferDetails): Promise<void> {
-  console.log(`Notify: simulating downstream failure for transfer ${details.transferId}`);
+export async function addClient(req: OpenAccountRequest): Promise<void> {
+  console.log(`Added client ${req.clientEmail} to ${req.accountId}`);
+}
+
+export async function addBankAccount(req: OpenAccountRequest): Promise<void> {
+  console.log(`Linking bank account ${req.bankAccount}: simulating downstream failure`);
   // Comment out the throw to watch the saga succeed end-to-end:
-  throw new Error("notification service down");
+  throw new Error("bank link service down");
 }
 
-export async function withdrawCompensation(details: TransferDetails): Promise<void> {
-  console.log(`Refunded $${details.amount} to ${details.fromAccount}`);
+export async function clearPostalAddresses(req: OpenAccountRequest): Promise<void> {
+  console.log(`Cleared postal addresses for ${req.accountId}`);
 }
 
-export async function depositCompensation(details: TransferDetails): Promise<void> {
-  console.log(`Reversed deposit of $${details.amount} from ${details.toAccount}`);
+export async function removeClient(req: OpenAccountRequest): Promise<void> {
+  console.log(`Removed client from ${req.accountId}`);
+}
+
+export async function disconnectBankAccounts(req: OpenAccountRequest): Promise<void> {
+  console.log(`Disconnected any bank accounts from ${req.accountId}`);
 }

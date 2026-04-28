@@ -7,7 +7,7 @@
 
 A catalog of design patterns for Temporal Workflows.
 
-- [View the live site](https://taonic.github.io/temporal-design-patterns)
+- [View the live site](https://temporal-design-patterns.fly.dev/)
 - [View the full pattern catalog](docs/README.md)
 
 ## Development

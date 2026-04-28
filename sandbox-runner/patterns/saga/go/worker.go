@@ -15,12 +15,14 @@ func main() {
 	defer c.Close()
 
 	w := worker.New(c, TaskQueue, worker.Options{})
-	w.RegisterWorkflow(TransferMoneyWorkflow)
-	w.RegisterActivity(Withdraw)
-	w.RegisterActivity(Deposit)
-	w.RegisterActivity(NotifyDownstream)
-	w.RegisterActivity(WithdrawCompensation)
-	w.RegisterActivity(DepositCompensation)
+	w.RegisterWorkflow(OpenAccountWorkflow)
+	w.RegisterActivity(CreateAccount)
+	w.RegisterActivity(AddAddress)
+	w.RegisterActivity(AddClient)
+	w.RegisterActivity(AddBankAccount)
+	w.RegisterActivity(ClearPostalAddresses)
+	w.RegisterActivity(RemoveClient)
+	w.RegisterActivity(DisconnectBankAccounts)
 
 	log.Printf("Worker listening on task queue '%s'", TaskQueue)
 	if err := w.Run(worker.InterruptCh()); err != nil {

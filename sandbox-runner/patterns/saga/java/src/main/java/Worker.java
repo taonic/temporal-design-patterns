@@ -9,7 +9,7 @@ public class Worker {
 
         WorkerFactory factory = WorkerFactory.newInstance(client);
         io.temporal.worker.Worker worker = factory.newWorker(Shared.TASK_QUEUE);
-        worker.registerWorkflowImplementationTypes(TransferMoneyWorkflow.Impl.class);
+        worker.registerWorkflowImplementationTypes(OpenAccountWorkflow.Impl.class);
         worker.registerActivitiesImplementations(new Activities.Impl());
 
         System.out.println("Worker listening on task queue '" + Shared.TASK_QUEUE + "'");

@@ -4,3 +4,11 @@ docs/.vitepress/cache
 .DS_Store
 skills
 .claude
+
+# Python build artifacts (runner deps are baked into Daytona images via pyproject.toml)
+__pycache__
+.venv
+uv.lock
+
+# Java build artifacts
+target

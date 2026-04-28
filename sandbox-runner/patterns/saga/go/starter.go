@@ -16,22 +16,23 @@ func main() {
 	}
 	defer c.Close()
 
-	transferID := fmt.Sprintf("%s-%d", WorkflowIDPrefix, time.Now().UnixMilli())
-	details := TransferDetails{
-		TransferID:  transferID,
-		FromAccount: "alice",
-		ToAccount:   "bob",
-		Amount:      100,
+	accountID := fmt.Sprintf("%s-%d", WorkflowIDPrefix, time.Now().UnixMilli())
+	req := OpenAccountRequest{
+		AccountID:   accountID,
+		ClientName:  "Alice Example",
+		ClientEmail: "alice@example.com",
+		Address:     "123 Main St, Brooklyn NY",
+		BankAccount: "DE89-3704-0044-0532-0130-00",
 	}
 
 	we, err := c.ExecuteWorkflow(
 		context.Background(),
 		client.StartWorkflowOptions{
-			ID:        transferID,
+			ID:        accountID,
 			TaskQueue: TaskQueue,
 		},
-		TransferMoneyWorkflow,
-		details,
+		OpenAccountWorkflow,
+		req,
 	)
 	if err != nil {
 		log.Fatalln("Unable to execute workflow:", err)
@@ -43,5 +44,5 @@ func main() {
 		log.Fatalln("Workflow failed:", err)
 	}
 	fmt.Println(result)
-	fmt.Printf("Open the Temporal UI and search for '%s' to see the saga history.\n", transferID)
+	fmt.Printf("Open the Temporal UI and search for '%s' to see the saga history.\n", accountID)
 }

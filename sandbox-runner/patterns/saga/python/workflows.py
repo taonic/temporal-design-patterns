@@ -6,68 +6,87 @@ from temporalio.common import RetryPolicy
 
 with workflow.unsafe.imports_passed_through():
     from activities import (
-        deposit,
-        deposit_compensation,
-        notify_downstream,
-        withdraw,
-        withdraw_compensation,
+        add_address,
+        add_bank_account,
+        add_client,
+        clear_postal_addresses,
+        create_account,
+        disconnect_bank_accounts,
+        remove_client,
     )
-    from shared import TransferDetails
+    from shared import OpenAccountRequest
 
 
 @workflow.defn
-class TransferMoneyWorkflow:
+class OpenAccountWorkflow:
     @workflow.run
-    async def run(self, details: TransferDetails) -> str:
+    async def run(self, req: OpenAccountRequest) -> str:
         compensations: List[Callable[[], Awaitable[None]]] = []
         retry = RetryPolicy(maximum_attempts=1)
 
         try:
             workflow.logger.info(
-                f"Starting transfer {details.transferId}: ${details.amount}"
+                f"Opening account {req.accountId} for {req.clientName}"
             )
 
-            compensations.append(
-                lambda: workflow.execute_activity(
-                    withdraw_compensation,
-                    details,
-                    start_to_close_timeout=timedelta(seconds=10),
-                    retry_policy=retry,
-                )
-            )
+            # Step 1: create_account has no compensation registered — leaving
+            # an empty account stub on later failure is acceptable for this demo.
             await workflow.execute_activity(
-                withdraw,
-                details,
+                create_account,
+                req,
                 start_to_close_timeout=timedelta(seconds=10),
                 retry_policy=retry,
             )
 
             compensations.append(
                 lambda: workflow.execute_activity(
-                    deposit_compensation,
-                    details,
+                    clear_postal_addresses,
+                    req,
                     start_to_close_timeout=timedelta(seconds=10),
                     retry_policy=retry,
                 )
             )
             await workflow.execute_activity(
-                deposit,
-                details,
+                add_address,
+                req,
                 start_to_close_timeout=timedelta(seconds=10),
                 retry_policy=retry,
             )
 
+            compensations.append(
+                lambda: workflow.execute_activity(
+                    remove_client,
+                    req,
+                    start_to_close_timeout=timedelta(seconds=10),
+                    retry_policy=retry,
+                )
+            )
             await workflow.execute_activity(
-                notify_downstream,
-                details,
+                add_client,
+                req,
                 start_to_close_timeout=timedelta(seconds=10),
                 retry_policy=retry,
             )
 
-            return f"Transfer {details.transferId} completed"
+            compensations.append(
+                lambda: workflow.execute_activity(
+                    disconnect_bank_accounts,
+                    req,
+                    start_to_close_timeout=timedelta(seconds=10),
+                    retry_policy=retry,
+                )
+            )
+            await workflow.execute_activity(
+                add_bank_account,
+                req,
+                start_to_close_timeout=timedelta(seconds=10),
+                retry_policy=retry,
+            )
+
+            return f"Account {req.accountId} opened"
         except Exception as err:
             workflow.logger.warning(
-                f"Transfer {details.transferId} failed ({err}); running {len(compensations)} compensation(s)"
+                f"Account {req.accountId} failed ({err}); running {len(compensations)} compensation(s)"
             )
             for compensate in reversed(compensations):
                 try:
@@ -78,4 +97,4 @@ class TransferMoneyWorkflow:
             # itself succeeds. Re-raising is the canonical pattern (see
             # saga-pattern.md best practices); this demo prefers a clean ✅
             # in the Temporal UI and surfaces the rollback via the result.
-            return f"Transfer {details.transferId} rolled back: {err}"
+            return f"Account {req.accountId} rolled back: {err}"

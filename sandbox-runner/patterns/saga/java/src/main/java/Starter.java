@@ -7,21 +7,26 @@ public class Starter {
         WorkflowServiceStubs service = WorkflowServiceStubs.newLocalServiceStubs();
         WorkflowClient client = WorkflowClient.newInstance(service);
 
-        String transferId = Shared.WORKFLOW_ID_PREFIX + "-" + System.currentTimeMillis();
-        Shared.TransferDetails details = new Shared.TransferDetails(transferId, "alice", "bob", 100);
+        String accountId = Shared.WORKFLOW_ID_PREFIX + "-" + System.currentTimeMillis();
+        Shared.OpenAccountRequest req = new Shared.OpenAccountRequest(
+                accountId,
+                "Alice Example",
+                "alice@example.com",
+                "123 Main St, Brooklyn NY",
+                "DE89-3704-0044-0532-0130-00");
 
-        TransferMoneyWorkflow workflow = client.newWorkflowStub(
-                TransferMoneyWorkflow.class,
+        OpenAccountWorkflow workflow = client.newWorkflowStub(
+                OpenAccountWorkflow.class,
                 WorkflowOptions.newBuilder()
                         .setTaskQueue(Shared.TASK_QUEUE)
-                        .setWorkflowId(transferId)
+                        .setWorkflowId(accountId)
                         .build());
 
-        System.out.println("Started workflow: " + transferId);
+        System.out.println("Started workflow: " + accountId);
 
-        String result = workflow.transfer(details);
+        String result = workflow.openAccount(req);
         System.out.println(result);
-        System.out.println("Open the Temporal UI and search for '" + transferId
+        System.out.println("Open the Temporal UI and search for '" + accountId
                 + "' to see the saga history.");
     }
 }

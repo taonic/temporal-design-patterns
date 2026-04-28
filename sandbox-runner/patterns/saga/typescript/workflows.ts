@@ -1,7 +1,7 @@
 import { log, proxyActivities } from "@temporalio/workflow";
 
 import type * as activities from "./activities";
-import type { TransferDetails } from "./shared";
+import type { OpenAccountRequest } from "./shared";
 
 const acts = proxyActivities<typeof activities>({
   startToCloseTimeout: "10 seconds",
@@ -10,25 +10,30 @@ const acts = proxyActivities<typeof activities>({
 
 type Compensation = () => Promise<void>;
 
-export async function transferMoneyWorkflow(details: TransferDetails): Promise<string> {
+export async function openAccount(req: OpenAccountRequest): Promise<string> {
   const compensations: Compensation[] = [];
 
   try {
-    log.info(`Starting transfer ${details.transferId}: $${details.amount}`);
+    log.info(`Opening account ${req.accountId} for ${req.clientName}`);
 
-    compensations.unshift(() => acts.withdrawCompensation(details));
-    await acts.withdraw(details);
+    // Step 1: createAccount has no compensation registered — leaving an empty
+    // account stub on later failure is acceptable for this demo.
+    await acts.createAccount(req);
 
-    compensations.unshift(() => acts.depositCompensation(details));
-    await acts.deposit(details);
+    compensations.unshift(() => acts.clearPostalAddresses(req));
+    await acts.addAddress(req);
 
-    await acts.notifyDownstream(details);
+    compensations.unshift(() => acts.removeClient(req));
+    await acts.addClient(req);
 
-    return `Transfer ${details.transferId} completed`;
+    compensations.unshift(() => acts.disconnectBankAccounts(req));
+    await acts.addBankAccount(req);
+
+    return `Account ${req.accountId} opened`;
   } catch (err) {
     const reason = (err as Error).message;
     log.warn(
-      `Transfer ${details.transferId} failed (${reason}); running ${compensations.length} compensation(s)`,
+      `Account ${req.accountId} failed (${reason}); running ${compensations.length} compensation(s)`,
     );
     for (const compensate of compensations) {
       try {
@@ -41,6 +46,6 @@ export async function transferMoneyWorkflow(details: TransferDetails): Promise<s
     // succeeds. Re-throwing is the canonical pattern (see saga-pattern.md
     // best practices); this demo prefers a clean ✅ in the Temporal UI and
     // surfaces the rollback via the result string.
-    return `Transfer ${details.transferId} rolled back: ${reason}`;
+    return `Account ${req.accountId} rolled back: ${reason}`;
   }
 }

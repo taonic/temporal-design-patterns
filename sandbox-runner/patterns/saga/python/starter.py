@@ -3,31 +3,32 @@ import time
 
 from temporalio.client import Client
 
-from shared import TASK_QUEUE, WORKFLOW_ID_PREFIX, TransferDetails
-from workflows import TransferMoneyWorkflow
+from shared import TASK_QUEUE, WORKFLOW_ID_PREFIX, OpenAccountRequest
+from workflows import OpenAccountWorkflow
 
 
 async def main() -> None:
     client = await Client.connect("localhost:7233")
-    transfer_id = f"{WORKFLOW_ID_PREFIX}-{int(time.time() * 1000)}"
-    details = TransferDetails(
-        transferId=transfer_id,
-        fromAccount="alice",
-        toAccount="bob",
-        amount=100,
+    account_id = f"{WORKFLOW_ID_PREFIX}-{int(time.time() * 1000)}"
+    request = OpenAccountRequest(
+        accountId=account_id,
+        clientName="Alice Example",
+        clientEmail="alice@example.com",
+        address="123 Main St, Brooklyn NY",
+        bankAccount="DE89-3704-0044-0532-0130-00",
     )
 
     handle = await client.start_workflow(
-        TransferMoneyWorkflow.run,
-        details,
-        id=transfer_id,
+        OpenAccountWorkflow.run,
+        request,
+        id=account_id,
         task_queue=TASK_QUEUE,
     )
-    print(f"Started workflow: {transfer_id}")
+    print(f"Started workflow: {account_id}")
 
     result = await handle.result()
     print(result)
-    print(f"Open the Temporal UI and search for '{transfer_id}' to see the saga history.")
+    print(f"Open the Temporal UI and search for '{account_id}' to see the saga history.")
 
 
 if __name__ == "__main__":
