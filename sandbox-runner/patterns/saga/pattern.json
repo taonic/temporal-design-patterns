@@ -6,16 +6,14 @@
       "files": ["starter.ts", "worker.ts", "workflows.ts", "activities.ts", "shared.ts"],
       "worker": "npx tsx worker.ts",
       "starter": "npx tsx starter.ts",
-      "workerProcessPattern": "tsx worker.ts",
-      "diskGib": 1
+      "workerProcessPattern": "tsx worker.ts"
     },
     "python": {
       "label": "Python",
       "files": ["starter.py", "worker.py", "workflows.py", "activities.py", "shared.py"],
       "worker": "uv run python worker.py",
       "starter": "uv run python starter.py",
-      "workerProcessPattern": "python worker.py",
-      "diskGib": 1
+      "workerProcessPattern": "python worker.py"
     },
     "go": {
       "label": "Go",
@@ -23,8 +21,7 @@
       "worker": "go run worker.go workflows.go activities.go shared.go",
       "starter": "go run starter.go workflows.go activities.go shared.go",
       "workerProcessPattern": "go run worker.go",
-      "diskGib": 2,
-      "memoryGib": 2
+      "diskGib": 2
     },
     "java": {
       "label": "Java",
