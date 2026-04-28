@@ -41,6 +41,8 @@ The following describes each step in the diagram:
 3. The client receives the initialization result while the Workflow continues executing.
 4. The Workflow executes the slower completion Activity (Phase 2) in the background.
 
+## Implementation
+
 The following examples show how each SDK implements this pattern.
 The Workflow registers an Update handler that blocks until initialization completes, then returns the result to the caller.
 The client receives the initialization result in a single round trip while the Workflow continues processing.
