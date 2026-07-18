@@ -63,7 +63,8 @@ gtag('config', 'G-KCHNTGYY7N');`]
         link: '/distributed-transaction-patterns',
         items: [
           { text: 'Saga Pattern', link: '/saga-pattern' },
-          { text: 'Early Return', link: '/early-return' }
+          { text: 'Early Return', link: '/early-return' },
+          { text: 'Cancellation Propagation', link: '/cancellation-propagation' }
         ]
       },
       {

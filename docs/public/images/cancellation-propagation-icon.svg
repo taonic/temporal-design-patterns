@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80">
+  <!-- Cancellation scope boundary -->
+  <rect x="34" y="12" width="56" height="56" rx="8" fill="none" stroke="#888" stroke-width="1.5" stroke-dasharray="4 3"/>
+
+  <!-- Concurrent child workflows inside the scope -->
+  <circle cx="62" cy="26" r="6" fill="none" stroke="#888" stroke-width="1.5"/>
+  <circle cx="62" cy="40" r="6" fill="none" stroke="#888" stroke-width="1.5"/>
+  <circle cx="62" cy="54" r="6" fill="none" stroke="#888" stroke-width="1.5"/>
+
+  <!-- Cancel request propagating into the scope -->
+  <circle cx="14" cy="40" r="9" fill="none" stroke="#cc2222" stroke-width="2.5"/>
+  <line x1="10" y1="36" x2="18" y2="44" stroke="#cc2222" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="18" y1="36" x2="10" y2="44" stroke="#cc2222" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="24" y1="40" x2="46" y2="40" stroke="#cc2222" stroke-width="2.5" stroke-linecap="round"/>
+</svg>
