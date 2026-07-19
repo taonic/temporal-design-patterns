@@ -98,6 +98,10 @@ h1:has(.pattern-page-icon) {
 .VPSidebar a.VPLink.link[href$="/batch-iterator"]::before {
   background-image: url(/images/batch-iterator-icon.svg);
 }
+.VPSidebar a.VPLink.link[href$="/cancellation-propagation.html"]::before,
+.VPSidebar a.VPLink.link[href$="/cancellation-propagation"]::before {
+  background-image: url(/images/cancellation-propagation-icon.svg);
+}
 .VPSidebar a.VPLink.link[href$="/child-workflows.html"]::before,
 .VPSidebar a.VPLink.link[href$="/child-workflows"]::before {
   background-image: url(/images/child-workflows-icon.svg);

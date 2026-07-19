@@ -1,0 +1,8 @@
+[project]
+name = "cancellation-propagation-python"
+version = "0.1.0"
+description = "Cancellation Propagation pattern demo (Python)"
+requires-python = ">=3.12"
+dependencies = [
+    "temporalio==1.9.0",
+]
