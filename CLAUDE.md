@@ -62,17 +62,7 @@ There are no test or lint commands.
 
 1. Create `docs/<pattern-name>.md`
 2. Add an entry to the appropriate sidebar section in `docs/.vitepress/config.mts`
-
-### Sidebar categories (defined in config.mts)
-
-| Category | Patterns |
-| :--- | :--- |
-| Distributed Transaction | Saga Pattern, Early Return |
-| Stateful / Lifecycle | Entity Workflow, Request-Response via Updates, Continue-As-New, Child Workflows |
-| Event-Driven | Signal with Start, Updatable Timer |
-| Business Process | Approval, Delayed Start |
-| Long-Running | Polling, Long Running Activity, Parallel Execution, Pick First (Race), Worker-Specific Task Queues |
-| SDK Examples | Java, Go |
+3. Add svg icon and make sure it appears on the nav bar
 
 ## Pattern Style Guide
 

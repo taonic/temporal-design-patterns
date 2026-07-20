@@ -483,3 +483,28 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 </div>
 
 </div>
+
+## Agentic patterns {.pattern-section-title}
+
+<div class="pattern-grid">
+<div class="pattern-tile">
+<a href="provider-fallback">
+<div class="pattern-tile-header">
+<img src="/images/provider-fallback-icon.svg" alt="Model Provider Fallback">
+<span>Model Provider Fallback</span>
+</div>
+<p>Sweeps a preference-ordered list of model providers, classifying each failure so the Workflow retries the same provider, fails over to the next, or aborts when no provider can help.</p>
+</a>
+</div>
+
+<div class="pattern-tile">
+<a href="agentic-patterns">
+<div class="pattern-tile-header">
+<img src="/images/agentic-patterns-icon.svg" alt="Agentic Patterns Overview">
+<span>Agentic Patterns Overview</span>
+</div>
+<p>Pattern selection guide for AI and agentic pipelines built on unreliable, non-deterministic, and metered model providers.</p>
+</a>
+</div>
+
+</div>
