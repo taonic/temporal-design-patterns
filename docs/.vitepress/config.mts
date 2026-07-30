@@ -115,6 +115,13 @@ gtag('config', 'G-KCHNTGYY7N');`]
           { text: 'Activity Dependency Injection', link: '/activity-dependency-injection' }
         ]
       },
+      {
+        text: 'Agentic Patterns',
+        link: '/agentic-patterns',
+        items: [
+          { text: 'Model Provider Fallback', link: '/provider-fallback' }
+        ]
+      },
     ],
     socialLinks: [
       { icon: 'github', link: 'https://github.com/taonic/temporal-design-patterns' }

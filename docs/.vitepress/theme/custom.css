@@ -182,6 +182,10 @@ h1:has(.pattern-page-icon) {
 .VPSidebar a.VPLink.link[href$="/priority-task-queues"]::before {
   background-image: url(/images/priority-task-queues-icon.svg);
 }
+.VPSidebar a.VPLink.link[href$="/provider-fallback.html"]::before,
+.VPSidebar a.VPLink.link[href$="/provider-fallback"]::before {
+  background-image: url(/images/provider-fallback-icon.svg);
+}
 .VPSidebar a.VPLink.link[href$="/request-response-via-updates.html"]::before,
 .VPSidebar a.VPLink.link[href$="/request-response-via-updates"]::before {
   background-image: url(/images/request-response-icon.svg);
