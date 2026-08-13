@@ -56,37 +56,8 @@ Keep turns in Session state when isolation overhead is unnecessary, but still em
 
 ### Cancel in-flight Steps
 
-Expose a Session or Turn cancel path (Signal, Update, or `/stop` slash command) that:
-
-1. Cancels the open Turn Child Workflow (or marks embedded turn state cancelled).
-2. Cancels in-flight Activities with a reason so Workers stop model and tool work instead of finishing spend after the user left.
-3. Cascades to Fan-Out children with an intentional `ParentClosePolicy` (usually cancel, not abandon).
-4. Emits `turn_cancelled` (or equivalent) so Progress Streaming and Cost & Token Accounting close the bracket.
-
-Idempotent tools still matter: cancel is not undo. Design write tools so a cancelled Activity retry does not double-apply.
-
-```python
-import asyncio
-
-@workflow.signal
-async def cancel_turn(self, reason: str) -> None:
-    self._cancel_reason = reason
-    if self._turn_handle:
-        self._turn_handle.cancel()  # Child Turn Workflow
-    # Embedded turns: set a flag; Activities must heartbeat and honor is_cancelled
-
-@activity.defn
-async def call_model(prompt: str) -> str:
-    # Long model/tool Activities should heartbeat and check cancellation.
-    while True:
-        if activity.is_cancelled():
-            # Best-effort provider abort if available; then acknowledge cancel.
-            raise asyncio.CancelledError()
-        activity.heartbeat("streaming")
-        ...
-```
-
-Pair cancel with [Heartbeat Long Steps](/heartbeat-long-steps) so Workers notice cancellation promptly instead of waiting for `start_to_close_timeout`.
+Use the dedicated [Cancel In-Flight Turn](/cancel-in-flight-turn) pattern: cancel the Turn Child (keep the Session), heartbeat Activities, cascade children, emit `turn_cancelled`.
+Cancel is not undo—pair with idempotent tools and [Tool Compensation](/tool-compensation) when writes may have partially applied.
 
 ## When to use
 
@@ -125,9 +96,11 @@ You accept Child Workflow overhead or the discipline of explicit sub-state.
 ## Related patterns
 
 - [Session Workflow](/session-workflow)
+- [Cancel In-Flight Turn](/cancel-in-flight-turn)
 - [Fan-Out Subagents](/fanout-subagents)
 - [Operator Slash Commands](/operator-slash-commands)
 - [Scheduled Agent Turns](/scheduled-agent-turns)
+- [Heartbeat Long Steps](/heartbeat-long-steps)
 - [Standardized Event Stream](/standardized-event-stream)
 
 ## Sample code

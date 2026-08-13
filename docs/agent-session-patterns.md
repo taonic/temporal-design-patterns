@@ -24,6 +24,15 @@ These patterns model long-lived agent sessions and how turns attach to them.
 </a>
 </div>
 <div class="pattern-tile">
+<a href="cancel-in-flight-turn">
+<div class="pattern-tile-header">
+<img src="/images/long-running-activity-icon.svg" alt="Cancel In-Flight Turn">
+<span>Cancel In-Flight Turn</span>
+</div>
+<p>Abort a Turn's model and tool Steps without killing the Session.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="session-signal-and-start">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Session with Signal-and-Start">
@@ -68,6 +77,15 @@ These patterns model long-lived agent sessions and how turns attach to them.
 <p>Pin definition and binding revisions per Session.</p>
 </a>
 </div>
+<div class="pattern-tile">
+<a href="agent-worker-versioning">
+<div class="pattern-tile-header">
+<img src="/images/worker-specific-taskqueue-icon.svg" alt="Agent Worker Versioning">
+<span>Agent Worker Versioning</span>
+</div>
+<p>Pin Worker build / Deployment Version separately from config.</p>
+</a>
+</div>
 </div>
 
 ## Choosing a Pattern
@@ -75,6 +93,8 @@ These patterns model long-lived agent sessions and how turns attach to them.
 **You need session workflow behavior:** One Workflow owns a session, memory, and event stream. Use [Session Workflow](/session-workflow).
 
 **You need turn workflow behavior:** Isolate each turn as a child Workflow or sub-state. Use [Turn Workflow](/turn-workflow).
+
+**You need to abort an open Turn without ending the Session:** Use [Cancel In-Flight Turn](/cancel-in-flight-turn).
 
 **You need session with signal-and-start behavior:** Create or signal a session from the first message. Use [Session with Signal-and-Start](/session-signal-and-start).
 
@@ -85,6 +105,8 @@ These patterns model long-lived agent sessions and how turns attach to them.
 **You need proactive or recurring agent cycles:** Use [Scheduled Agent Turns](/scheduled-agent-turns).
 
 **You need reproducible agent config vs placement:** Use [Agent Definition Versioning](/agent-definition-versioning).
+
+**You need replay-safe Worker code rollouts for open Sessions:** Use [Agent Worker Versioning](/agent-worker-versioning).
 
 ## Related Sections
 

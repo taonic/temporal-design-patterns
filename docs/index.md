@@ -27,6 +27,15 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 </a>
 </div>
 <div class="pattern-tile">
+<a href="cancel-in-flight-turn">
+<div class="pattern-tile-header">
+<img src="/images/long-running-activity-icon.svg" alt="Cancel In-Flight Turn">
+<span>Cancel In-Flight Turn</span>
+</div>
+<p>Abort a Turn's model and tool Steps without killing the Session.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="session-signal-and-start">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Session with Signal-and-Start">
@@ -69,6 +78,15 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <span>Agent Definition Versioning</span>
 </div>
 <p>Pin definition and binding revisions per Session.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="agent-worker-versioning">
+<div class="pattern-tile-header">
+<img src="/images/worker-specific-taskqueue-icon.svg" alt="Agent Worker Versioning">
+<span>Agent Worker Versioning</span>
+</div>
+<p>Pin Worker build / Deployment Version separately from config.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -572,6 +590,15 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <span>Agent Tracing</span>
 </div>
 <p>Correlate spans with session and step IDs.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="session-visibility-attributes">
+<div class="pattern-tile-header">
+<img src="/images/event-accumulator-icon.svg" alt="Session Visibility Attributes">
+<span>Session Visibility Attributes</span>
+</div>
+<p>Search Attributes so ops can list Sessions by status and tenant.</p>
 </a>
 </div>
 <div class="pattern-tile">

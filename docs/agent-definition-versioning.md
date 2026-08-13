@@ -85,7 +85,7 @@ Keep using `prompt_id` + `prompt_version` inside a definition revision, or treat
 
 ### Relationship to Worker Versioning
 
-Pin Worker build IDs so Workflow/Activity *code* stays replay-compatible.
+Use [Agent Worker Versioning](/agent-worker-versioning) to pin Worker Deployment / build identity so Workflow/Activity *code* stays replay-compatible.
 Still pin definition/binding so config loaded from object storage cannot drift under that code.
 
 ### Explicit migration
@@ -133,6 +133,7 @@ You operate two artifact pipelines and migration rules.
 
 ## Related patterns
 
+- [Agent Worker Versioning](/agent-worker-versioning)
 - [Prompt Versioning](/prompt-versioning)
 - [Durable Model Call](/durable-model-call)
 - [Activity Tool](/activity-tool)

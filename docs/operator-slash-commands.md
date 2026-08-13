@@ -77,6 +77,7 @@ You must validate command grammar and authorize who may send Signals.
 
 - [Approval-Gated Tools](/approval-gated-tools)
 - [Session-Scoped Approvals](/session-scoped-approvals)
+- [Cancel In-Flight Turn](/cancel-in-flight-turn)
 - [Session Workflow](/session-workflow)
 
 ## Sample code

@@ -35,16 +35,7 @@ Map `session_id` to a Temporal Workflow ID (or a Search Attribute that resolves 
 
 ### Search Attributes for ops
 
-Upsert custom Search Attributes on Session start and Turn boundaries so operators can find work without knowing the Workflow Id:
-
-| Attribute | Example use |
-| :--- | :--- |
-| `sessionId` | Join channel thread → Workflow |
-| `agentId` | Filter by agent configuration |
-| `tenantId` / fairness key | Multi-tenant ops and Fairness debugging |
-| `turnStatus` | `running` / `awaiting_approval` / `cancelled` |
-| `source` | `interactive` vs `schedule` ([Scheduled Agent Turns](/scheduled-agent-turns)) |
-
+Use [Session Visibility Attributes](/session-visibility-attributes) to upsert bounded custom Search Attributes (`AgentTurnStatus`, `AgentTenantId`, …) on Session start and Turn boundaries so operators can find work without knowing the Workflow Id.
 Keep attribute cardinality bounded. Do not index free-form prompts.
 
 ## When to use
@@ -85,6 +76,7 @@ The trade-off is that you must design ID formats and ownership rules up front in
 - [Session with Signal-and-Start](/session-signal-and-start)
 - [Entity Agent](/entity-agent)
 - [Continue-As-New Session](/continue-as-new-session)
+- [Session Visibility Attributes](/session-visibility-attributes)
 - [Agent Tracing](/agent-tracing)
 
 ## Sample code

@@ -1,0 +1,11 @@
+[project]
+name = "cancel_in_flight_turn"
+version = "0.1.0"
+description = "Agentic pattern sample"
+requires-python = ">=3.12"
+dependencies = [
+    "temporalio==1.9.0",
+]
+
+[tool.uv]
+package = false

@@ -24,6 +24,15 @@ These patterns make agent behavior reconstructable from events, traces, and metr
 </a>
 </div>
 <div class="pattern-tile">
+<a href="session-visibility-attributes">
+<div class="pattern-tile-header">
+<img src="/images/event-accumulator-icon.svg" alt="Session Visibility Attributes">
+<span>Session Visibility Attributes</span>
+</div>
+<p>Search Attributes so ops can list Sessions by status and tenant.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="cost-token-accounting">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Cost & Token Accounting">
@@ -66,6 +75,8 @@ These patterns make agent behavior reconstructable from events, traces, and metr
 **You need standardized event stream behavior:** One ordered stream per session. Use [Standardized Event Stream](/standardized-event-stream).
 
 **You need agent tracing behavior:** Correlate spans with session and step IDs. Use [Agent Tracing](/agent-tracing).
+
+**You need to list Sessions by status/tenant in Temporal Visibility:** Use [Session Visibility Attributes](/session-visibility-attributes).
 
 **You need cost & token accounting behavior:** Aggregate usage per call, turn, and session. Use [Cost & Token Accounting](/cost-token-accounting).
 

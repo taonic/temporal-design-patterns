@@ -139,6 +139,7 @@ You must design resume semantics and keep heartbeat payloads small and non-sensi
 - [Activity Tool](/activity-tool)
 - [Model Timeout Profiles](/model-timeout-profiles)
 - [Turn Workflow](/turn-workflow)
+- [Cancel In-Flight Turn](/cancel-in-flight-turn)
 - [Progress Streaming](/progress-streaming)
 - [Resumable Correction](/resumable-correction)
 - [Local Activity Tools](/local-activity-tools)

@@ -34,11 +34,13 @@ export default withMermaid(defineConfig({
         items: [
           { text: 'Session Workflow', link: '/session-workflow' },
           { text: 'Turn Workflow', link: '/turn-workflow' },
+          { text: 'Cancel In-Flight Turn', link: '/cancel-in-flight-turn' },
           { text: 'Session with Signal-and-Start', link: '/session-signal-and-start' },
           { text: 'Entity Agent', link: '/entity-agent' },
           { text: 'Continue-As-New Session', link: '/continue-as-new-session' },
           { text: 'Scheduled Agent Turns', link: '/scheduled-agent-turns' },
           { text: 'Agent Definition Versioning', link: '/agent-definition-versioning' },
+          { text: 'Agent Worker Versioning', link: '/agent-worker-versioning' },
         ]
       },
       {
@@ -127,6 +129,7 @@ export default withMermaid(defineConfig({
           { text: 'Standardized Event Stream', link: '/standardized-event-stream' },
           { text: 'Progress Streaming', link: '/progress-streaming' },
           { text: 'Agent Tracing', link: '/agent-tracing' },
+          { text: 'Session Visibility Attributes', link: '/session-visibility-attributes' },
           { text: 'Cost & Token Accounting', link: '/cost-token-accounting' },
           { text: 'Agent Step Retry Alerting', link: '/agent-step-retry-alerting' },
           { text: 'Eval-Backed Behavior Checks', link: '/eval-backed-behavior-checks' },
