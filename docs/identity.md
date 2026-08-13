@@ -72,6 +72,7 @@ The trade-off is that you must design ID formats and ownership rules up front in
 
 ## Related patterns
 
+- [Initiator vs Current Principal](/initiator-vs-current-principal)
 - [Session Workflow](/session-workflow)
 - [Session with Signal-and-Start](/session-signal-and-start)
 - [Entity Agent](/entity-agent)

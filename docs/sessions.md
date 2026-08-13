@@ -96,6 +96,15 @@ Long-lived agent Sessions, Turns, and lifecycle controls.
 </a>
 </div>
 <div class="pattern-tile">
+<a href="initiator-vs-current-principal">
+<div class="pattern-tile-header">
+<img src="/images/request-response-icon.svg" alt="Initiator vs Current Principal">
+<span>Initiator vs Current Principal</span>
+</div>
+<p>Pin Session owner separately from Delivery caller.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="operator-session-reset">
 <div class="pattern-tile-header">
 <img src="/images/resumable-activity-icon.svg" alt="Operator Session Reset">
@@ -129,6 +138,8 @@ Long-lived agent Sessions, Turns, and lifecycle controls.
 **You need an operator playbook for stuck Sessions:** Use [Operator Session Reset](/operator-session-reset).
 
 **You need Sessions that must finish without parking for a human:** Use [Task-Mode Session](/task-mode-session).
+
+**You need Session owner ≠ latest Delivery caller:** Use [Initiator vs Current Principal](/initiator-vs-current-principal).
 
 ## Related Sections
 

@@ -131,6 +131,7 @@ You must operate a secret store and channel grant UX.
 
 ## Related patterns
 
+- [Connection Discovery](/connection-discovery)
 - [Ask-User Wait](/ask-user-wait)
 - [Approval-Gated Tools](/approval-gated-tools)
 - [Callback Tool](/callback-tool)

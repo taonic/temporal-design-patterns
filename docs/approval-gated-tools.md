@@ -99,6 +99,7 @@ You add latency and operational load for gated tools.
 
 ## Related patterns
 
+- [Failure-Triggered Approval](/failure-triggered-approval)
 - [Root-Mediated Subagent Approvals](/root-mediated-subagent-approvals)
 - [Session-Scoped Approvals](/session-scoped-approvals)
 - [Updatable Approval Timer](/updatable-approval-timer)

@@ -89,6 +89,7 @@ Schemas must evolve carefully alongside prompts.
 
 ## Related patterns
 
+- [Model-Output Projection](/model-output-projection)
 - [Durable Model Call](/durable-model-call)
 - [Agent Tool Loop](/agent-tool-loop)
 - [Type-Checked Scripts](/type-checked-scripts)

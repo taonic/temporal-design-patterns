@@ -83,6 +83,7 @@ You maintain fixtures as product behavior evolves.
 
 ## Related patterns
 
+- [Durability Crash-Test CI](/durability-crash-test-ci)
 - [Standardized Event Stream](/standardized-event-stream)
 - [Approval-Gated Tools](/approval-gated-tools)
 - [Filesystem Authoring](/filesystem-authoring)

@@ -99,6 +99,15 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 </a>
 </div>
 <div class="pattern-tile">
+<a href="initiator-vs-current-principal">
+<div class="pattern-tile-header">
+<img src="/images/request-response-icon.svg" alt="Initiator vs Current Principal">
+<span>Initiator vs Current Principal</span>
+</div>
+<p>Pin Session owner separately from Delivery caller.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="operator-session-reset">
 <div class="pattern-tile-header">
 <img src="/images/resumable-activity-icon.svg" alt="Operator Session Reset">
@@ -268,6 +277,33 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <span>On-Demand Skill Load</span>
 </div>
 <p>Load Skill bodies into a Turn only when needed.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="effect-classified-tools">
+<div class="pattern-tile-header">
+<img src="/images/local-activities-icon.svg" alt="Effect-Classified Tools">
+<span>Effect-Classified Tools</span>
+</div>
+<p>Declare pure, state, or external Tool effects.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="connection-discovery">
+<div class="pattern-tile-header">
+<img src="/images/signal-with-start-icon.svg" alt="Connection Discovery">
+<span>Connection Discovery</span>
+</div>
+<p>Search connections then call qualified Tools.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="model-output-projection">
+<div class="pattern-tile-header">
+<img src="/images/event-accumulator-icon.svg" alt="Model-Output Projection">
+<span>Model-Output Projection</span>
+</div>
+<p>Full Tool results for UI; projection for the model.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -443,6 +479,15 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 </a>
 </div>
 <div class="pattern-tile">
+<a href="failure-triggered-approval">
+<div class="pattern-tile-header">
+<img src="/images/approval-icon.svg" alt="Failure-Triggered Approval">
+<span>Failure-Triggered Approval</span>
+</div>
+<p>Escalate only after sandboxed Tool denials.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="ask-user-wait">
 <div class="pattern-tile-header">
 <img src="/images/approval-icon.svg" alt="Ask-User Wait">
@@ -597,6 +642,15 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 </a>
 </div>
 <div class="pattern-tile">
+<a href="sandbox-profile-tiers">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="Sandbox Profile Tiers">
+<span>Sandbox Profile Tiers</span>
+</div>
+<p>Pin read-only, workspace-write, or full-access.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="type-checked-scripts">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Type-Checked Scripts">
@@ -644,6 +698,15 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <span>Safety-Profiled Tools</span>
 </div>
 <p>Declare inherently safe, idempotent, or non-idempotent tools.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="command-safety-classification">
+<div class="pattern-tile-header">
+<img src="/images/non-retryable-errors-icon.svg" alt="Command Safety Classification">
+<span>Command Safety Classification</span>
+</div>
+<p>Classify shell argv before exec or Approval.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -825,6 +888,24 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <span>Eval-Backed Behavior Checks</span>
 </div>
 <p>Regression gates for agent behavior.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="durability-crash-test-ci">
+<div class="pattern-tile-header">
+<img src="/images/continue-as-new-icon.svg" alt="Durability Crash-Test CI">
+<span>Durability Crash-Test CI</span>
+</div>
+<p>Replay fixture histories in CI before merge.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="follow-up-suggestions">
+<div class="pattern-tile-header">
+<img src="/images/signal-with-start-icon.svg" alt="Follow-up Suggestions">
+<span>Follow-up Suggestions</span>
+</div>
+<p>Emit non-fatal next-step chips after a Turn.</p>
 </a>
 </div>
 <div class="pattern-tile">

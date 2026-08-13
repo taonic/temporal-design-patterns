@@ -76,6 +76,7 @@ You must version the event schema and bound payload size.
 
 ## Related patterns
 
+- [Follow-up Suggestions](/follow-up-suggestions)
 - [Session Workflow](/session-workflow)
 - [Agent Tracing](/agent-tracing)
 - [Cost & Token Accounting](/cost-token-accounting)

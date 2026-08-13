@@ -24,6 +24,15 @@ Sandbox orchestration, typed scripts, and sticky Worker placement for code-runni
 </a>
 </div>
 <div class="pattern-tile">
+<a href="sandbox-profile-tiers">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="Sandbox Profile Tiers">
+<span>Sandbox Profile Tiers</span>
+</div>
+<p>Pin read-only, workspace-write, or full-access.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="type-checked-scripts">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Type-Checked Scripts">
@@ -63,6 +72,8 @@ Sandbox orchestration, typed scripts, and sticky Worker placement for code-runni
 **You need to fan out sandboxed script work:** Use [Script Fan-Out](/script-fan-out).
 
 **You need sticky queues for sandbox Workers:** Use [Sticky Sandbox Task Queues](/sticky-sandbox-task-queues).
+
+**You need named isolation tiers for shell Tools:** Use [Sandbox Profile Tiers](/sandbox-profile-tiers).
 
 ## Related Sections
 

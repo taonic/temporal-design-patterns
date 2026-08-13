@@ -42,6 +42,7 @@ export default withMermaid(defineConfig({
           { text: 'Continue-As-New Session', link: '/continue-as-new-session' },
           { text: 'Scheduled Agent Turns', link: '/scheduled-agent-turns' },
           { text: 'Task-Mode Session', link: '/task-mode-session' },
+          { text: 'Initiator vs Current Principal', link: '/initiator-vs-current-principal' },
           { text: 'Operator Session Reset', link: '/operator-session-reset' },
         ]
       },
@@ -70,6 +71,9 @@ export default withMermaid(defineConfig({
           { text: 'Typed Agent Operations', link: '/typed-agent-operations' },
           { text: 'Agent Tool Loop', link: '/agent-tool-loop' },
           { text: 'On-Demand Skill Load', link: '/on-demand-skill-load' },
+          { text: 'Effect-Classified Tools', link: '/effect-classified-tools' },
+          { text: 'Connection Discovery', link: '/connection-discovery' },
+          { text: 'Model-Output Projection', link: '/model-output-projection' },
           { text: 'Tool Retry Profiles', link: '/tool-retry-profiles' },
           { text: 'Poison Tool Quarantine', link: '/poison-tool-quarantine' },
           { text: 'Heartbeat Long Steps', link: '/heartbeat-long-steps' },
@@ -98,6 +102,7 @@ export default withMermaid(defineConfig({
         link: '/human-interaction',
         items: [
           { text: 'Approval-Gated Tools', link: '/approval-gated-tools' },
+          { text: 'Failure-Triggered Approval', link: '/failure-triggered-approval' },
           { text: 'Ask-User Wait', link: '/ask-user-wait' },
           { text: 'Connection Auth Wait', link: '/connection-auth-wait' },
           { text: 'Session-Scoped Approvals', link: '/session-scoped-approvals' },
@@ -124,6 +129,7 @@ export default withMermaid(defineConfig({
         items: [
           { text: 'Code Mode Orchestrator', link: '/code-mode-orchestrator' },
           { text: 'Tools-Only Sandbox', link: '/tools-only-sandbox' },
+          { text: 'Sandbox Profile Tiers', link: '/sandbox-profile-tiers' },
           { text: 'Type-Checked Scripts', link: '/type-checked-scripts' },
           { text: 'Script Fan-Out', link: '/script-fan-out' },
           { text: 'Sticky Sandbox Task Queues', link: '/sticky-sandbox-task-queues' },
@@ -134,6 +140,7 @@ export default withMermaid(defineConfig({
         link: '/safety',
         items: [
           { text: 'Safety-Profiled Tools', link: '/safety-profiled-tools' },
+          { text: 'Command Safety Classification', link: '/command-safety-classification' },
           { text: 'Guardrail Steps', link: '/guardrail-steps' },
           { text: 'Security Profiles per Agent', link: '/security-profiles-per-agent' },
           { text: 'Network & Resource Sandboxing', link: '/network-resource-sandboxing' },
@@ -163,6 +170,8 @@ export default withMermaid(defineConfig({
           { text: 'Session Spend Caps', link: '/session-spend-caps' },
           { text: 'Agent Step Retry Alerting', link: '/agent-step-retry-alerting' },
           { text: 'Eval-Backed Behavior Checks', link: '/eval-backed-behavior-checks' },
+          { text: 'Durability Crash-Test CI', link: '/durability-crash-test-ci' },
+          { text: 'Follow-up Suggestions', link: '/follow-up-suggestions' },
         ]
       },
       {

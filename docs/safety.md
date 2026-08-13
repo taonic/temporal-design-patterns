@@ -15,6 +15,15 @@ Label tools and environments so policy can gate or block unsafe calls.
 </a>
 </div>
 <div class="pattern-tile">
+<a href="command-safety-classification">
+<div class="pattern-tile-header">
+<img src="/images/non-retryable-errors-icon.svg" alt="Command Safety Classification">
+<span>Command Safety Classification</span>
+</div>
+<p>Classify shell argv before exec or Approval.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="guardrail-steps">
 <div class="pattern-tile-header">
 <img src="/images/non-retryable-errors-icon.svg" alt="Guardrail Steps">
@@ -52,6 +61,8 @@ Label tools and environments so policy can gate or block unsafe calls.
 **You need environment-specific tool and network allowances:** Use [Security Profiles per Agent](/security-profiles-per-agent).
 
 **You need to bound sandboxes as Workflow-controlled data planes:** Use [Network & Resource Sandboxing](/network-resource-sandboxing).
+
+**You need argv-level shell policy before exec:** Use [Command Safety Classification](/command-safety-classification).
 
 ## Related Sections
 

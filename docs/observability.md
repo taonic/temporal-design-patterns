@@ -77,6 +77,24 @@ Events, streams, traces, Visibility, cost, and eval gates for agent work.
 <p>Regression gates for agent behavior.</p>
 </a>
 </div>
+<div class="pattern-tile">
+<a href="durability-crash-test-ci">
+<div class="pattern-tile-header">
+<img src="/images/continue-as-new-icon.svg" alt="Durability Crash-Test CI">
+<span>Durability Crash-Test CI</span>
+</div>
+<p>Replay fixture histories in CI before merge.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="follow-up-suggestions">
+<div class="pattern-tile-header">
+<img src="/images/signal-with-start-icon.svg" alt="Follow-up Suggestions">
+<span>Follow-up Suggestions</span>
+</div>
+<p>Emit non-fatal next-step chips after a Turn.</p>
+</a>
+</div>
 </div>
 
 ## Choosing a Pattern
@@ -96,6 +114,10 @@ Events, streams, traces, Visibility, cost, and eval gates for agent work.
 **You need alerts when Steps retry past a threshold:** Use [Agent Step Retry Alerting](/agent-step-retry-alerting).
 
 **You need regression gates for agent behavior:** Use [Eval-Backed Behavior Checks](/eval-backed-behavior-checks).
+
+**You need CI replay gates for agent Workflows:** Use [Durability Crash-Test CI](/durability-crash-test-ci).
+
+**You need post-Turn suggestion chips:** Use [Follow-up Suggestions](/follow-up-suggestions).
 
 ## Related Sections
 

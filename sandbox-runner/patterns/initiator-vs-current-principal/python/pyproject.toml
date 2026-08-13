@@ -1,0 +1,8 @@
+[project]
+name = "initiator_vs_current_principal"
+version = "0.1.0"
+description = "Agentic pattern sample"
+requires-python = ">=3.12"
+dependencies = ["temporalio==1.9.0"]
+[tool.uv]
+package = false

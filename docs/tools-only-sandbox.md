@@ -82,6 +82,7 @@ You must maintain a capable sandbox implementation.
 
 ## Related patterns
 
+- [Sandbox Profile Tiers](/sandbox-profile-tiers)
 - [Code Mode Orchestrator](/code-mode-orchestrator)
 - [Type-Checked Scripts](/type-checked-scripts)
 - [Network & Resource Sandboxing](/network-resource-sandboxing)

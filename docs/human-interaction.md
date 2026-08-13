@@ -15,6 +15,15 @@ Pause Turns for approvals, clarifying answers, connection grants, and operator c
 </a>
 </div>
 <div class="pattern-tile">
+<a href="failure-triggered-approval">
+<div class="pattern-tile-header">
+<img src="/images/approval-icon.svg" alt="Failure-Triggered Approval">
+<span>Failure-Triggered Approval</span>
+</div>
+<p>Escalate only after sandboxed Tool denials.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="ask-user-wait">
 <div class="pattern-tile-header">
 <img src="/images/approval-icon.svg" alt="Ask-User Wait">
@@ -85,6 +94,8 @@ Pause Turns for approvals, clarifying answers, connection grants, and operator c
 **You need to park until a human fixes bad inputs:** Use [Resumable Correction](/resumable-correction).
 
 **You need deterministic textual operator commands:** Use [Operator Slash Commands](/operator-slash-commands).
+
+**You need Approvals only after Sandbox denials:** Use [Failure-Triggered Approval](/failure-triggered-approval).
 
 ## Related Sections
 

@@ -83,6 +83,8 @@ Authors must classify tools honestly.
 
 ## Related patterns
 
+- [Command Safety Classification](/command-safety-classification)
+- [Effect-Classified Tools](/effect-classified-tools)
 - [Tool Retry Profiles](/tool-retry-profiles)
 - [Guardrail Steps](/guardrail-steps)
 - [Approval-Gated Tools](/approval-gated-tools)

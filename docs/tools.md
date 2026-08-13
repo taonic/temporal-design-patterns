@@ -69,6 +69,33 @@ How agents invoke side effects: Activity, Workflow, Callback, Nexus, and tool-lo
 </a>
 </div>
 <div class="pattern-tile">
+<a href="effect-classified-tools">
+<div class="pattern-tile-header">
+<img src="/images/local-activities-icon.svg" alt="Effect-Classified Tools">
+<span>Effect-Classified Tools</span>
+</div>
+<p>Declare pure, state, or external Tool effects.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="connection-discovery">
+<div class="pattern-tile-header">
+<img src="/images/signal-with-start-icon.svg" alt="Connection Discovery">
+<span>Connection Discovery</span>
+</div>
+<p>Search connections then call qualified Tools.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="model-output-projection">
+<div class="pattern-tile-header">
+<img src="/images/event-accumulator-icon.svg" alt="Model-Output Projection">
+<span>Model-Output Projection</span>
+</div>
+<p>Full Tool results for UI; projection for the model.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="tool-retry-profiles">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Tool Retry Profiles">
@@ -173,6 +200,12 @@ How agents invoke side effects: Activity, Workflow, Callback, Nexus, and tool-lo
 **You need to compile MCP/OpenAPI catalogs into Activities:** Use [MCP / OpenAPI Tooling](/mcp-openapi-tooling).
 
 **You need progressive Skill bodies without bloating every Turn:** Use [On-Demand Skill Load](/on-demand-skill-load).
+
+**You need pure/state/external Tool dispatch:** Use [Effect-Classified Tools](/effect-classified-tools).
+
+**You need search-then-load connection Tools:** Use [Connection Discovery](/connection-discovery).
+
+**You need rich channel Tool results and short model views:** Use [Model-Output Projection](/model-output-projection).
 
 ## Related Sections
 
