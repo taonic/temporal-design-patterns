@@ -113,6 +113,7 @@ You accept summarization loss and must validate critical facts survive compactio
 
 ## Related patterns
 
+- [Compaction Tool-State Continuity](/compaction-tool-state-continuity)
 - [Session Memory](/session-memory)
 - [Continue-As-New Session](/continue-as-new-session)
 - [Claim-Check Payloads](/claim-check-payloads)

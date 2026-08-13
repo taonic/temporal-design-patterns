@@ -87,6 +87,15 @@ Long-lived agent Sessions, Turns, and lifecycle controls.
 </a>
 </div>
 <div class="pattern-tile">
+<a href="task-mode-session">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="Task-Mode Session">
+<span>Task-Mode Session</span>
+</div>
+<p>Pin Sessions to finish without parking for humans.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="operator-session-reset">
 <div class="pattern-tile-header">
 <img src="/images/resumable-activity-icon.svg" alt="Operator Session Reset">
@@ -118,6 +127,8 @@ Long-lived agent Sessions, Turns, and lifecycle controls.
 **You need proactive or recurring agent cycles:** Use [Scheduled Agent Turns](/scheduled-agent-turns).
 
 **You need an operator playbook for stuck Sessions:** Use [Operator Session Reset](/operator-session-reset).
+
+**You need Sessions that must finish without parking for a human:** Use [Task-Mode Session](/task-mode-session).
 
 ## Related Sections
 

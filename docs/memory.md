@@ -24,6 +24,15 @@ What a Session remembers, compacts, externalizes, and claim-checks.
 </a>
 </div>
 <div class="pattern-tile">
+<a href="compaction-tool-state-continuity">
+<div class="pattern-tile-header">
+<img src="/images/event-accumulator-icon.svg" alt="Compaction Tool-State Continuity">
+<span>Compaction Tool-State Continuity</span>
+</div>
+<p>Preserve todos and Approvals across compaction.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="cross-session-memory">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Cross-Session Memory">
@@ -63,6 +72,8 @@ What a Session remembers, compacts, externalizes, and claim-checks.
 **You need large memory outside Workflow history:** Use [Externalized Memory](/externalized-memory).
 
 **You need to pass large blobs by reference:** Use [Claim-Check Payloads](/claim-check-payloads).
+
+**You need todos/Approvals to survive compaction:** Use [Compaction Tool-State Continuity](/compaction-tool-state-continuity).
 
 ## Related Sections
 

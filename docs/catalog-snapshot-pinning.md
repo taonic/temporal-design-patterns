@@ -120,6 +120,7 @@ You store immutable blobs and pass snapshot ids everywhere.
 
 ## Related patterns
 
+- [Dynamic Capability Resolution](/dynamic-capability-resolution)
 - [Agent Definition Versioning](/agent-definition-versioning)
 - [Prompt Versioning](/prompt-versioning)
 - [Agent Worker Versioning](/agent-worker-versioning)

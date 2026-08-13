@@ -24,6 +24,15 @@ Pin definition, catalog, binding, Worker, and prompt revisions so parks and roll
 </a>
 </div>
 <div class="pattern-tile">
+<a href="dynamic-capability-resolution">
+<div class="pattern-tile-header">
+<img src="/images/continue-as-new-icon.svg" alt="Dynamic Capability Resolution">
+<span>Dynamic Capability Resolution</span>
+</div>
+<p>Resolve Tools/Skills from principal then snapshot.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="binding-readiness-gate">
 <div class="pattern-tile-header">
 <img src="/images/worker-specific-taskqueue-icon.svg" alt="Binding Readiness Gate">
@@ -85,6 +94,8 @@ Pin definition, catalog, binding, Worker, and prompt revisions so parks and roll
 **You need to version prompts without redeploying Workflows:** Use [Prompt Versioning](/prompt-versioning).
 
 **You need to pin A/B prompt or model variants per Session:** Use [Prompt Experiment Pins](/prompt-experiment-pins).
+
+**You need Tools/Skills resolved from principal then frozen:** Use [Dynamic Capability Resolution](/dynamic-capability-resolution).
 
 ## Related Sections
 

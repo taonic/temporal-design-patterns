@@ -60,6 +60,15 @@ How agents invoke side effects: Activity, Workflow, Callback, Nexus, and tool-lo
 </a>
 </div>
 <div class="pattern-tile">
+<a href="on-demand-skill-load">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="On-Demand Skill Load">
+<span>On-Demand Skill Load</span>
+</div>
+<p>Load Skill bodies into a Turn only when needed.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="tool-retry-profiles">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Tool Retry Profiles">
@@ -162,6 +171,8 @@ How agents invoke side effects: Activity, Workflow, Callback, Nexus, and tool-lo
 **You need to undo tool side effects:** Use [Tool Compensation](/tool-compensation).
 
 **You need to compile MCP/OpenAPI catalogs into Activities:** Use [MCP / OpenAPI Tooling](/mcp-openapi-tooling).
+
+**You need progressive Skill bodies without bloating every Turn:** Use [On-Demand Skill Load](/on-demand-skill-load).
 
 ## Related Sections
 

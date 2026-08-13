@@ -59,6 +59,15 @@ HTTP and messaging ingress, delivery ledgers, and capability-separated handles.
 <p>Re-check auth at apply, not only at channel accept.</p>
 </a>
 </div>
+<div class="pattern-tile">
+<a href="mid-turn-delivery-coalescing">
+<div class="pattern-tile-header">
+<img src="/images/signal-with-start-icon.svg" alt="Mid-Turn Delivery Coalescing">
+<span>Mid-Turn Delivery Coalescing</span>
+</div>
+<p>Fold queued same-initiator Deliveries into the next Turn.</p>
+</a>
+</div>
 </div>
 
 ## Choosing a Pattern
@@ -74,6 +83,8 @@ HTTP and messaging ingress, delivery ledgers, and capability-separated handles.
 **You need write credentials separate from stream/watch links:** Use [Split Resume and Observe Handles](/split-resume-observe-handles).
 
 **You need auth re-checked when a queued Delivery applies:** Use [Delivery Authorization Timing](/delivery-authorization-timing).
+
+**You need mid-Turn messages folded into the next Turn:** Use [Mid-Turn Delivery Coalescing](/mid-turn-delivery-coalescing).
 
 ## Related Sections
 

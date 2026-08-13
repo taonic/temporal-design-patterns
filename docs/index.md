@@ -90,6 +90,15 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 </a>
 </div>
 <div class="pattern-tile">
+<a href="task-mode-session">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="Task-Mode Session">
+<span>Task-Mode Session</span>
+</div>
+<p>Pin Sessions to finish without parking for humans.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="operator-session-reset">
 <div class="pattern-tile-header">
 <img src="/images/resumable-activity-icon.svg" alt="Operator Session Reset">
@@ -128,6 +137,15 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <span>Catalog Snapshot Pinning</span>
 </div>
 <p>Pin tool/prompt catalog bytes so park cannot drift.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="dynamic-capability-resolution">
+<div class="pattern-tile-header">
+<img src="/images/continue-as-new-icon.svg" alt="Dynamic Capability Resolution">
+<span>Dynamic Capability Resolution</span>
+</div>
+<p>Resolve Tools/Skills from principal then snapshot.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -241,6 +259,15 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <span>Agent Tool Loop</span>
 </div>
 <p>Durable model↔tool loop until a final reply.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="on-demand-skill-load">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="On-Demand Skill Load">
+<span>On-Demand Skill Load</span>
+</div>
+<p>Load Skill bodies into a Turn only when needed.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -493,6 +520,15 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 </a>
 </div>
 <div class="pattern-tile">
+<a href="root-mediated-subagent-approvals">
+<div class="pattern-tile-header">
+<img src="/images/approval-icon.svg" alt="Root-Mediated Subagent Approvals">
+<span>Root-Mediated Subagent Approvals</span>
+</div>
+<p>Proxy child Approvals through the parent Session.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="persistent-subagent-threads">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Persistent Subagent Threads">
@@ -667,6 +703,15 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <span>Context Compaction</span>
 </div>
 <p>Summarize history to keep model context bounded.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="compaction-tool-state-continuity">
+<div class="pattern-tile-header">
+<img src="/images/event-accumulator-icon.svg" alt="Compaction Tool-State Continuity">
+<span>Compaction Tool-State Continuity</span>
+</div>
+<p>Preserve todos and Approvals across compaction.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -889,6 +934,15 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <span>Delivery Authorization Timing</span>
 </div>
 <p>Re-check auth at apply, not only at channel accept.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="mid-turn-delivery-coalescing">
+<div class="pattern-tile-header">
+<img src="/images/signal-with-start-icon.svg" alt="Mid-Turn Delivery Coalescing">
+<span>Mid-Turn Delivery Coalescing</span>
+</div>
+<p>Fold queued same-initiator Deliveries into the next Turn.</p>
 </a>
 </div>
 <div class="pattern-tile">

@@ -1,0 +1,12 @@
+{
+  "name": "on-demand-skill-load",
+  "languages": {
+    "python": {
+      "label": "Python",
+      "files": ["shared.py", "activities.py", "workflows.py", "worker.py", "starter.py"],
+      "worker": "uv run python worker.py",
+      "starter": "uv run python starter.py",
+      "workerProcessPattern": "python worker.py"
+    }
+  }
+}

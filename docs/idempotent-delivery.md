@@ -132,6 +132,7 @@ You must issue and store delivery IDs and bound the ledger.
 
 ## Related patterns
 
+- [Mid-Turn Delivery Coalescing](/mid-turn-delivery-coalescing)
 - [Validated Session Ingress](/validated-session-ingress)
 - [Split Resume and Observe Handles](/split-resume-observe-handles)
 - [Delivery Authorization Timing](/delivery-authorization-timing)

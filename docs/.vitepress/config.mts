@@ -41,6 +41,7 @@ export default withMermaid(defineConfig({
           { text: 'Session Idle Eviction', link: '/session-idle-eviction' },
           { text: 'Continue-As-New Session', link: '/continue-as-new-session' },
           { text: 'Scheduled Agent Turns', link: '/scheduled-agent-turns' },
+          { text: 'Task-Mode Session', link: '/task-mode-session' },
           { text: 'Operator Session Reset', link: '/operator-session-reset' },
         ]
       },
@@ -50,6 +51,7 @@ export default withMermaid(defineConfig({
         items: [
           { text: 'Agent Definition Versioning', link: '/agent-definition-versioning' },
           { text: 'Catalog Snapshot Pinning', link: '/catalog-snapshot-pinning' },
+          { text: 'Dynamic Capability Resolution', link: '/dynamic-capability-resolution' },
           { text: 'Binding Readiness Gate', link: '/binding-readiness-gate' },
           { text: 'Agent Worker Versioning', link: '/agent-worker-versioning' },
           { text: 'Patched Agent Workflow Evolution', link: '/patched-agent-workflow-evolution' },
@@ -67,6 +69,7 @@ export default withMermaid(defineConfig({
           { text: 'Nexus Tool', link: '/nexus-tool' },
           { text: 'Typed Agent Operations', link: '/typed-agent-operations' },
           { text: 'Agent Tool Loop', link: '/agent-tool-loop' },
+          { text: 'On-Demand Skill Load', link: '/on-demand-skill-load' },
           { text: 'Tool Retry Profiles', link: '/tool-retry-profiles' },
           { text: 'Poison Tool Quarantine', link: '/poison-tool-quarantine' },
           { text: 'Heartbeat Long Steps', link: '/heartbeat-long-steps' },
@@ -108,6 +111,7 @@ export default withMermaid(defineConfig({
         link: '/subagents',
         items: [
           { text: 'Subagent Toolset', link: '/subagent-toolset' },
+          { text: 'Root-Mediated Subagent Approvals', link: '/root-mediated-subagent-approvals' },
           { text: 'Persistent Subagent Threads', link: '/persistent-subagent-threads' },
           { text: 'Fan-Out Subagents', link: '/fanout-subagents' },
           { text: 'Best-Effort Parallel Tools', link: '/best-effort-parallel-tools' },
@@ -141,6 +145,7 @@ export default withMermaid(defineConfig({
         items: [
           { text: 'Session Memory', link: '/session-memory' },
           { text: 'Context Compaction', link: '/context-compaction' },
+          { text: 'Compaction Tool-State Continuity', link: '/compaction-tool-state-continuity' },
           { text: 'Cross-Session Memory', link: '/cross-session-memory' },
           { text: 'Externalized Memory', link: '/externalized-memory' },
           { text: 'Claim-Check Payloads', link: '/claim-check-payloads' },
@@ -179,6 +184,7 @@ export default withMermaid(defineConfig({
           { text: 'Validated Session Ingress', link: '/validated-session-ingress' },
           { text: 'Split Resume and Observe Handles', link: '/split-resume-observe-handles' },
           { text: 'Delivery Authorization Timing', link: '/delivery-authorization-timing' },
+          { text: 'Mid-Turn Delivery Coalescing', link: '/mid-turn-delivery-coalescing' },
         ]
       },
     ],

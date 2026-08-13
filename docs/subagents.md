@@ -15,6 +15,15 @@ Delegate work to child agents, fan-out, and remote agent boundaries.
 </a>
 </div>
 <div class="pattern-tile">
+<a href="root-mediated-subagent-approvals">
+<div class="pattern-tile-header">
+<img src="/images/approval-icon.svg" alt="Root-Mediated Subagent Approvals">
+<span>Root-Mediated Subagent Approvals</span>
+</div>
+<p>Proxy child Approvals through the parent Session.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="persistent-subagent-threads">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Persistent Subagent Threads">
@@ -63,6 +72,8 @@ Delegate work to child agents, fan-out, and remote agent boundaries.
 **You need parallel tools with partial success:** Use [Best-Effort Parallel Tools](/best-effort-parallel-tools).
 
 **You need cross-Namespace agent delegation:** Use [Remote Subagent](/remote-subagent).
+
+**You need child Approvals on the parent human channel:** Use [Root-Mediated Subagent Approvals](/root-mediated-subagent-approvals).
 
 ## Related Sections
 

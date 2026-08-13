@@ -86,6 +86,7 @@ You operate more long-lived Workflows.
 
 ## Related patterns
 
+- [Root-Mediated Subagent Approvals](/root-mediated-subagent-approvals)
 - [Subagent Toolset](/subagent-toolset)
 - [Entity Agent](/entity-agent)
 - [Continue-As-New Session](/continue-as-new-session)

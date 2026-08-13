@@ -143,6 +143,7 @@ You must design ID and overlap rules carefully so schedules do not amplify spend
 
 ## Related patterns
 
+- [Task-Mode Session](/task-mode-session)
 - [Entity Agent](/entity-agent)
 - [Turn Workflow](/turn-workflow)
 - [Session Workflow](/session-workflow)
