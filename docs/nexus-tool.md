@@ -91,6 +91,7 @@ You take on Endpoint/registry operations and clearer contracts between caller an
 - **Using sync Nexus handlers for long model or search work.** They hit short handler deadlines.
 - **Skipping idempotency keys** on write Operations.
 - **Calling the handler Task Queue directly** instead of the Endpoint name.
+- **Not mapping Nexus failures into tool or step failure events.** Audit and Progress Streaming lose the failure unless you record it like other tools.
 
 ## Related patterns
 

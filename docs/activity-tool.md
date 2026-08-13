@@ -90,6 +90,7 @@ Each call costs an Activity schedule; very chatty tools may need batching or Cod
 - **Retrying payments without keys.** Double charges follow.
 - **Huge payloads in Activity results.** Prefer summaries or externalized blobs.
 - **Catching and swallowing Activity errors in the Workflow.** Surface failures as step failures or approval waits.
+- **Long tools without heartbeats.** Multi-minute IO needs Activity heartbeats or Temporal may treat the Worker as dead.
 
 ## Related patterns
 

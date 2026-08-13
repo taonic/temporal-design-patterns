@@ -80,6 +80,8 @@ You add operational waits that need clear SLAs.
 
 - **Re-running non-idempotent success paths after resume.**
 - **Parking on every transient 503.** Use retry profiles first.
+- **Parking with `time.sleep` or an Activity wait instead of Workflow `wait_condition`.** Blocks the worker and is not durable.
+- **Correction wait and last-error missing from the Continue-As-New snapshot.** Resume state vanishes on the new run.
 
 ## Related patterns
 

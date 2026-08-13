@@ -80,8 +80,9 @@ You operate more long-lived Workflows.
 
 ## Common pitfalls
 
-- **Leaking thread IDs across tenants.**
 - **Never Continue-As-New on busy threads.**
+- **Caching the Run ID after a thread Continue-As-New.** Signals and queries hit a closed run.
+- **Unbounded threads with no idle close.** History grows without bound.
 
 ## Related patterns
 

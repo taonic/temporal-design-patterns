@@ -80,8 +80,9 @@ You maintain per-channel adapters.
 
 ## Common pitfalls
 
-- **Using channel event timestamps as Workflow logic without side-effect APIs.**
+- **Using wall-clock timestamps for Workflow timeouts.** Channel event times are not Workflow time; use timers and `wait_condition`.
 - **One global Workflow for all Slack threads.**
+- **Not deduping platform delivery IDs before Signal.** Retried webhooks double-process the same message.
 
 ## Related patterns
 

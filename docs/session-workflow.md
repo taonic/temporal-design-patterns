@@ -97,7 +97,7 @@ You must manage Workflow history growth and design Continue-As-New for long sess
 | :--- | :--- | :--- | :--- |
 | Session Workflow | High | Yes | Natural fit |
 | Stateless request handler | None | No | Manual |
-| External DB only | Partial | Yes | Easy to drift from execution |
+| External DB only | Partial | Yes | Drifts without shared ownership |
 
 ## Best practices
 

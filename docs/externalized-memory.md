@@ -77,6 +77,7 @@ External systems add their own failure modes.
 
 - **Embedding full documents in Activity results forever.**
 - **Bypassing tools with a shared singleton client in Workflow imports.**
+- **Re-querying an index in Workflow code on replay instead of using Activity results.** Nondeterministic; hits different data each replay.
 
 ## Related patterns
 

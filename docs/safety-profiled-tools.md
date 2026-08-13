@@ -78,8 +78,8 @@ Authors must classify tools honestly.
 
 ## Common pitfalls
 
-- **Marking writes as inherently_safe.**
-- **Profile only in comments, not enforced config.**
+- **`non_idempotent` tool still gets Activity retries.** Duplicate side effects on every attempt.
+- **Profile not consulted before `execute_activity`.** Unsafe tools run with default retry policies.
 
 ## Related patterns
 

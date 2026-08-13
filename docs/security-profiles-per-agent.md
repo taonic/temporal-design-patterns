@@ -73,8 +73,8 @@ You maintain profile matrices as tools grow.
 
 ## Common pitfalls
 
-- **Copying dev profile to prod.**
-- **Allowing shell tools in prod security profiles.**
+- **Workers on the same task queue register different tool sets.** Causes nondeterminism across Workers.
+- **Prod profile only in app config, not enforced at Activity dispatch.** Workers still run tools the profile forbids.
 
 ## Related patterns
 

@@ -70,7 +70,8 @@ You operate another moving part (sandbox backend).
 ## Common pitfalls
 
 - **Running Code Mode in-process with the Workflow worker.**
-- **Passing broad credentials into the sandbox environment.**
+- **Secrets in Workflow args instead of Activity environment.** Tokens land in history and Continue-As-New payloads.
+- **Sandbox Activity without heartbeats during long boots.** The Activity looks dead and is retried or timed out mid-start.
 
 ## Related patterns
 

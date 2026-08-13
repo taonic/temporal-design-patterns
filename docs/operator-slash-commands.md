@@ -70,7 +70,8 @@ You must validate command grammar and authorize who may send Signals.
 ## Common pitfalls
 
 - **Parsing commands in an Activity.** Command effects on Session state belong in the Workflow.
-- **Allowing `/skip` without audit.** Always emit events for policy changes.
+- **`/stop` that does not cancel in-flight Activities or children.** Work keeps running after the Session looks stopped.
+- **Policy mutated via Activity side effects that never land in Session state.** Replay and Continue-As-New lose the change.
 
 ## Related patterns
 

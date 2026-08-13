@@ -94,7 +94,7 @@ You must manage store retention, access control, and fetch latency.
 
 - **Logging full prompts into events.** Event payloads count toward size too.
 - **Passing megabyte strings through Signals/Updates.**
-- **Assuming development sizes match production.** Failures often appear only on the first large task.
+- **Returning the full blob as an Activity result.** Hits BlobSizeLimit and can terminate the Workflow.
 
 ## Related patterns
 

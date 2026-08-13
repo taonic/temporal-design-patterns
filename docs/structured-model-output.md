@@ -60,7 +60,7 @@ Keep free text for user-facing chat replies.
 
 ## Benefits and trade-offs
 
-You fail fast on bad shapes and keep Workflows simple.
+You fail fast on bad shapes and keep Workflows free of ad-hoc parsing.
 Schemas must evolve carefully alongside prompts.
 
 ## Comparison with alternatives
@@ -79,8 +79,10 @@ Schemas must evolve carefully alongside prompts.
 
 ## Common pitfalls
 
-- **Parsing JSON with ad-hoc string splits in the Workflow.**
-- **Huge nested schemas that models rarely satisfy.**
+- **Validation failures treated as retryable forever.** Raise non-retryable ApplicationError or cap repair loops so bad shapes do not spin.
+- **Changing schemas mid-session without a schema or prompt version pin.** In-flight Turns get mismatched expectations.
+- **Huge nested schemas that models rarely satisfy.** Prefer small, flat contracts.
+- **Parsing JSON with ad-hoc string splits in the Workflow.** Validate in the Activity and return typed results.
 
 ## Related patterns
 

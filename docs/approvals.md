@@ -65,7 +65,7 @@ The trade-off is operational load and turn latency for gated tools.
 
 - **Approving in a database without parking the Workflow.** Correlation breaks on failover.
 - **Running the Activity before the wait.** The gate must precede the side effect.
-- **Confusing this page with the pattern implementations.** See Approval-Gated Tools and Session-Scoped Approvals for how to build the waits.
+- **Treating a session grant as a global forever grant.** Trust leaks across sessions and survives longer than intended.
 
 ## Related patterns
 

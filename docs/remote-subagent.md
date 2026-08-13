@@ -79,6 +79,7 @@ You take on distributed failure modes and schema drift between sides.
 
 - **Calling HTTP from the Workflow.**
 - **Losing cursor on Activity retry and double-sending messages.**
+- **Long-lived auth tokens in Workflow args or history.** Tokens leak into Temporal event storage and survive Continue-As-New.
 
 ## Related patterns
 

@@ -74,8 +74,9 @@ You must design snapshot schemas carefully and version them.
 ## Common pitfalls
 
 - **Passing the entire transcript.** Arguments become the first events of the new run.
-- **Dropping Signals.** Drain handlers before continuing.
+- **Dropping Signals, Updates, approvals, or callbacks.** Drain handlers and carry open waits before continuing.
 - **Changing session_id.** Channels will orphan the previous execution.
+- **Open Child Workflows without handles in the snapshot.** In-flight turns and subagents become unreachable after Continue-As-New.
 
 ## Related patterns
 

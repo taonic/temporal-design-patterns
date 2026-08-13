@@ -81,6 +81,7 @@ Generated tools still need safety review.
 - **Auto-enabling all generated tools in prod.**
 - **Passing raw user tokens to the model context.**
 - **Assuming a hot MCP process session survives Activity retry.** It does not unless you reattach explicitly.
+- **Silent tool-ID churn on every spec refresh.** Sessions pin stale tool IDs and call the wrong Operations.
 
 ## Related patterns
 

@@ -81,7 +81,8 @@ Each call schedules an Activity; batching may be needed for tiny calls.
 
 - **Putting API keys in Workflow arguments permanently.** Prefer worker-side env config.
 - **Omitting model name in events.** Breaks cost attribution.
-- **Retrying non-idempotent side-effect tools after a model retry.** Separate policies.
+- **Assuming a model Activity retry re-runs prior tool Steps.** Only the failed model call retries; completed tools stay done unless you re-invoke them with separate policies.
+- **Long streaming or reasoning calls without heartbeat_timeout.** Workers look stuck and the Activity may be killed without progress signals.
 
 ## Related patterns
 

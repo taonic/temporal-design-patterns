@@ -81,6 +81,8 @@ You must design Signal handlers that queue work safely under Continue-As-New.
 
 - **Random session IDs per message.** Destroys continuity.
 - **Signaling with a stale Run ID.** Fails after Continue-As-New.
+- **Ignoring WorkflowIdReusePolicy.** Closed sessions may reject or unexpectedly reuse IDs when a new conversation starts.
+- **Assuming one Signal equals one finished Turn under bursts.** Queue messages; overlapping Signals need ordered Turn scheduling.
 
 ## Related patterns
 

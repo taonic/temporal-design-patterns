@@ -87,7 +87,8 @@ Callers must understand incomplete result sets.
 
 ## Common pitfalls
 
-- **Swallowing exceptions without logging which query failed.**
+- **Failing the whole Workflow instead of capturing per-branch errors.** One failed tool aborts siblings you meant to keep.
+- **Missing `schedule_to_close` or cancel that leaves siblings running.** Stragglers keep consuming slots after the wait group returns.
 - **Using best-effort for non-idempotent writes.**
 
 ## Related patterns

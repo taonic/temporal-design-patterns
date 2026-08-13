@@ -76,7 +76,8 @@ You must maintain a capable sandbox implementation.
 
 ## Common pitfalls
 
-- **Relying on the model to obey sandbox rules.**
+- **Sandbox or code execution in the Workflow worker process.** Compromises the worker and blocks the event loop.
+- **Host callbacks that are not Activities.** Side effects skip durability and retry policy.
 - **Exposing a shell host tool that reopens the network.**
 
 ## Related patterns

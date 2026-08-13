@@ -80,6 +80,7 @@ You must keep price tables and model names accurate.
 
 - **Counting only successful calls.** Failed calls still cost money.
 - **Aggregating only in logs without session rollups.**
+- **Emitting `token_usage` on every Activity attempt without an attempt key.** Retries double-count the same call.
 
 ## Related patterns
 

@@ -80,6 +80,8 @@ You accept Child Workflow overhead or the discipline of explicit sub-state.
 - **Starting unbounded parallel turns.** Cap concurrency on the Session.
 - **Duplicating session memory in every child.** Pass summaries, not full history.
 - **Forgetting Parent Close Policy.** Decide whether children survive session stop.
+- **Reusing Child Workflow IDs.** Colliding IDs fail starts or attach to the wrong Turn.
+- **Parent Continue-As-New without snapshotting open turn children.** You lose handles to in-flight Turns.
 
 ## Related patterns
 

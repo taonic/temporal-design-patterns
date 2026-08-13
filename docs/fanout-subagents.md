@@ -90,7 +90,7 @@ You pay Child Workflow overhead and must merge partial failures deliberately.
 
 ## Common pitfalls
 
-- **Unbounded Promise fan-out.** Exhausts workers and downstream quotas.
+- **Unbounded concurrent child starts.** Exhausts workers and downstream quotas.
 - **Leaving ParentClosePolicy at ABANDON.** Cancelled parents leak burning subagents.
 - **Orphan children on parent Continue-As-New.** Set Parent Close Policy intentionally; reattach or cancel before CAN.
 

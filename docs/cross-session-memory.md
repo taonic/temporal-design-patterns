@@ -72,7 +72,7 @@ You must operate a store and write policies.
 
 ## Common pitfalls
 
-- **Letting the model invent store keys that cross tenants.**
+- **Treating Activity-read shared memory as fresh without a new read Activity after external writes.** Stale results replay forever.
 - **Writing shared memory from Workflow code without an Activity.**
 
 ## Related patterns

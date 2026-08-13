@@ -102,6 +102,7 @@ You must manage stream storage across Continue-As-New.
 - **Assuming real-time media suitability.**
 - **Appending retry tokens without a RETRY reset.** UIs show duplicated or garbled text.
 - **Dropping stream state on Continue-As-New.** Clients jump or miss history.
+- **Completing the Turn before subscribers see the terminal stream event.** Clients miss completion and hang on an open stream.
 
 ## Related patterns
 

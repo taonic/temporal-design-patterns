@@ -80,6 +80,7 @@ Summaries can drop detail—design refresh paths.
 
 - **Unbounded append-only notes in Workflow state.**
 - **Updating memory inside failed turns without rollback rules.**
+- **Session memory omitted from the Continue-As-New snapshot.** Notes and summaries disappear on the new run.
 
 ## Related patterns
 

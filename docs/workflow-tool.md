@@ -9,7 +9,7 @@ Primitives used: ToolDefinition (`kind=workflow`), ToolCallStep without an Activ
 ## Problem
 
 Not every tool needs an Activity.
-If you schedule Activities for trivial pure functions, you add latency and noise.
+If you schedule Activities for pure functions, you add latency and noise.
 If you put non-deterministic logic in the Workflow, replay breaks.
 
 ## Solution
@@ -76,6 +76,7 @@ You manage the discipline of keeping those tools pure.
 
 - **Calling `datetime.now()` or random inside a Workflow tool.** Breaks replay.
 - **Using Workflow tools for "quick" HTTP.** Latency and failure modes still need Activities.
+- **Heavy CPU inline in the Workflow.** Long pure computation still blocks the Workflow task; prefer an Activity for expensive work.
 
 ## Related patterns
 

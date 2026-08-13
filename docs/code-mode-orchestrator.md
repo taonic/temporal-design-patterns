@@ -69,8 +69,8 @@ You must invest in sandboxing, type stubs, and script size limits.
 
 ## Common pitfalls
 
-- **Treating the sandbox as trusted.** Model-authored code is untrusted input.
-- **Skipping host events.** Every host call must still appear on the session stream.
+- **Host tool calls as in-process functions, not Activities.** Side effects are not durable and break replay.
+- **Sandbox local state lost on Activity retry.** In-memory sandbox files and handles vanish; the retry starts cold.
 - **Double-running non-idempotent host tools after replay.** Host calls must be Activities with proper policies.
 
 ## Related patterns

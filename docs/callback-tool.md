@@ -74,6 +74,8 @@ You depend on a connected client; without one, the Turn stays parked.
 
 - **Implementing the tool body on the worker anyway.** That defeats the pattern.
 - **Forgetting reconnect.** Clients must resume outstanding callbacks after disconnect.
+- **Unbounded callback wait.** Set a timeout so a missing client fails or escalates the Turn.
+- **Non-idempotent callback completion handling.** Duplicate `callback_completed` deliveries must not apply side effects twice.
 
 ## Related patterns
 

@@ -80,8 +80,9 @@ You must maintain the mapping as providers evolve.
 
 ## Common pitfalls
 
-- **Retrying 401 forever.**
-- **Marking all APIStatusError as retryable.**
+- **Retrying 401 forever.** Mark `AuthenticationError` with `non_retryable=True`, or you burn quota on a bad key.
+- **Marking all APIStatusError as retryable.** 4xx and policy failures are often permanent; treat them as non-retryable.
+- **Classifying 429 as non-retryable (or content-policy as retryable).** Wrong class wastes time on permanent faults or burns tokens on throttling you should wait out.
 
 ## Related patterns
 

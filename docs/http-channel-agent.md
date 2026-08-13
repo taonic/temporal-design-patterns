@@ -82,6 +82,8 @@ You must operate an API tier in front of Temporal.
 
 - **Embedding the agent loop in FastAPI handlers.**
 - **Forgetting auth on stream endpoints.**
+- **Streaming without a cursor after disconnect.** Clients miss or duplicate tokens on reconnect.
+- **Running model SDKs in the API process.** Bypasses durable Activities and loses work on process crash.
 
 ## Related patterns
 

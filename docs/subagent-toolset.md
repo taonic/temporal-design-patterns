@@ -82,8 +82,9 @@ You must design failure and cancellation across parent and child.
 
 ## Common pitfalls
 
-- **Treating child chat text as the only API.**
+- **Fire-and-forget child with `ParentClosePolicy=ABANDON`.** Cancelled or completed parents leave children burning indefinitely.
 - **Orphan children after parent Continue-As-New without handles in the snapshot.**
+- **Child handles not carried across parent Continue-As-New.** You cannot cancel, signal, or await those children after the new run starts.
 
 ## Related patterns
 

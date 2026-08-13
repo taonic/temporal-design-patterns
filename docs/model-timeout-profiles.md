@@ -47,10 +47,10 @@ await workflow.execute_activity(
 
 | Class | start_to_close |
 | :--- | :--- |
-| Simple chat LLM | 30s |
+| Chat LLM | 30s |
 | Reasoning / extended thinking | 5m |
 | Web search tool | 5m |
-| Simple tool | 30–60s |
+| Short tool | 30–60s |
 | Image generation | 2m |
 | Document processing | 1–2m |
 
@@ -83,6 +83,7 @@ Profiles need periodic review as models change.
 
 - **Copying chat timeouts onto reasoning models.**
 - **No schedule_to_close on gather() fan-out searches.** One bad retry loop can stall the join.
+- **Long generations without heartbeats.** Pair long start_to_close with heartbeat_timeout so stuck Workers surface before the full timeout.
 
 ## Related patterns
 

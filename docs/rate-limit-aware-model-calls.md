@@ -77,6 +77,7 @@ Header formats differ by vendor—keep parsers tested.
 
 - **time.sleep in the Activity for minutes** instead of next_retry_delay.
 - **Parsing Retry-After in the Workflow.**
+- **next_retry_delay without enough schedule_to_close or max attempts.** Long Retry-After waits exhaust the timeout or attempt budget before the provider recovers.
 
 ## Related patterns
 

@@ -73,7 +73,8 @@ Stub generation must stay in sync with tool schemas.
 ## Common pitfalls
 
 - **Checking a different script than you execute.**
-- **Allowing dynamic getattr to bypass stubs.**
+- **Typecheck Activity performs host side effects.** Validation must be pure; writes belong in execute Activities.
+- **Check result not recorded, so a retry runs a different script.** Without a durable check outcome, retries may typecheck and execute another script.
 
 ## Related patterns
 

@@ -72,7 +72,8 @@ You must keep attribute schemas consistent.
 ## Common pitfalls
 
 - **New random IDs in each Activity retry.** Use Workflow-supplied step IDs.
-- **PII in span attributes.**
+- **PII in span attributes, including prompts and tool args.**
+- **Heavy OpenTelemetry or export I/O inside Workflow code.** Blocks Workers and breaks determinism.
 
 ## Related patterns
 

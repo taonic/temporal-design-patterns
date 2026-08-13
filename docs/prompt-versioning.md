@@ -79,6 +79,8 @@ You maintain a prompt catalog beside code.
 
 - **Hot-editing prod prompts without pins.**
 - **Different workers resolving different file contents for the same version label.**
+- **Full prompt text in Workflow or Activity args.** Pass prompt_id and version; load text in the Worker or from versioned storage.
+- **Worker Versioning alone while prompts load from mutable storage.** Pin prompt versions in Session state or you still drift mid-session.
 
 ## Related patterns
 

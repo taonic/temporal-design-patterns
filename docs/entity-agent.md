@@ -84,6 +84,7 @@ You must operate long-lived Workflows carefully (Continue-As-New, visibility).
 - **One Workflow for all entities.** Creates a hotspot and mixes tenancy.
 - **Never Continue-As-New.** History grows without bound.
 - **Caching Run IDs in clients.** Breaks after Continue-As-New.
+- **Completing the entity Workflow on idle instead of parking.** Idle entities should wait on Signals; completing drops the durable address.
 
 ## Related patterns
 

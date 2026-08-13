@@ -79,6 +79,7 @@ You maintain fixtures as product behavior evolves.
 
 - **Scoring free-text only.** Prefer events.
 - **Live-model CI without flake budgets.**
+- **Scoring Temporal history or UI text instead of the app event stream.** Brittle across UI changes and history truncation.
 
 ## Related patterns
 

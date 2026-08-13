@@ -89,6 +89,8 @@ Long loops grow history—combine with Continue-As-New Session on long jobs.
 - **Unbounded while True without a max_steps guard.**
 - **Putting the provider SDK in the Workflow.**
 - **Re-running the whole loop after Continue-As-New without snapshotting messages.**
+- **Re-running completed tool Steps on recovery without idempotency.** Replay or recovery must not double-apply side effects.
+- **Stuffing full tool payloads into next model args.** Use Claim-Check refs and short summaries instead.
 
 ## Related patterns
 

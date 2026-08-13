@@ -79,8 +79,9 @@ You must map provider errors carefully.
 
 ## Common pitfalls
 
-- **Leaving default SDK retries on.**
-- **Catching all exceptions and returning None.** Hides failures from Temporal.
+- **Leaving default SDK retries on.** Stacked SDK and Temporal retries multiply delays and hide attempt counts.
+- **Catching all exceptions and returning None.** Hides failures from Temporal so the Step looks successful.
+- **HTTP-layer retries still on after max_retries=0.** Transport libraries may retry independently; disable those too or you still stampede.
 
 ## Related patterns
 

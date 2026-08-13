@@ -82,7 +82,8 @@ You must maintain profile metadata as tools evolve.
 
 ## Common pitfalls
 
-- **Copy-pasting payment retries from search tools.**
+- **Copy-pasting payment retries onto read-only tools (or reverse).** Aggressive retries on payments risk double charges; timid retries on reads burn attempts without recovering.
+- **Omitting a profile and inheriting Activity defaults.** Defaults are often too aggressive for mutating tools.
 - **Silent profile overrides in one Turn.** Keep overrides explicit and evented.
 
 ## Related patterns

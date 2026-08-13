@@ -77,7 +77,8 @@ You increase burst load on downstream systems.
 ## Common pitfalls
 
 - **Fan-out of non-idempotent tools without keys.**
-- **Unbounded gather over huge lists.**
+- **Unbounded gather over huge lists.** Exhausts worker slots.
+- **Script timeout while child host Activities are still running.** Orphaned Activities keep running after the sandbox fails.
 
 ## Related patterns
 

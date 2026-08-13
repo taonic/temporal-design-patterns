@@ -81,7 +81,8 @@ A stolen session Signal path becomes more powerful—authorize operators careful
 ## Common pitfalls
 
 - **Persisting session grants into global config.** Leaks trust across sessions.
-- **Forgetting to snapshot grants on Continue-As-New.**
+- **Allow list omitted from Continue-As-New args.** Grants disappear on the new run.
+- **Evaluating the allow list only in an Activity.** Replay-unsafe; grant checks belong in Workflow state.
 
 ## Related patterns
 
