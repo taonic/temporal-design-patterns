@@ -1,99 +1,100 @@
-<h1>Tool Retry Profiles <img src="/images/child-workflows-icon.svg" alt="Tool Retry Profiles" class="pattern-page-icon"></h1>
+<h1>Tool Retry Profiles <img src="/images/fixed-count-retries-icon.svg" alt="Tool Retry Profiles" class="pattern-page-icon"></h1>
 
 ## Overview
 
-Per-tool retry and safety policies.
-You use Temporal Workflows and Activities under the hood so the agent can pause, retry, and resume without losing session state.
+The Tool Retry Profiles pattern assigns retry and safety profiles per tool.
+Read-only or idempotent tools can retry automatically; non-idempotent tools require approvals or idempotency keys.
+Primitives used: StepPolicy, SafetyProfile, ToolDefinition defaults.
 
 ## Problem
 
-Without this pattern, you risk losing mid-turn progress on worker restarts, double-executing side effects, or scattering session state across ad-hoc stores that are hard to audit.
+A single global retry policy either double-executes payments or gives up too early on transient read failures.
 
 ## Solution
 
-Structure the agent so the durable boundary matches the pattern:
+Attach a default StepPolicy and SafetyProfile to each ToolDefinition.
+When the Turn schedules an Activity tool, apply that policy: attempt counts, backoff, and whether approval is required before the first attempt.
 
 ```mermaid
-flowchart LR
-    Input[Input] --> Session
-    Session --> Turn
-    Turn --> Step
-    Step --> Out[Reply or wait]
+flowchart TD
+    Tool[Tool selected] --> Profile{Safety profile}
+    Profile -->|inherently_safe| Retry[Automatic retries]
+    Profile -->|idempotent_side_effect| Key[Retries with idempotency key]
+    Profile -->|non_idempotent| Gate[Approval or single attempt]
 ```
 
 The following describes each step in the diagram:
 
-1. An input arrives for a Session (message, channel event, or schedule).
-2. The Session starts or continues a Turn.
-3. The Turn runs Steps (model calls, tools, approvals) as durable units.
-4. The Turn ends with a reply, an error, or a wait for an external decision.
+1. Each tool declares safety and retry defaults.
+2. The Turn loads the profile when scheduling the Step.
+3. Safe tools retry; non-idempotent tools gate or require keys.
+4. Failures emit classified tool_call_failed events.
 
 ```python
-# agent/agent.py — structural sketch
-from temporalio import workflow
+TOOL_POLICIES = {
+    "search": {"maximum_attempts": 5, "safety": "inherently_safe"},
+    "charge": {"maximum_attempts": 1, "safety": "non_idempotent"},
+}
 
-@workflow.defn
-class AgentSessionWorkflow:
-    @workflow.run
-    async def run(self, session_id: str) -> None:
-        # Own cross-turn state, approvals, and the event stream.
-        ...
+policy = TOOL_POLICIES[tool_name]
+await workflow.execute_activity(
+    run_tool,
+    args=[tool_name, payload],
+    start_to_close_timeout=timedelta(seconds=30),
+    retry_policy=RetryPolicy(maximum_attempts=policy["maximum_attempts"]),
+)
 ```
 
 ## Implementation
 
+### Mapping to Temporal
 
-A runnable sample may be added later; the Python sketches below show the structure.
+Encode profiles as RetryPolicy and timeouts on `execute_activity`.
+Keep the profile table next to tool definitions so authors cannot forget it.
 
-### Session ownership
+### Interaction with approvals
 
-Keep memory, approval overrides, and the ordered event stream on the Session Workflow so every Turn shares one durable context.
-
-### Step boundaries
-
-Run non-deterministic or side-effecting work in Activities so completed Steps replay from recorded results after a restart.
+Non-idempotent tools should usually combine a strict retry profile with Approval-Gated Tools.
 
 ## When to use
 
-This pattern fits when you need the behavior described in Overview and Problem.
-It is not a good fit when a short-lived script without durability is enough.
+Use per-tool profiles whenever an agent has mixed read and mutate tools.
+A single shared RetryPolicy is enough only for uniform read-only agents.
 
 ## Benefits and trade-offs
 
-You gain crash safety, clear observability, and a place to hang approvals.
-You accept Workflow history growth and the need to Continue-As-New on long sessions.
+You avoid double side effects while still absorbing transient faults.
+You must maintain profile metadata as tools evolve.
 
 ## Comparison with alternatives
 
-| Approach | Durability | Isolation |
+| Profile | Retries | Typical tools |
 | :--- | :--- | :--- |
-| This pattern | High | Clear Session/Turn/Step boundaries |
-| In-memory agent loop | None | Lost on restart |
+| inherently_safe | Many | Search, fetch |
+| idempotent_side_effect | Few + key | Upserts |
+| non_idempotent | One or gated | Payments |
 
 ## Best practices
 
-- **Emit events at boundaries.** Record turn and step start/end so UIs can reconstruct the run.
-- **Keep Workflows deterministic.** Put model and IO calls in Activities.
-- **Name Sessions stably.** Use a Session ID that external channels can address.
+- **Default deny for unknown tools.** Missing profile should fail closed.
+- **Document idempotency keys.** Put key fields in the tool schema.
+- **Align metrics.** Tag retries by tool_id and profile.
 
 ## Common pitfalls
 
-- **Doing IO in the Workflow.** Non-deterministic calls break replay.
-- **Unbounded history.** Long sessions must Continue-As-New with a state snapshot.
-- **Silent retries on non-idempotent tools.** Gate or key those tools before automatic retry.
+- **Copy-pasting payment retries from search tools.**
+- **Silent profile overrides in one Turn.** Keep overrides explicit and evented.
 
 ## Related patterns
 
-- [Session Workflow](/session-workflow)
+- [Safety-Profiled Tools](/safety-profiled-tools)
+- [Approval-Gated Tools](/approval-gated-tools)
 - [Activity Tool](/activity-tool)
-- [Standardized Event Stream](/standardized-event-stream)
 
 ## Sample code
 
-See `sandbox-runner/patterns/tool-retry-profiles/python/` when a live sample exists for this pattern.
+See related runnable samples under `sandbox-runner/patterns/` when this pattern builds on Session Workflow, Activity Tool, or Code Mode.
 
 ## References
 
-- [Temporal Docs: Workflows](https://docs.temporal.io/workflows)
-- [Temporal Docs: Activities](https://docs.temporal.io/activities)
-- [Temporal Docs: Continue-As-New](https://docs.temporal.io/workflow-execution/continue-as-new)
+- [Temporal Docs: Retry policies](https://docs.temporal.io/encyclopedia/retry-policies)

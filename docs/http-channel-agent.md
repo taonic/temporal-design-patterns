@@ -1,99 +1,98 @@
-<h1>HTTP Channel Agent <img src="/images/child-workflows-icon.svg" alt="HTTP Channel Agent" class="pattern-page-icon"></h1>
+<h1>HTTP Channel Agent <img src="/images/webhooks-icon.svg" alt="HTTP Channel Agent" class="pattern-page-icon"></h1>
 
 ## Overview
 
-Expose a session API over HTTP and SSE.
-You use Temporal Workflows and Activities under the hood so the agent can pause, retry, and resume without losing session state.
+The HTTP Channel Agent pattern exposes an agent as an HTTP session API.
+Clients create sessions, send messages, and stream events over NDJSON or SSE, while agent logic stays in Workflows and Activities.
+Primitives used: SessionDescriptor, MessageRequest/Response, EventStream, Session Workflow.
 
 ## Problem
 
-Without this pattern, you risk losing mid-turn progress on worker restarts, double-executing side effects, or scattering session state across ad-hoc stores that are hard to audit.
+If HTTP handlers embed agent loops, you lose durability and duplicate protocol logic per service.
 
 ## Solution
 
-Structure the agent so the durable boundary matches the pattern:
+HTTP only translates to Temporal signals/starts and streams the session event log.
+The Session Workflow owns turns and tools.
 
 ```mermaid
 flowchart LR
-    Input[Input] --> Session
-    Session --> Turn
-    Turn --> Step
-    Step --> Out[Reply or wait]
+    Client --> HTTP[Session HTTP API]
+    HTTP --> Temporal[Start/Signal Session]
+    Temporal --> Session[Session Workflow]
+    Session --> Stream[SSE/NDJSON events]
+    Stream --> Client
 ```
 
 The following describes each step in the diagram:
 
-1. An input arrives for a Session (message, channel event, or schedule).
-2. The Session starts or continues a Turn.
-3. The Turn runs Steps (model calls, tools, approvals) as durable units.
-4. The Turn ends with a reply, an error, or a wait for an external decision.
+1. Client creates a session and receives session_id.
+2. Client posts a message; API signal-with-starts the Session.
+3. The Session runs Turns and appends events.
+4. Client reads events until turn_ended.
 
 ```python
-# agent/agent.py — structural sketch
-from temporalio import workflow
-
-@workflow.defn
-class AgentSessionWorkflow:
-    @workflow.run
-    async def run(self, session_id: str) -> None:
-        # Own cross-turn state, approvals, and the event stream.
-        ...
+# API handler sketch
+async def post_message(session_id: str, text: str):
+    await client.start_workflow(
+        AgentSessionWorkflow.run,
+        args=[session_id],
+        id=session_id,
+        task_queue=TASK_QUEUE,
+        start_signal="user_message",
+        start_signal_args=[text],
+    )
 ```
 
 ## Implementation
 
+### AuthN/Z
 
-A runnable sample may be added later; the Python sketches below show the structure.
+Protect create/message/stream routes; authorize per session.
 
-### Session ownership
+### Streaming
 
-Keep memory, approval overrides, and the ordered event stream on the Session Workflow so every Turn shares one durable context.
-
-### Step boundaries
-
-Run non-deterministic or side-effecting work in Activities so completed Steps replay from recorded results after a restart.
+Support cursors so clients reconnect without losing events.
 
 ## When to use
 
-This pattern fits when you need the behavior described in Overview and Problem.
-It is not a good fit when a short-lived script without durability is enough.
+Use as the default integration surface for web and service clients.
+Pair with messaging channels for Slack/email frontends.
 
 ## Benefits and trade-offs
 
-You gain crash safety, clear observability, and a place to hang approvals.
-You accept Workflow history growth and the need to Continue-As-New on long sessions.
+You keep HTTP thin and agents durable.
+You must operate an API tier in front of Temporal.
 
 ## Comparison with alternatives
 
-| Approach | Durability | Isolation |
-| :--- | :--- | :--- |
-| This pattern | High | Clear Session/Turn/Step boundaries |
-| In-memory agent loop | None | Lost on restart |
+| Layer | Responsibility |
+| :--- | :--- |
+| HTTP API | Auth, session IO, SSE |
+| Session Workflow | Agent logic |
+| Activities | Model/tools |
 
 ## Best practices
 
-- **Emit events at boundaries.** Record turn and step start/end so UIs can reconstruct the run.
-- **Keep Workflows deterministic.** Put model and IO calls in Activities.
-- **Name Sessions stably.** Use a Session ID that external channels can address.
+- **Stable session_id in responses.**
+- **Cursored event streams.**
+- **Do not run model SDKs in the API process.**
 
 ## Common pitfalls
 
-- **Doing IO in the Workflow.** Non-deterministic calls break replay.
-- **Unbounded history.** Long sessions must Continue-As-New with a state snapshot.
-- **Silent retries on non-idempotent tools.** Gate or key those tools before automatic retry.
+- **Embedding the agent loop in FastAPI handlers.**
+- **Forgetting auth on stream endpoints.**
 
 ## Related patterns
 
-- [Session Workflow](/session-workflow)
-- [Activity Tool](/activity-tool)
-- [Standardized Event Stream](/standardized-event-stream)
+- [Session with Signal-and-Start](/session-signal-and-start)
+- [HTTP and Client](/http-and-client)
+- [Messaging Channel Agent](/messaging-channel-agent)
 
 ## Sample code
 
-See `sandbox-runner/patterns/http-channel-agent/python/` when a live sample exists for this pattern.
+See related runnable samples under `sandbox-runner/patterns/` when this pattern builds on Session Workflow, Activity Tool, or Code Mode.
 
 ## References
 
-- [Temporal Docs: Workflows](https://docs.temporal.io/workflows)
-- [Temporal Docs: Activities](https://docs.temporal.io/activities)
-- [Temporal Docs: Continue-As-New](https://docs.temporal.io/workflow-execution/continue-as-new)
+- [Temporal Docs: Signal-With-Start](https://docs.temporal.io/encyclopedia/workflow-message-passing#signal-with-start)

@@ -1,99 +1,96 @@
-<h1>Safety-Profiled Tools <img src="/images/child-workflows-icon.svg" alt="Safety-Profiled Tools" class="pattern-page-icon"></h1>
+<h1>Safety-Profiled Tools <img src="/images/saga-icon.svg" alt="Safety-Profiled Tools" class="pattern-page-icon"></h1>
 
 ## Overview
 
-Declare inherently safe, idempotent, or non-idempotent tools.
-You use Temporal Workflows and Activities under the hood so the agent can pause, retry, and resume without losing session state.
+The Safety-Profiled Tools pattern labels each tool with a safety profile (`inherently_safe`, `idempotent_side_effect`, `non_idempotent`) and enforces matching policies.
+The runtime blocks or gates calls that do not match their expected profile and environment.
+Primitives used: SafetyProfile on ToolDefinition, build/startup validation, ApprovalPolicy defaults.
 
 ## Problem
 
-Without this pattern, you risk losing mid-turn progress on worker restarts, double-executing side effects, or scattering session state across ad-hoc stores that are hard to audit.
+Without labels, every tool looks the same to retries and approvals, so policy engines guess wrong.
 
 ## Solution
 
-Structure the agent so the durable boundary matches the pattern:
+Require a SafetyProfile on every ToolDefinition.
+At build or worker start, fail if a mutating tool lacks a profile or if profile and retry settings contradict.
+At runtime, ApprovalPolicy and StepPolicy read the label.
 
 ```mermaid
-flowchart LR
-    Input[Input] --> Session
-    Session --> Turn
-    Turn --> Step
-    Step --> Out[Reply or wait]
+flowchart TD
+    Def[ToolDefinition] --> Label[SafetyProfile]
+    Label --> Build[Validate at build]
+    Label --> Runtime[Approvals and retries]
 ```
 
 The following describes each step in the diagram:
 
-1. An input arrives for a Session (message, channel event, or schedule).
-2. The Session starts or continues a Turn.
-3. The Turn runs Steps (model calls, tools, approvals) as durable units.
-4. The Turn ends with a reply, an error, or a wait for an external decision.
+1. Authors declare a safety profile next to each tool.
+2. Startup validation rejects missing or contradictory configs.
+3. Runtime policies use the label to gate or retry.
+4. Events can include the profile for audits.
 
 ```python
-# agent/agent.py — structural sketch
-from temporalio import workflow
+TOOLS = {
+    "search": {"safety": "inherently_safe"},
+    "charge": {"safety": "non_idempotent", "idempotency_key_field": "key"},
+}
 
-@workflow.defn
-class AgentSessionWorkflow:
-    @workflow.run
-    async def run(self, session_id: str) -> None:
-        # Own cross-turn state, approvals, and the event stream.
-        ...
+def assert_profiles(tools: dict) -> None:
+    for name, meta in tools.items():
+        if "safety" not in meta:
+            raise ValueError(f"{name} missing safety profile")
 ```
 
 ## Implementation
 
+### Defaults
 
-A runnable sample may be added later; the Python sketches below show the structure.
+Prefer safe-by-default: unknown tools are treated as non_idempotent and gated.
 
-### Session ownership
+### Documentation
 
-Keep memory, approval overrides, and the ordered event stream on the Session Workflow so every Turn shares one durable context.
-
-### Step boundaries
-
-Run non-deterministic or side-effecting work in Activities so completed Steps replay from recorded results after a restart.
+Pattern pages and tool READMEs should state the profile next to the schema.
 
 ## When to use
 
-This pattern fits when you need the behavior described in Overview and Problem.
-It is not a good fit when a short-lived script without durability is enough.
+Use for every multi-tool agent.
+Skip only for prototypes with a single read-only tool.
 
 ## Benefits and trade-offs
 
-You gain crash safety, clear observability, and a place to hang approvals.
-You accept Workflow history growth and the need to Continue-As-New on long sessions.
+You make policy mechanical instead of prompt-based.
+Authors must classify tools honestly.
 
 ## Comparison with alternatives
 
-| Approach | Durability | Isolation |
-| :--- | :--- | :--- |
-| This pattern | High | Clear Session/Turn/Step boundaries |
-| In-memory agent loop | None | Lost on restart |
+| Profile | Meaning |
+| :--- | :--- |
+| inherently_safe | Read-only / pure |
+| idempotent_side_effect | Safe to retry with key |
+| non_idempotent | Do not auto-retry |
 
 ## Best practices
 
-- **Emit events at boundaries.** Record turn and step start/end so UIs can reconstruct the run.
-- **Keep Workflows deterministic.** Put model and IO calls in Activities.
-- **Name Sessions stably.** Use a Session ID that external channels can address.
+- **Fail build on missing labels.**
+- **Pair non_idempotent with approvals or keys.**
+- **Re-review profiles when tool behavior changes.**
 
 ## Common pitfalls
 
-- **Doing IO in the Workflow.** Non-deterministic calls break replay.
-- **Unbounded history.** Long sessions must Continue-As-New with a state snapshot.
-- **Silent retries on non-idempotent tools.** Gate or key those tools before automatic retry.
+- **Marking writes as inherently_safe.**
+- **Profile only in comments, not enforced config.**
 
 ## Related patterns
 
-- [Session Workflow](/session-workflow)
-- [Activity Tool](/activity-tool)
-- [Standardized Event Stream](/standardized-event-stream)
+- [Tool Retry Profiles](/tool-retry-profiles)
+- [Approval-Gated Tools](/approval-gated-tools)
+- [Security Profiles per Agent](/security-profiles-per-agent)
 
 ## Sample code
 
-See `sandbox-runner/patterns/safety-profiled-tools/python/` when a live sample exists for this pattern.
+See related runnable samples under `sandbox-runner/patterns/` when this pattern builds on Session Workflow, Activity Tool, or Code Mode.
 
 ## References
 
-- [Temporal Docs: Workflows](https://docs.temporal.io/workflows)
-- [Temporal Docs: Activities](https://docs.temporal.io/activities)
-- [Temporal Docs: Continue-As-New](https://docs.temporal.io/workflow-execution/continue-as-new)
+- [Temporal Docs: Retry policies](https://docs.temporal.io/encyclopedia/retry-policies)

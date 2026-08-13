@@ -33,7 +33,7 @@ The following describes each step in the diagram:
 3. The parent awaits results and emits completion events linking parent and child IDs.
 
 ```python
-# Structural sketch inside a parent Workflow
+# Parent Workflow fan-out example
 handles = [
     await workflow.start_child_workflow(SubagentSession.run, item, id=f"{session_id}-{item}")
     for item in items

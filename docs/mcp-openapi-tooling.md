@@ -1,99 +1,90 @@
-<h1>MCP / OpenAPI Tooling <img src="/images/child-workflows-icon.svg" alt="MCP / OpenAPI Tooling" class="pattern-page-icon"></h1>
+<h1>MCP / OpenAPI Tooling <img src="/images/activity-dependency-injection-icon.svg" alt="MCP / OpenAPI Tooling" class="pattern-page-icon"></h1>
 
 ## Overview
 
-Compile external tools into Activity tools.
-You use Temporal Workflows and Activities under the hood so the agent can pause, retry, and resume without losing session state.
+The MCP / OpenAPI Tooling pattern discovers external tools and services (via MCP servers or OpenAPI descriptions) and compiles them into typed Activity tools.
+The agent calls them as first-class tools with schemas, retries, approvals, and telemetry.
+Primitives used: ToolDefinition generation, Activity Tools, SafetyProfile assignment.
 
 ## Problem
 
-Without this pattern, you risk losing mid-turn progress on worker restarts, double-executing side effects, or scattering session state across ad-hoc stores that are hard to audit.
+Hand-writing Activity wrappers for every external API does not scale and drifts from the upstream schema.
 
 ## Solution
 
-Structure the agent so the durable boundary matches the pattern:
+At build or startup, ingest MCP/OpenAPI descriptions, generate ToolDefinitions (JSON Schema → Pydantic), and register Activity bodies that call the remote API.
+Assign safety profiles and approval defaults during compilation.
 
 ```mermaid
 flowchart LR
-    Input[Input] --> Session
-    Session --> Turn
-    Turn --> Step
-    Step --> Out[Reply or wait]
+    Spec[MCP/OpenAPI] --> Compile[Compile ToolDefinitions]
+    Compile --> Tools[Activity tools]
+    Tools --> Agent[Agent Session]
 ```
 
 The following describes each step in the diagram:
 
-1. An input arrives for a Session (message, channel event, or schedule).
-2. The Session starts or continues a Turn.
-3. The Turn runs Steps (model calls, tools, approvals) as durable units.
-4. The Turn ends with a reply, an error, or a wait for an external decision.
+1. A connector spec is fetched or vendored.
+2. Compilation produces typed tools with IDs and schemas.
+3. Workers register generated Activities.
+4. The agent uses them like any other Activity Tool under policy.
 
 ```python
-# agent/agent.py — structural sketch
-from temporalio import workflow
-
-@workflow.defn
-class AgentSessionWorkflow:
-    @workflow.run
-    async def run(self, session_id: str) -> None:
-        # Own cross-turn state, approvals, and the event stream.
-        ...
+# Generated tooling registration example
+defs = compile_openapi(spec_path)
+for d in defs:
+    register_activity_tool(d.name, d.input_model, d.output_model, d.endpoint)
 ```
 
 ## Implementation
 
+### Freshness
 
-A runnable sample may be added later; the Python sketches below show the structure.
+Pin specs in-repo or validate digests so tool IDs do not churn silently.
 
-### Session ownership
+### Auth
 
-Keep memory, approval overrides, and the ordered event stream on the Session Workflow so every Turn shares one durable context.
-
-### Step boundaries
-
-Run non-deterministic or side-effecting work in Activities so completed Steps replay from recorded results after a restart.
+Broker credentials in the Activity layer; never ask the model for secrets.
 
 ## When to use
 
-This pattern fits when you need the behavior described in Overview and Problem.
-It is not a good fit when a short-lived script without durability is enough.
+Use when integrating many external APIs or MCP servers.
+Hand-write tools when you need custom semantics beyond the spec.
 
 ## Benefits and trade-offs
 
-You gain crash safety, clear observability, and a place to hang approvals.
-You accept Workflow history growth and the need to Continue-As-New on long sessions.
+You scale tool ingestion with schema fidelity.
+Generated tools still need safety review.
 
 ## Comparison with alternatives
 
-| Approach | Durability | Isolation |
-| :--- | :--- | :--- |
-| This pattern | High | Clear Session/Turn/Step boundaries |
-| In-memory agent loop | None | Lost on restart |
+| Source | Output |
+| :--- | :--- |
+| OpenAPI | HTTP Activity tools |
+| MCP | ToolDefinitions from server list |
+| Hand-written | Custom tools |
 
 ## Best practices
 
-- **Emit events at boundaries.** Record turn and step start/end so UIs can reconstruct the run.
-- **Keep Workflows deterministic.** Put model and IO calls in Activities.
-- **Name Sessions stably.** Use a Session ID that external channels can address.
+- **Review safety profiles after generation.**
+- **Stable tool IDs.** Avoid renaming on every spec refresh.
+- **Contract tests against the real API in CI.**
 
 ## Common pitfalls
 
-- **Doing IO in the Workflow.** Non-deterministic calls break replay.
-- **Unbounded history.** Long sessions must Continue-As-New with a state snapshot.
-- **Silent retries on non-idempotent tools.** Gate or key those tools before automatic retry.
+- **Auto-enabling all generated tools in prod.**
+- **Passing raw user tokens to the model context.**
 
 ## Related patterns
 
-- [Session Workflow](/session-workflow)
 - [Activity Tool](/activity-tool)
-- [Standardized Event Stream](/standardized-event-stream)
+- [Safety-Profiled Tools](/safety-profiled-tools)
+- [Security Profiles per Agent](/security-profiles-per-agent)
 
 ## Sample code
 
-See `sandbox-runner/patterns/mcp-openapi-tooling/python/` when a live sample exists for this pattern.
+See related runnable samples under `sandbox-runner/patterns/` when this pattern builds on Session Workflow, Activity Tool, or Code Mode.
 
 ## References
 
-- [Temporal Docs: Workflows](https://docs.temporal.io/workflows)
 - [Temporal Docs: Activities](https://docs.temporal.io/activities)
-- [Temporal Docs: Continue-As-New](https://docs.temporal.io/workflow-execution/continue-as-new)

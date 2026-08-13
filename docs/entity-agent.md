@@ -1,99 +1,101 @@
-<h1>Entity Agent <img src="/images/child-workflows-icon.svg" alt="Entity Agent" class="pattern-page-icon"></h1>
+<h1>Entity Agent <img src="/images/entity-workflow-icon.svg" alt="Entity Agent" class="pattern-page-icon"></h1>
 
 ## Overview
 
-One long-lived agent Workflow per business entity.
-You use Temporal Workflows and Activities under the hood so the agent can pause, retry, and resume without losing session state.
+The Entity Agent pattern models a long-lived business entity as an agent.
+One Workflow per entity (account, workspace, user) owns its tools, policies, and subagents.
+All agentic work for that entity routes through the same Workflow for the entity lifetime.
+Primitives used: Session bound to entity ID, Entity Workflow lifetime, Continue-As-New Session.
 
 ## Problem
 
-Without this pattern, you risk losing mid-turn progress on worker restarts, double-executing side effects, or scattering session state across ad-hoc stores that are hard to audit.
+If each request spins a new agent session, entity policies, memory, and in-flight approvals scatter.
+Operators cannot ask one durable address what the entity agent is doing.
 
 ## Solution
 
-Structure the agent so the durable boundary matches the pattern:
+Set `session_id` (or Workflow ID) to the entity ID.
+Route every channel message, schedule, and subagent call for that entity through the same Session Workflow.
+Use Continue-As-New to keep history bounded over months or years.
 
 ```mermaid
 flowchart LR
-    Input[Input] --> Session
-    Session --> Turn
-    Turn --> Step
-    Step --> Out[Reply or wait]
+    Channels --> Entity[Entity Agent Session]
+    Schedules --> Entity
+    Entity --> Tools[Tools and subagents]
+    Entity --> Memory[Entity memory]
 ```
 
 The following describes each step in the diagram:
 
-1. An input arrives for a Session (message, channel event, or schedule).
-2. The Session starts or continues a Turn.
-3. The Turn runs Steps (model calls, tools, approvals) as durable units.
-4. The Turn ends with a reply, an error, or a wait for an external decision.
+1. An entity ID (account, workspace) becomes the durable Session ID.
+2. All inputs for that entity signal or update the same Workflow.
+3. The agent applies entity-scoped policies, memory, and tools.
+4. Continue-As-New preserves identity while resetting history.
 
 ```python
-# agent/agent.py — structural sketch
-from temporalio import workflow
-
-@workflow.defn
-class AgentSessionWorkflow:
-    @workflow.run
-    async def run(self, session_id: str) -> None:
-        # Own cross-turn state, approvals, and the event stream.
-        ...
+# Workflow ID == entity id
+await client.start_workflow(
+    EntityAgentWorkflow.run,
+    args=[account_id],
+    id=f"account-{account_id}",
+    task_queue=TASK_QUEUE,
+    start_signal="user_message",
+    start_signal_args=[text],
+)
 ```
 
 ## Implementation
 
+### Routing
 
-A runnable sample may be added later; the Python sketches below show the structure.
+HTTP and messaging channels must derive the entity ID deterministically so retries hit the same Workflow.
 
-### Session ownership
+### Lifecycle
 
-Keep memory, approval overrides, and the ordered event stream on the Session Workflow so every Turn shares one durable context.
-
-### Step boundaries
-
-Run non-deterministic or side-effecting work in Activities so completed Steps replay from recorded results after a restart.
+Define when the entity agent completes (account closed) versus idles durably forever.
 
 ## When to use
 
-This pattern fits when you need the behavior described in Overview and Problem.
-It is not a good fit when a short-lived script without durability is enough.
+Use Entity Agents for per-account or per-workspace assistants with ongoing state.
+Use short Session Workflows for one-off jobs without an entity lifetime.
 
 ## Benefits and trade-offs
 
-You gain crash safety, clear observability, and a place to hang approvals.
-You accept Workflow history growth and the need to Continue-As-New on long sessions.
+You get one source of truth for entity agent state and policy.
+You must operate long-lived Workflows carefully (Continue-As-New, visibility).
 
 ## Comparison with alternatives
 
-| Approach | Durability | Isolation |
+| Approach | Continuity | Addressability |
 | :--- | :--- | :--- |
-| This pattern | High | Clear Session/Turn/Step boundaries |
-| In-memory agent loop | None | Lost on restart |
+| Entity Agent | High | Stable entity ID |
+| New session per chat | Low | Ephemeral |
+| Shared global agent | Medium | Contended |
 
 ## Best practices
 
-- **Emit events at boundaries.** Record turn and step start/end so UIs can reconstruct the run.
-- **Keep Workflows deterministic.** Put model and IO calls in Activities.
-- **Name Sessions stably.** Use a Session ID that external channels can address.
+- **Align IDs with the business key.** Avoid random UUIDs for entity sessions.
+- **Scope tools to the entity.** Prevent cross-tenant data access in tool arguments.
+- **Idle durably.** Prefer signals over busy loops while waiting.
 
 ## Common pitfalls
 
-- **Doing IO in the Workflow.** Non-deterministic calls break replay.
-- **Unbounded history.** Long sessions must Continue-As-New with a state snapshot.
-- **Silent retries on non-idempotent tools.** Gate or key those tools before automatic retry.
+- **One Workflow for all entities.** Creates a hotspot and mixes tenancy.
+- **Never Continue-As-New.** History grows without bound.
+- **Caching Run IDs in clients.** Breaks after Continue-As-New.
 
 ## Related patterns
 
 - [Session Workflow](/session-workflow)
-- [Activity Tool](/activity-tool)
-- [Standardized Event Stream](/standardized-event-stream)
+- [Continue-As-New Session](/continue-as-new-session)
+- [Session with Signal-and-Start](/session-signal-and-start)
 
 ## Sample code
 
-See `sandbox-runner/patterns/entity-agent/python/` when a live sample exists for this pattern.
+See related runnable samples under `sandbox-runner/patterns/` when this pattern builds on Session Workflow, Activity Tool, or Code Mode.
 
 ## References
 
-- [Temporal Docs: Workflows](https://docs.temporal.io/workflows)
-- [Temporal Docs: Activities](https://docs.temporal.io/activities)
+- [Temporal Docs: Workflow ID](https://docs.temporal.io/workflow-execution/workflowid-runid)
 - [Temporal Docs: Continue-As-New](https://docs.temporal.io/workflow-execution/continue-as-new)

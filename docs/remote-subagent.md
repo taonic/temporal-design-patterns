@@ -1,99 +1,93 @@
-<h1>Remote Subagent <img src="/images/child-workflows-icon.svg" alt="Remote Subagent" class="pattern-page-icon"></h1>
+<h1>Remote Subagent <img src="/images/webhooks-icon.svg" alt="Remote Subagent" class="pattern-page-icon"></h1>
 
 ## Overview
 
-Drive an agent hosted elsewhere via session HTTP.
-You use Temporal Workflows and Activities under the hood so the agent can pause, retry, and resume without losing session state.
+The Remote Subagent pattern drives an agent hosted in another runtime or cluster via its session HTTP API, while representing it locally as a subagent toolset.
+Parent and child still exchange events and approvals through the shared session protocol.
+Primitives used: HTTP Session client, SubagentHandle, remote session IDs, subagent events.
 
 ## Problem
 
-Without this pattern, you risk losing mid-turn progress on worker restarts, double-executing side effects, or scattering session state across ad-hoc stores that are hard to audit.
+Not every specialist can run as a Child Workflow in the same worker process or cluster.
+You still need durable parent orchestration and a unified audit story.
 
 ## Solution
 
-Structure the agent so the durable boundary matches the pattern:
+Implement subagent tools as Activities that call the remote session HTTP API (create session, send message, stream events).
+Record remote `session_id` on the SubagentHandle and mirror important remote events into the parent stream.
 
 ```mermaid
 flowchart LR
-    Input[Input] --> Session
-    Session --> Turn
-    Turn --> Step
-    Step --> Out[Reply or wait]
+    Parent[Parent Session] --> Act[Activity client]
+    Act --> HTTP[Remote session API]
+    HTTP --> Remote[Remote agent Session]
+    Act --> Events[subagent_* on parent]
 ```
 
 The following describes each step in the diagram:
 
-1. An input arrives for a Session (message, channel event, or schedule).
-2. The Session starts or continues a Turn.
-3. The Turn runs Steps (model calls, tools, approvals) as durable units.
-4. The Turn ends with a reply, an error, or a wait for an external decision.
+1. The parent starts a remote session through an Activity.
+2. Operation calls become HTTP turns against that session.
+3. The Activity streams or polls events until the operation completes.
+4. The parent emits linked subagent events for local observers.
 
 ```python
-# agent/agent.py — structural sketch
-from temporalio import workflow
-
-@workflow.defn
-class AgentSessionWorkflow:
-    @workflow.run
-    async def run(self, session_id: str) -> None:
-        # Own cross-turn state, approvals, and the event stream.
-        ...
+@activity.defn
+async def remote_subagent_call(base_url: str, session_id: str, message: str) -> str:
+    # HTTP client to remote session API — runs in Activity only.
+    ...
+    return reply_text
 ```
 
 ## Implementation
 
+### Durability
 
-A runnable sample may be added later; the Python sketches below show the structure.
+The Activity must be restart-safe: resume streaming from a cursor, or reconcile with remote status on retry.
 
-### Session ownership
+### Trust boundary
 
-Keep memory, approval overrides, and the ordered event stream on the Session Workflow so every Turn shares one durable context.
-
-### Step boundaries
-
-Run non-deterministic or side-effecting work in Activities so completed Steps replay from recorded results after a restart.
+Authenticate to the remote API; do not embed long-lived secrets in Workflow history.
 
 ## When to use
 
-This pattern fits when you need the behavior described in Overview and Problem.
-It is not a good fit when a short-lived script without durability is enough.
+Use when the child must run in another cluster, language, or scaling domain.
+Prefer local Child Workflows when both agents share a Temporal namespace.
 
 ## Benefits and trade-offs
 
-You gain crash safety, clear observability, and a place to hang approvals.
-You accept Workflow history growth and the need to Continue-As-New on long sessions.
+You compose across deployment boundaries.
+You take on distributed failure modes and schema drift between sides.
 
 ## Comparison with alternatives
 
-| Approach | Durability | Isolation |
+| Approach | Location | Coupling |
 | :--- | :--- | :--- |
-| This pattern | High | Clear Session/Turn/Step boundaries |
-| In-memory agent loop | None | Lost on restart |
+| Remote Subagent | Other cluster | HTTP protocol |
+| Local subagent | Same Temporal | Child Workflow |
+| Ad-hoc webhook | Other cluster | Weak semantics |
 
 ## Best practices
 
-- **Emit events at boundaries.** Record turn and step start/end so UIs can reconstruct the run.
-- **Keep Workflows deterministic.** Put model and IO calls in Activities.
-- **Name Sessions stably.** Use a Session ID that external channels can address.
+- **Mirror IDs.** Parent events should include remote session_id.
+- **Timeouts on both sides.** Avoid eternal Activities.
+- **Version the session API.** Breaking changes need explicit migration.
 
 ## Common pitfalls
 
-- **Doing IO in the Workflow.** Non-deterministic calls break replay.
-- **Unbounded history.** Long sessions must Continue-As-New with a state snapshot.
-- **Silent retries on non-idempotent tools.** Gate or key those tools before automatic retry.
+- **Calling HTTP from the Workflow.**
+- **Losing cursor on Activity retry and double-sending messages.**
 
 ## Related patterns
 
-- [Session Workflow](/session-workflow)
-- [Activity Tool](/activity-tool)
-- [Standardized Event Stream](/standardized-event-stream)
+- [Subagent Toolset](/subagent-toolset)
+- [HTTP Channel Agent](/http-channel-agent)
+- [HTTP and Client](/http-and-client)
 
 ## Sample code
 
-See `sandbox-runner/patterns/remote-subagent/python/` when a live sample exists for this pattern.
+See related runnable samples under `sandbox-runner/patterns/` when this pattern builds on Session Workflow, Activity Tool, or Code Mode.
 
 ## References
 
-- [Temporal Docs: Workflows](https://docs.temporal.io/workflows)
 - [Temporal Docs: Activities](https://docs.temporal.io/activities)
-- [Temporal Docs: Continue-As-New](https://docs.temporal.io/workflow-execution/continue-as-new)

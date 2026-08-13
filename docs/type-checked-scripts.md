@@ -1,99 +1,90 @@
-<h1>Type-Checked Scripts <img src="/images/child-workflows-icon.svg" alt="Type-Checked Scripts" class="pattern-page-icon"></h1>
+<h1>Type-Checked Scripts <img src="/images/non-retryable-errors-icon.svg" alt="Type-Checked Scripts" class="pattern-page-icon"></h1>
 
 ## Overview
 
-Reject ill-typed scripts before execution.
-You use Temporal Workflows and Activities under the hood so the agent can pause, retry, and resume without losing session state.
+The Type-Checked Scripts pattern generates type stubs from ToolDefinitions and checks model-authored scripts against them before execution.
+Scripts that call tools with wrong arguments or shapes fail fast with clear errors instead of running partial workflows.
+Primitives used: ScriptDefinition, ToolDefinition schemas, pre-exec validation Step.
 
 ## Problem
 
-Without this pattern, you risk losing mid-turn progress on worker restarts, double-executing side effects, or scattering session state across ad-hoc stores that are hard to audit.
+Invalid scripts can call tools halfway, leave partial side effects, or waste a Turn on avoidable mistakes.
 
 ## Solution
 
-Structure the agent so the durable boundary matches the pattern:
+Before sandbox execution, generate stubs from tool input/output schemas and run a static check.
+On failure, return errors to the model or operator without executing host calls.
 
 ```mermaid
 flowchart LR
-    Input[Input] --> Session
-    Session --> Turn
-    Turn --> Step
-    Step --> Out[Reply or wait]
+    Script --> Check[Type check vs stubs]
+    Check -->|ok| Run[Sandbox run]
+    Check -->|fail| Err[Error to model]
+    Run --> Host[Host tool Steps]
 ```
 
 The following describes each step in the diagram:
 
-1. An input arrives for a Session (message, channel event, or schedule).
-2. The Session starts or continues a Turn.
-3. The Turn runs Steps (model calls, tools, approvals) as durable units.
-4. The Turn ends with a reply, an error, or a wait for an external decision.
+1. ToolDefinitions produce type stubs for host functions.
+2. The script is checked before any host call.
+3. Failures short-circuit with actionable diagnostics.
+4. Passing scripts proceed to tools_only execution.
 
 ```python
-# agent/agent.py — structural sketch
-from temporalio import workflow
-
-@workflow.defn
-class AgentSessionWorkflow:
-    @workflow.run
-    async def run(self, session_id: str) -> None:
-        # Own cross-turn state, approvals, and the event stream.
-        ...
+# Generated tooling registration example
+stubs = generate_stubs(tool_definitions)
+errors = typecheck(script_text, stubs)
+if errors:
+    return {"ok": False, "errors": errors}
+return run_in_sandbox(script_text, host_dispatcher)
 ```
 
 ## Implementation
 
+### Where it runs
 
-A runnable sample may be added later; the Python sketches below show the structure.
-
-### Session ownership
-
-Keep memory, approval overrides, and the ordered event stream on the Session Workflow so every Turn shares one durable context.
-
-### Step boundaries
-
-Run non-deterministic or side-effecting work in Activities so completed Steps replay from recorded results after a restart.
+Validation can be an Activity Step before sandbox run, or part of the Code Mode Activity before side effects.
+Either way, emit events that distinguish check failure from host tool failure.
 
 ## When to use
 
-This pattern fits when you need the behavior described in Overview and Problem.
-It is not a good fit when a short-lived script without durability is enough.
+Use whenever Code Mode is enabled.
+Skipping checks is acceptable only in throwaway experiments.
 
 ## Benefits and trade-offs
 
-You gain crash safety, clear observability, and a place to hang approvals.
-You accept Workflow history growth and the need to Continue-As-New on long sessions.
+You prevent many partial side-effect runs.
+Stub generation must stay in sync with tool schemas.
 
 ## Comparison with alternatives
 
-| Approach | Durability | Isolation |
+| Approach | Catches bad args | Side effects before fail |
 | :--- | :--- | :--- |
-| This pattern | High | Clear Session/Turn/Step boundaries |
-| In-memory agent loop | None | Lost on restart |
+| Type-Checked Scripts | Early | No |
+| Runtime tool errors only | Late | Possible |
+| Prompt-only instructions | Weak | Possible |
 
 ## Best practices
 
-- **Emit events at boundaries.** Record turn and step start/end so UIs can reconstruct the run.
-- **Keep Workflows deterministic.** Put model and IO calls in Activities.
-- **Name Sessions stably.** Use a Session ID that external channels can address.
+- **Regenerate stubs when tools change.**
+- **Return model-readable errors.**
+- **Do not execute host calls during check.**
 
 ## Common pitfalls
 
-- **Doing IO in the Workflow.** Non-deterministic calls break replay.
-- **Unbounded history.** Long sessions must Continue-As-New with a state snapshot.
-- **Silent retries on non-idempotent tools.** Gate or key those tools before automatic retry.
+- **Checking a different script than you execute.**
+- **Allowing dynamic getattr to bypass stubs.**
 
 ## Related patterns
 
-- [Session Workflow](/session-workflow)
-- [Activity Tool](/activity-tool)
-- [Standardized Event Stream](/standardized-event-stream)
+- [Code Mode Orchestrator](/code-mode-orchestrator)
+- [Tools-Only Sandbox](/tools-only-sandbox)
+- [Tools and Operations](/tools-and-operations)
 
 ## Sample code
 
-See `sandbox-runner/patterns/type-checked-scripts/python/` when a live sample exists for this pattern.
+See related runnable samples under `sandbox-runner/patterns/` when this pattern builds on Session Workflow, Activity Tool, or Code Mode.
 
 ## References
 
-- [Temporal Docs: Workflows](https://docs.temporal.io/workflows)
 - [Temporal Docs: Activities](https://docs.temporal.io/activities)
-- [Temporal Docs: Continue-As-New](https://docs.temporal.io/workflow-execution/continue-as-new)

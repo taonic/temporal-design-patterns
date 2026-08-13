@@ -1,99 +1,91 @@
-<h1>Security Profiles per Agent <img src="/images/child-workflows-icon.svg" alt="Security Profiles per Agent" class="pattern-page-icon"></h1>
+<h1>Security Profiles per Agent <img src="/images/priority-task-queues-icon.svg" alt="Security Profiles per Agent" class="pattern-page-icon"></h1>
 
 ## Overview
 
-Environment-specific tool and network allowances.
-You use Temporal Workflows and Activities under the hood so the agent can pause, retry, and resume without losing session state.
+The Security Profiles per Agent pattern defines security profiles (development, staging, production) that control which tools, sandboxes, and networks are available to an agent.
+Profiles are declared alongside the agent and validated at build time.
+Primitives used: SecurityProfile, tool allow/deny lists, SandboxProfile binding.
 
 ## Problem
 
-Without this pattern, you risk losing mid-turn progress on worker restarts, double-executing side effects, or scattering session state across ad-hoc stores that are hard to audit.
+The same agent code often runs in dev with loose tools and in prod with strict ones.
+If the difference is only environment folklore, production can accidentally enable dangerous tools.
 
 ## Solution
 
-Structure the agent so the durable boundary matches the pattern:
+Declare a SecurityProfile next to the agent (for example allow lists, sandbox profile, channel auth requirements).
+Select the active profile via deployment config and validate that every enabled tool is permitted.
 
 ```mermaid
-flowchart LR
-    Input[Input] --> Session
-    Session --> Turn
-    Turn --> Step
-    Step --> Out[Reply or wait]
+flowchart TD
+    Agent[Agent project] --> Profiles[dev / staging / prod]
+    Profiles --> Validate[Build validation]
+    Validate --> Worker[Worker runtime]
 ```
 
 The following describes each step in the diagram:
 
-1. An input arrives for a Session (message, channel event, or schedule).
-2. The Session starts or continues a Turn.
-3. The Turn runs Steps (model calls, tools, approvals) as durable units.
-4. The Turn ends with a reply, an error, or a wait for an external decision.
+1. Authors maintain named security profiles with the agent.
+2. Deployment selects prod/staging/dev.
+3. Build or startup validates tool and sandbox permissions.
+4. Runtime refuses tools outside the active profile.
 
 ```python
-# agent/agent.py — structural sketch
-from temporalio import workflow
+PROFILES = {
+    "prod": {"tools": ["search"], "sandbox": "tools_only"},
+    "dev": {"tools": ["search", "shell"], "sandbox": "tools_only"},
+}
 
-@workflow.defn
-class AgentSessionWorkflow:
-    @workflow.run
-    async def run(self, session_id: str) -> None:
-        # Own cross-turn state, approvals, and the event stream.
-        ...
+active = PROFILES[os.environ["AGENT_SECURITY_PROFILE"]]
+assert set(registered_tools) <= set(active["tools"])
 ```
 
 ## Implementation
 
+### Separation from SafetyProfile
 
-A runnable sample may be added later; the Python sketches below show the structure.
-
-### Session ownership
-
-Keep memory, approval overrides, and the ordered event stream on the Session Workflow so every Turn shares one durable context.
-
-### Step boundaries
-
-Run non-deterministic or side-effecting work in Activities so completed Steps replay from recorded results after a restart.
+SafetyProfile is per tool; SecurityProfile is per agent/environment.
+Both must pass before a call runs.
 
 ## When to use
 
-This pattern fits when you need the behavior described in Overview and Problem.
-It is not a good fit when a short-lived script without durability is enough.
+Use whenever an agent has more than one deployment environment.
+A single locked profile is enough for a prod-only private agent.
 
 ## Benefits and trade-offs
 
-You gain crash safety, clear observability, and a place to hang approvals.
-You accept Workflow history growth and the need to Continue-As-New on long sessions.
+You prevent environment drift with validation.
+You maintain profile matrices as tools grow.
 
 ## Comparison with alternatives
 
-| Approach | Durability | Isolation |
-| :--- | :--- | :--- |
-| This pattern | High | Clear Session/Turn/Step boundaries |
-| In-memory agent loop | None | Lost on restart |
+| Control | Scope |
+| :--- | :--- |
+| SafetyProfile | Per tool |
+| SecurityProfile | Per agent/env |
+| ApprovalPolicy | Per session/runtime |
 
 ## Best practices
 
-- **Emit events at boundaries.** Record turn and step start/end so UIs can reconstruct the run.
-- **Keep Workflows deterministic.** Put model and IO calls in Activities.
-- **Name Sessions stably.** Use a Session ID that external channels can address.
+- **Fail closed in prod.** Missing profile aborts startup.
+- **Diff profiles in CI.** Catch accidental widenings.
+- **Require auth on prod channels.**
 
 ## Common pitfalls
 
-- **Doing IO in the Workflow.** Non-deterministic calls break replay.
-- **Unbounded history.** Long sessions must Continue-As-New with a state snapshot.
-- **Silent retries on non-idempotent tools.** Gate or key those tools before automatic retry.
+- **Copying dev profile to prod.**
+- **Allowing shell tools in prod security profiles.**
 
 ## Related patterns
 
-- [Session Workflow](/session-workflow)
-- [Activity Tool](/activity-tool)
-- [Standardized Event Stream](/standardized-event-stream)
+- [Safety-Profiled Tools](/safety-profiled-tools)
+- [Network & Resource Sandboxing](/network-resource-sandboxing)
+- [Filesystem Authoring](/filesystem-authoring)
 
 ## Sample code
 
-See `sandbox-runner/patterns/security-profiles-per-agent/python/` when a live sample exists for this pattern.
+See related runnable samples under `sandbox-runner/patterns/` when this pattern builds on Session Workflow, Activity Tool, or Code Mode.
 
 ## References
 
-- [Temporal Docs: Workflows](https://docs.temporal.io/workflows)
-- [Temporal Docs: Activities](https://docs.temporal.io/activities)
-- [Temporal Docs: Continue-As-New](https://docs.temporal.io/workflow-execution/continue-as-new)
+- [Temporal Docs: Workers](https://docs.temporal.io/workers)

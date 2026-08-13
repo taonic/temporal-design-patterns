@@ -1,99 +1,90 @@
-<h1>Cross-Session Memory <img src="/images/child-workflows-icon.svg" alt="Cross-Session Memory" class="pattern-page-icon"></h1>
+<h1>Cross-Session Memory <img src="/images/batch-iterator-icon.svg" alt="Cross-Session Memory" class="pattern-page-icon"></h1>
 
 ## Overview
 
-Share bounded memory across sessions.
-You use Temporal Workflows and Activities under the hood so the agent can pause, retry, and resume without losing session state.
+The Cross-Session Memory pattern shares bounded, structured memory across sessions (for example per-user or per-team knowledge), while each session retains its own local context and approvals.
+Access is always mediated by the agent’s tools and policies.
+Primitives used: External memory tools, Session Memory composition, Safety/Approval on writes.
 
 ## Problem
 
-Without this pattern, you risk losing mid-turn progress on worker restarts, double-executing side effects, or scattering session state across ad-hoc stores that are hard to audit.
+Some knowledge should outlive a single session, but writing it ad hoc from Activities without policy creates silent cross-talk and tenancy bugs.
 
 ## Solution
 
-Structure the agent so the durable boundary matches the pattern:
+Provide explicit memory tools (read/write) backed by Activities.
+Sessions pull relevant slices into Session Memory at turn start and write back only through those tools under approval rules.
 
 ```mermaid
-flowchart LR
-    Input[Input] --> Session
-    Session --> Turn
-    Turn --> Step
-    Step --> Out[Reply or wait]
+flowchart TB
+    S1[Session A] -->|memory tool| Store[Shared store]
+    S2[Session B] -->|memory tool| Store
+    S1 --> Local1[Session memory]
+    S2 --> Local2[Session memory]
 ```
 
 The following describes each step in the diagram:
 
-1. An input arrives for a Session (message, channel event, or schedule).
-2. The Session starts or continues a Turn.
-3. The Turn runs Steps (model calls, tools, approvals) as durable units.
-4. The Turn ends with a reply, an error, or a wait for an external decision.
+1. A Session loads shared memory via a tool Activity.
+2. It merges a bounded slice into local Session Memory.
+3. Writes go back through a gated memory tool.
+4. Other sessions see updates only through the same tools.
 
 ```python
-# agent/agent.py — structural sketch
-from temporalio import workflow
-
-@workflow.defn
-class AgentSessionWorkflow:
-    @workflow.run
-    async def run(self, session_id: str) -> None:
-        # Own cross-turn state, approvals, and the event stream.
-        ...
+shared = await workflow.execute_activity(
+    memory_read,
+    args=[user_id, "preferences"],
+    start_to_close_timeout=timedelta(seconds=30),
+)
+self._memory["shared"] = shared
 ```
 
 ## Implementation
 
+### Tenancy
 
-A runnable sample may be added later; the Python sketches below show the structure.
-
-### Session ownership
-
-Keep memory, approval overrides, and the ordered event stream on the Session Workflow so every Turn shares one durable context.
-
-### Step boundaries
-
-Run non-deterministic or side-effecting work in Activities so completed Steps replay from recorded results after a restart.
+Keys must include tenant/user/team IDs.
+Tools enforce authorization using worker-side identity, not model claims alone.
 
 ## When to use
 
-This pattern fits when you need the behavior described in Overview and Problem.
-It is not a good fit when a short-lived script without durability is enough.
+Use for preferences, org knowledge, or long-term facts.
+Keep purely conversational scratch state in Session Memory only.
 
 ## Benefits and trade-offs
 
-You gain crash safety, clear observability, and a place to hang approvals.
-You accept Workflow history growth and the need to Continue-As-New on long sessions.
+You share knowledge without merging sessions.
+You must operate a store and write policies.
 
 ## Comparison with alternatives
 
-| Approach | Durability | Isolation |
+| Memory | Lifetime | Sharing |
 | :--- | :--- | :--- |
-| This pattern | High | Clear Session/Turn/Step boundaries |
-| In-memory agent loop | None | Lost on restart |
+| Session | One session | No |
+| Cross-Session | Across sessions | Yes, mediated |
+| Externalized index | Long | Via tools |
 
 ## Best practices
 
-- **Emit events at boundaries.** Record turn and step start/end so UIs can reconstruct the run.
-- **Keep Workflows deterministic.** Put model and IO calls in Activities.
-- **Name Sessions stably.** Use a Session ID that external channels can address.
+- **Gate writes.** Shared memory is a side effect.
+- **Bound payloads.** Prefer structured records over free-text dumps.
+- **Audit reads/writes in the event stream.**
 
 ## Common pitfalls
 
-- **Doing IO in the Workflow.** Non-deterministic calls break replay.
-- **Unbounded history.** Long sessions must Continue-As-New with a state snapshot.
-- **Silent retries on non-idempotent tools.** Gate or key those tools before automatic retry.
+- **Letting the model invent store keys that cross tenants.**
+- **Writing shared memory from Workflow code without an Activity.**
 
 ## Related patterns
 
-- [Session Workflow](/session-workflow)
-- [Activity Tool](/activity-tool)
-- [Standardized Event Stream](/standardized-event-stream)
+- [Session Memory](/session-memory)
+- [Externalized Memory](/externalized-memory)
+- [Approval-Gated Tools](/approval-gated-tools)
 
 ## Sample code
 
-See `sandbox-runner/patterns/cross-session-memory/python/` when a live sample exists for this pattern.
+See related runnable samples under `sandbox-runner/patterns/` when this pattern builds on Session Workflow, Activity Tool, or Code Mode.
 
 ## References
 
-- [Temporal Docs: Workflows](https://docs.temporal.io/workflows)
 - [Temporal Docs: Activities](https://docs.temporal.io/activities)
-- [Temporal Docs: Continue-As-New](https://docs.temporal.io/workflow-execution/continue-as-new)

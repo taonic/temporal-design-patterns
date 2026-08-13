@@ -1,99 +1,98 @@
-<h1>Persistent Subagent Threads <img src="/images/child-workflows-icon.svg" alt="Persistent Subagent Threads" class="pattern-page-icon"></h1>
+<h1>Persistent Subagent Threads <img src="/images/entity-workflow-icon.svg" alt="Persistent Subagent Threads" class="pattern-page-icon"></h1>
 
 ## Overview
 
-Reusable durable threads per topic or user.
-You use Temporal Workflows and Activities under the hood so the agent can pause, retry, and resume without losing session state.
+The Persistent Subagent Threads pattern gives each user, project, or topic a durable subagent thread with its own context.
+The root agent creates and reuses these threads, which idle durably and periodically Continue-As-New.
+Primitives used: SubagentHandle reuse, Entity-like child Sessions, Continue-As-New.
 
 ## Problem
 
-Without this pattern, you risk losing mid-turn progress on worker restarts, double-executing side effects, or scattering session state across ad-hoc stores that are hard to audit.
+Starting a fresh subagent every time drops specialized context.
+Keeping everything in the parent Session mixes concerns and grows history faster.
 
 ## Solution
 
-Structure the agent so the durable boundary matches the pattern:
+Allocate stable child session IDs such as `{parent}-researcher-{topic}`.
+Reuse signal-with-start against that ID.
+Children idle on Signals and Continue-As-New independently of the parent.
 
 ```mermaid
-flowchart LR
-    Input[Input] --> Session
-    Session --> Turn
-    Turn --> Step
-    Step --> Out[Reply or wait]
+flowchart TB
+    Parent --> T1[Thread topic-A]
+    Parent --> T2[Thread topic-B]
+    T1 -->|idle + signal| T1
+    T2 -->|Continue-As-New| T2
 ```
 
 The following describes each step in the diagram:
 
-1. An input arrives for a Session (message, channel event, or schedule).
-2. The Session starts or continues a Turn.
-3. The Turn runs Steps (model calls, tools, approvals) as durable units.
-4. The Turn ends with a reply, an error, or a wait for an external decision.
+1. The parent maps a topic or user to a child session ID.
+2. It starts or signals that child for work.
+3. The child retains its own memory and tools across invocations.
+4. Each thread Continues-As-New on its own schedule.
 
 ```python
-# agent/agent.py — structural sketch
-from temporalio import workflow
-
-@workflow.defn
-class AgentSessionWorkflow:
-    @workflow.run
-    async def run(self, session_id: str) -> None:
-        # Own cross-turn state, approvals, and the event stream.
-        ...
+thread_id = f"{session_id}-topic-{topic}"
+await client.start_workflow(
+    TopicAgent.run,
+    args=[thread_id],
+    id=thread_id,
+    task_queue=TASK_QUEUE,
+    start_signal="user_message",
+    start_signal_args=[text],
+)
 ```
 
 ## Implementation
 
+### Directory of threads
 
-A runnable sample may be added later; the Python sketches below show the structure.
+Keep a map of topic → thread_id in parent Session state or an external index.
 
-### Session ownership
+### Idle cost
 
-Keep memory, approval overrides, and the ordered event stream on the Session Workflow so every Turn shares one durable context.
-
-### Step boundaries
-
-Run non-deterministic or side-effecting work in Activities so completed Steps replay from recorded results after a restart.
+Durable idle is cheap; avoid polling loops inside children.
 
 ## When to use
 
-This pattern fits when you need the behavior described in Overview and Problem.
-It is not a good fit when a short-lived script without durability is enough.
+Use for ongoing specialists tied to entities or topics.
+Use one-shot subagents for disposable tasks.
 
 ## Benefits and trade-offs
 
-You gain crash safety, clear observability, and a place to hang approvals.
-You accept Workflow history growth and the need to Continue-As-New on long sessions.
+You preserve specialized context without bloating the parent.
+You operate more long-lived Workflows.
 
 ## Comparison with alternatives
 
-| Approach | Durability | Isolation |
+| Approach | Context retention | Lifecycle |
 | :--- | :--- | :--- |
-| This pattern | High | Clear Session/Turn/Step boundaries |
-| In-memory agent loop | None | Lost on restart |
+| Persistent threads | High | Long-lived |
+| New subagent each call | None | Ephemeral |
+| All in parent | High | Parent hotspot |
 
 ## Best practices
 
-- **Emit events at boundaries.** Record turn and step start/end so UIs can reconstruct the run.
-- **Keep Workflows deterministic.** Put model and IO calls in Activities.
-- **Name Sessions stably.** Use a Session ID that external channels can address.
+- **Stable thread IDs.** Deterministic from parent + topic.
+- **Close unused threads.** Avoid unbounded idle agents.
+- **Isolate secrets.** Thread tools should not see other topics' data.
 
 ## Common pitfalls
 
-- **Doing IO in the Workflow.** Non-deterministic calls break replay.
-- **Unbounded history.** Long sessions must Continue-As-New with a state snapshot.
-- **Silent retries on non-idempotent tools.** Gate or key those tools before automatic retry.
+- **Leaking thread IDs across tenants.**
+- **Never Continue-As-New on busy threads.**
 
 ## Related patterns
 
-- [Session Workflow](/session-workflow)
-- [Activity Tool](/activity-tool)
-- [Standardized Event Stream](/standardized-event-stream)
+- [Subagent Toolset](/subagent-toolset)
+- [Entity Agent](/entity-agent)
+- [Continue-As-New Session](/continue-as-new-session)
 
 ## Sample code
 
-See `sandbox-runner/patterns/persistent-subagent-threads/python/` when a live sample exists for this pattern.
+See related runnable samples under `sandbox-runner/patterns/` when this pattern builds on Session Workflow, Activity Tool, or Code Mode.
 
 ## References
 
-- [Temporal Docs: Workflows](https://docs.temporal.io/workflows)
-- [Temporal Docs: Activities](https://docs.temporal.io/activities)
-- [Temporal Docs: Continue-As-New](https://docs.temporal.io/workflow-execution/continue-as-new)
+- [Temporal Docs: Signal-With-Start](https://docs.temporal.io/encyclopedia/workflow-message-passing#signal-with-start)

@@ -1,99 +1,94 @@
-<h1>Tools-Only Sandbox <img src="/images/child-workflows-icon.svg" alt="Tools-Only Sandbox" class="pattern-page-icon"></h1>
+<h1>Tools-Only Sandbox <img src="/images/parallel-execution-icon.svg" alt="Tools-Only Sandbox" class="pattern-page-icon"></h1>
 
 ## Overview
 
-Scripts may only call host tools.
-You use Temporal Workflows and Activities under the hood so the agent can pause, retry, and resume without losing session state.
+The Tools-Only Sandbox pattern runs model-authored scripts in a locked-down sandbox where the only side effects are calls to host tools.
+No direct filesystem or network; all real actions flow through Activity tools and their approval policies.
+Primitives used: SandboxProfile `tools_only`, ScriptExecution, host ToolCallSteps.
 
 ## Problem
 
-Without this pattern, you risk losing mid-turn progress on worker restarts, double-executing side effects, or scattering session state across ad-hoc stores that are hard to audit.
+Giving a model a general code interpreter with network access bypasses tool approvals and safety profiles.
 
 ## Solution
 
-Structure the agent so the durable boundary matches the pattern:
+Configure the sandbox so imports and syscalls cannot reach the network or host FS.
+Expose only async host functions that dispatch back into durable tool Steps.
 
 ```mermaid
-flowchart LR
-    Input[Input] --> Session
-    Session --> Turn
-    Turn --> Step
-    Step --> Out[Reply or wait]
+flowchart TB
+    Script[Model script] --> Sandbox[tools_only sandbox]
+    Sandbox -->|blocked| Net[Network/FS]
+    Sandbox -->|allowed| Host[Host tool Activities]
 ```
 
 The following describes each step in the diagram:
 
-1. An input arrives for a Session (message, channel event, or schedule).
-2. The Session starts or continues a Turn.
-3. The Turn runs Steps (model calls, tools, approvals) as durable units.
-4. The Turn ends with a reply, an error, or a wait for an external decision.
+1. The Code Mode Step selects the tools_only profile.
+2. The script runs with host function stubs only.
+3. Any real IO is a host tool Activity with events and approvals.
+4. Direct network or filesystem use fails inside the sandbox.
 
 ```python
-# agent/agent.py — structural sketch
-from temporalio import workflow
-
-@workflow.defn
-class AgentSessionWorkflow:
-    @workflow.run
-    async def run(self, session_id: str) -> None:
-        # Own cross-turn state, approvals, and the event stream.
-        ...
+# Pseudocode profile
+SANDBOX_PROFILES = {
+    "tools_only": {
+        "allow_network": False,
+        "allow_filesystem": False,
+        "host_tools": ["search", "book"],
+    }
+}
 ```
 
 ## Implementation
 
+### Separating compute_only
 
-A runnable sample may be added later; the Python sketches below show the structure.
+Use `compute_only` when the script must not call host tools either (pure calculation).
 
-### Session ownership
+### Enforcement
 
-Keep memory, approval overrides, and the ordered event stream on the Session Workflow so every Turn shares one durable context.
-
-### Step boundaries
-
-Run non-deterministic or side-effecting work in Activities so completed Steps replay from recorded results after a restart.
+Enforcement belongs in the sandbox runtime, not in prompt instructions alone.
 
 ## When to use
 
-This pattern fits when you need the behavior described in Overview and Problem.
-It is not a good fit when a short-lived script without durability is enough.
+Use tools_only for Code Mode in production.
+Use richer profiles only in controlled development environments.
 
 ## Benefits and trade-offs
 
-You gain crash safety, clear observability, and a place to hang approvals.
-You accept Workflow history growth and the need to Continue-As-New on long sessions.
+You keep approval and observability on the real side effects.
+You must maintain a capable sandbox implementation.
 
 ## Comparison with alternatives
 
-| Approach | Durability | Isolation |
+| Profile | Host tools | Network |
 | :--- | :--- | :--- |
-| This pattern | High | Clear Session/Turn/Step boundaries |
-| In-memory agent loop | None | Lost on restart |
+| tools_only | Yes | No |
+| compute_only | No | No |
+| unrestricted | Yes | Yes |
 
 ## Best practices
 
-- **Emit events at boundaries.** Record turn and step start/end so UIs can reconstruct the run.
-- **Keep Workflows deterministic.** Put model and IO calls in Activities.
-- **Name Sessions stably.** Use a Session ID that external channels can address.
+- **Fail closed on policy violations.**
+- **Pass explicit allow lists of host tools into each Code Mode tool.**
+- **Test escape attempts in CI.**
 
 ## Common pitfalls
 
-- **Doing IO in the Workflow.** Non-deterministic calls break replay.
-- **Unbounded history.** Long sessions must Continue-As-New with a state snapshot.
-- **Silent retries on non-idempotent tools.** Gate or key those tools before automatic retry.
+- **Relying on the model to obey sandbox rules.**
+- **Exposing a shell host tool that reopens the network.**
 
 ## Related patterns
 
-- [Session Workflow](/session-workflow)
-- [Activity Tool](/activity-tool)
-- [Standardized Event Stream](/standardized-event-stream)
+- [Code Mode Orchestrator](/code-mode-orchestrator)
+- [Type-Checked Scripts](/type-checked-scripts)
+- [Network & Resource Sandboxing](/network-resource-sandboxing)
 
 ## Sample code
 
-See `sandbox-runner/patterns/tools-only-sandbox/python/` when a live sample exists for this pattern.
+See related runnable samples under `sandbox-runner/patterns/` when this pattern builds on Session Workflow, Activity Tool, or Code Mode.
 
 ## References
 
-- [Temporal Docs: Workflows](https://docs.temporal.io/workflows)
 - [Temporal Docs: Activities](https://docs.temporal.io/activities)
-- [Temporal Docs: Continue-As-New](https://docs.temporal.io/workflow-execution/continue-as-new)

@@ -1,99 +1,96 @@
-<h1>Resumable Correction <img src="/images/child-workflows-icon.svg" alt="Resumable Correction" class="pattern-page-icon"></h1>
+<h1>Resumable Correction <img src="/images/resumable-activity-icon.svg" alt="Resumable Correction" class="pattern-page-icon"></h1>
 
 ## Overview
 
-Park after repeated failures until a human fixes inputs.
-You use Temporal Workflows and Activities under the hood so the agent can pause, retry, and resume without losing session state.
+The Resumable Correction pattern combines retries and approvals.
+When a tool repeatedly fails (bad input, missing record), the agent parks in a resumable state, emits an event describing the error, and waits for a human to correct inputs or environment before resuming from the last safe step.
+Primitives used: Step failure classification, ApprovalWait/human wait, Session resume.
 
 ## Problem
 
-Without this pattern, you risk losing mid-turn progress on worker restarts, double-executing side effects, or scattering session state across ad-hoc stores that are hard to audit.
+Blind retries waste tokens and can worsen bad writes.
+Failing the whole session loses successful prior Steps.
 
 ## Solution
 
-Structure the agent so the durable boundary matches the pattern:
+After a retry budget is exhausted on a retryable-but-stuck error, transition the Turn or Session into a correction wait.
+Emit an event with the error and suggested fix fields.
+On human correction Signal/Update, resume from the failed Step without replaying completed Steps.
 
 ```mermaid
-flowchart LR
-    Input[Input] --> Session
-    Session --> Turn
-    Turn --> Step
-    Step --> Out[Reply or wait]
+flowchart TD
+    Step[Tool Step] -->|fail| Retry{Budget left?}
+    Retry -->|yes| Step
+    Retry -->|no| Park[correction_requested]
+    Park --> Human[Human fixes input]
+    Human --> Resume[Resume from Step]
 ```
 
 The following describes each step in the diagram:
 
-1. An input arrives for a Session (message, channel event, or schedule).
-2. The Session starts or continues a Turn.
-3. The Turn runs Steps (model calls, tools, approvals) as durable units.
-4. The Turn ends with a reply, an error, or a wait for an external decision.
+1. A tool Step fails with a classified error.
+2. Retries follow the tool profile until the budget is spent.
+3. The Session parks and asks for correction instead of aborting everything.
+4. A human supplies corrected args or confirms environment fix; the Step runs again.
 
 ```python
-# agent/agent.py — structural sketch
-from temporalio import workflow
-
-@workflow.defn
-class AgentSessionWorkflow:
-    @workflow.run
-    async def run(self, session_id: str) -> None:
-        # Own cross-turn state, approvals, and the event stream.
-        ...
+if attempts >= max_attempts:
+    self._correction = {"tool": tool_id, "error": err, "args": args}
+    await workflow.wait_condition(lambda: self._corrected_args is not None)
+    args = self._corrected_args
+# execute Activity again with corrected args
 ```
 
 ## Implementation
 
+### What humans can change
 
-A runnable sample may be added later; the Python sketches below show the structure.
+Allow argument patches, environment acknowledgements, or skip/cancel decisions.
+Validate corrected args against the tool schema before resume.
 
-### Session ownership
+### Completed Steps
 
-Keep memory, approval overrides, and the ordered event stream on the Session Workflow so every Turn shares one durable context.
-
-### Step boundaries
-
-Run non-deterministic or side-effecting work in Activities so completed Steps replay from recorded results after a restart.
+Rely on Workflow history / recorded results so successful prior Steps are not re-executed.
 
 ## When to use
 
-This pattern fits when you need the behavior described in Overview and Problem.
-It is not a good fit when a short-lived script without durability is enough.
+Use when failures are often fixable by humans (bad IDs, missing tickets).
+Fail fast when errors are permanent and uncorrectable.
 
 ## Benefits and trade-offs
 
-You gain crash safety, clear observability, and a place to hang approvals.
-You accept Workflow history growth and the need to Continue-As-New on long sessions.
+You preserve partial progress and reduce wasted model loops.
+You add operational waits that need clear SLAs.
 
 ## Comparison with alternatives
 
-| Approach | Durability | Isolation |
+| Approach | Preserves progress | Human load |
 | :--- | :--- | :--- |
-| This pattern | High | Clear Session/Turn/Step boundaries |
-| In-memory agent loop | None | Lost on restart |
+| Resumable Correction | Yes | On stuck failures |
+| Abort session | No | Low |
+| Infinite auto-retry | Maybe | Hidden cost |
 
 ## Best practices
 
-- **Emit events at boundaries.** Record turn and step start/end so UIs can reconstruct the run.
-- **Keep Workflows deterministic.** Put model and IO calls in Activities.
-- **Name Sessions stably.** Use a Session ID that external channels can address.
+- **Classify errors.** Only park on correction-eligible classes.
+- **Show last args and error.** Operators cannot guess.
+- **Cap park duration.** Expire or escalate.
 
 ## Common pitfalls
 
-- **Doing IO in the Workflow.** Non-deterministic calls break replay.
-- **Unbounded history.** Long sessions must Continue-As-New with a state snapshot.
-- **Silent retries on non-idempotent tools.** Gate or key those tools before automatic retry.
+- **Re-running non-idempotent success paths after resume.**
+- **Parking on every transient 503.** Use retry profiles first.
 
 ## Related patterns
 
+- [Tool Retry Profiles](/tool-retry-profiles)
+- [Approval-Gated Tools](/approval-gated-tools)
 - [Session Workflow](/session-workflow)
-- [Activity Tool](/activity-tool)
-- [Standardized Event Stream](/standardized-event-stream)
 
 ## Sample code
 
-See `sandbox-runner/patterns/resumable-correction/python/` when a live sample exists for this pattern.
+See related runnable samples under `sandbox-runner/patterns/` when this pattern builds on Session Workflow, Activity Tool, or Code Mode.
 
 ## References
 
-- [Temporal Docs: Workflows](https://docs.temporal.io/workflows)
-- [Temporal Docs: Activities](https://docs.temporal.io/activities)
-- [Temporal Docs: Continue-As-New](https://docs.temporal.io/workflow-execution/continue-as-new)
+- [Temporal Docs: Activity retries](https://docs.temporal.io/encyclopedia/retry-policies)

@@ -1,99 +1,93 @@
-<h1>Externalized Memory <img src="/images/child-workflows-icon.svg" alt="Externalized Memory" class="pattern-page-icon"></h1>
+<h1>Externalized Memory <img src="/images/mapreduce-tree-icon.svg" alt="Externalized Memory" class="pattern-page-icon"></h1>
 
 ## Overview
 
-Push large memory behind durable tools.
-You use Temporal Workflows and Activities under the hood so the agent can pause, retry, and resume without losing session state.
+The Externalized Memory pattern pushes large or specialized memory (search indexes, logs, vector stores) behind tools and Activities.
+The agent never mutates external memory in-place without going through a durable, approval-aware tool call.
+Primitives used: Activity Tools for memory IO, Session pointers, evented tool calls.
 
 ## Problem
 
-Without this pattern, you risk losing mid-turn progress on worker restarts, double-executing side effects, or scattering session state across ad-hoc stores that are hard to audit.
+Vector indexes and large corpora do not fit in Workflow state.
+Direct SDK access from random code paths skips retries and approvals.
 
 ## Solution
 
-Structure the agent so the durable boundary matches the pattern:
+Expose `memory_search`, `memory_upsert`, and similar as Activity tools.
+Session state holds only handles, cursors, and small summaries.
 
 ```mermaid
 flowchart LR
-    Input[Input] --> Session
-    Session --> Turn
-    Turn --> Step
-    Step --> Out[Reply or wait]
+    Session -->|pointer| Tool[Memory Activity tool]
+    Tool --> Index[Vector/DB index]
+    Tool --> Events[tool_call events]
 ```
 
 The following describes each step in the diagram:
 
-1. An input arrives for a Session (message, channel event, or schedule).
-2. The Session starts or continues a Turn.
-3. The Turn runs Steps (model calls, tools, approvals) as durable units.
-4. The Turn ends with a reply, an error, or a wait for an external decision.
+1. The Turn needs large-context retrieval or storage.
+2. It calls a memory tool Activity with a schema-validated query or record.
+3. The Activity talks to the external index.
+4. The Session stores only the returned IDs or snippets it needs.
 
 ```python
-# agent/agent.py — structural sketch
-from temporalio import workflow
-
-@workflow.defn
-class AgentSessionWorkflow:
-    @workflow.run
-    async def run(self, session_id: str) -> None:
-        # Own cross-turn state, approvals, and the event stream.
-        ...
+hits = await workflow.execute_activity(
+    memory_search,
+    args=[collection, query, 5],
+    start_to_close_timeout=timedelta(seconds=30),
+)
+self._memory["last_hits"] = [h["id"] for h in hits]
 ```
 
 ## Implementation
 
+### Approvals
 
-A runnable sample may be added later; the Python sketches below show the structure.
+Treat upserts/deletes as non-idempotent or idempotent_side_effect with keys.
 
-### Session ownership
+### Replay
 
-Keep memory, approval overrides, and the ordered event stream on the Session Workflow so every Turn shares one durable context.
-
-### Step boundaries
-
-Run non-deterministic or side-effecting work in Activities so completed Steps replay from recorded results after a restart.
+Completed retrievals replay from Activity results; do not re-query inside the Workflow.
 
 ## When to use
 
-This pattern fits when you need the behavior described in Overview and Problem.
-It is not a good fit when a short-lived script without durability is enough.
+Use for search indexes, document stores, and bulky artifacts.
+Keep tiny summaries in Session Memory.
 
 ## Benefits and trade-offs
 
-You gain crash safety, clear observability, and a place to hang approvals.
-You accept Workflow history growth and the need to Continue-As-New on long sessions.
+You scale memory beyond Workflow limits with durable calls.
+External systems add their own failure modes.
 
 ## Comparison with alternatives
 
-| Approach | Durability | Isolation |
+| Store location | Fits Workflow history | Policy surface |
 | :--- | :--- | :--- |
-| This pattern | High | Clear Session/Turn/Step boundaries |
-| In-memory agent loop | None | Lost on restart |
+| Externalized via tools | No need | Tool profiles |
+| Inline Session state | Only if small | Limited |
+| Hidden global client | Risky | None |
 
 ## Best practices
 
-- **Emit events at boundaries.** Record turn and step start/end so UIs can reconstruct the run.
-- **Keep Workflows deterministic.** Put model and IO calls in Activities.
-- **Name Sessions stably.** Use a Session ID that external channels can address.
+- **Return IDs + short snippets.**
+- **Idempotency keys on upserts.**
+- **Redact sensitive hits in events.**
 
 ## Common pitfalls
 
-- **Doing IO in the Workflow.** Non-deterministic calls break replay.
-- **Unbounded history.** Long sessions must Continue-As-New with a state snapshot.
-- **Silent retries on non-idempotent tools.** Gate or key those tools before automatic retry.
+- **Embedding full documents in Activity results forever.**
+- **Bypassing tools with a shared singleton client in Workflow imports.**
 
 ## Related patterns
 
-- [Session Workflow](/session-workflow)
+- [Session Memory](/session-memory)
 - [Activity Tool](/activity-tool)
-- [Standardized Event Stream](/standardized-event-stream)
+- [Safety-Profiled Tools](/safety-profiled-tools)
 
 ## Sample code
 
-See `sandbox-runner/patterns/externalized-memory/python/` when a live sample exists for this pattern.
+See related runnable samples under `sandbox-runner/patterns/` when this pattern builds on Session Workflow, Activity Tool, or Code Mode.
 
 ## References
 
-- [Temporal Docs: Workflows](https://docs.temporal.io/workflows)
 - [Temporal Docs: Activities](https://docs.temporal.io/activities)
-- [Temporal Docs: Continue-As-New](https://docs.temporal.io/workflow-execution/continue-as-new)

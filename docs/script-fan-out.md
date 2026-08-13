@@ -1,99 +1,94 @@
-<h1>Script Fan-Out <img src="/images/child-workflows-icon.svg" alt="Script Fan-Out" class="pattern-page-icon"></h1>
+<h1>Script Fan-Out <img src="/images/fanout-child-workflows-icon.svg" alt="Script Fan-Out" class="pattern-page-icon"></h1>
 
 ## Overview
 
-Concurrent tool and subagent calls from one script.
-You use Temporal Workflows and Activities under the hood so the agent can pause, retry, and resume without losing session state.
+The Script Fan-Out pattern lets a single script coordinate subagents and tools concurrently, turning many one-by-one calls into a tree of concurrent invocations.
+Temporal still governs each call’s retries, approvals, and observability.
+Primitives used: SandboxScriptStep, concurrent host ToolCalls, optional subagent tools.
 
 ## Problem
 
-Without this pattern, you risk losing mid-turn progress on worker restarts, double-executing side effects, or scattering session state across ad-hoc stores that are hard to audit.
+Sequential tool loops make multi-item work slow and token-heavy even when items are independent.
 
 ## Solution
 
-Structure the agent so the durable boundary matches the pattern:
+In Code Mode, allow `asyncio.gather` (or equivalent) over host tool calls and subagent operations.
+Each concurrent call remains its own durable Step.
 
 ```mermaid
-flowchart LR
-    Input[Input] --> Session
-    Session --> Turn
-    Turn --> Step
-    Step --> Out[Reply or wait]
+flowchart TB
+    Script --> G[gather]
+    G --> T1[Tool A]
+    G --> T2[Tool B]
+    G --> S1[Subagent]
 ```
 
 The following describes each step in the diagram:
 
-1. An input arrives for a Session (message, channel event, or schedule).
-2. The Session starts or continues a Turn.
-3. The Turn runs Steps (model calls, tools, approvals) as durable units.
-4. The Turn ends with a reply, an error, or a wait for an external decision.
+1. The model writes a script that fans out independent calls.
+2. The sandbox schedules host calls concurrently.
+3. Each call is an Activity/subagent Step with its own policy.
+4. The script joins results and optionally continues.
 
 ```python
-# agent/agent.py — structural sketch
-from temporalio import workflow
-
-@workflow.defn
-class AgentSessionWorkflow:
-    @workflow.run
-    async def run(self, session_id: str) -> None:
-        # Own cross-turn state, approvals, and the event stream.
-        ...
+# Model-authored script shape
+async def main():
+    a, b = await asyncio.gather(
+        search({"q": "alpha"}),
+        search({"q": "beta"}),
+    )
+    return {"a": a, "b": b}
 ```
 
 ## Implementation
 
+### Limits
 
-A runnable sample may be added later; the Python sketches below show the structure.
+Enforce max concurrent host calls per script and per session.
 
-### Session ownership
+### Ordering
 
-Keep memory, approval overrides, and the ordered event stream on the Session Workflow so every Turn shares one durable context.
-
-### Step boundaries
-
-Run non-deterministic or side-effecting work in Activities so completed Steps replay from recorded results after a restart.
+Do not assume completion order; join explicitly in the script.
 
 ## When to use
 
-This pattern fits when you need the behavior described in Overview and Problem.
-It is not a good fit when a short-lived script without durability is enough.
+Use when items are independent and latency matters.
+Stay sequential when later calls need earlier results.
 
 ## Benefits and trade-offs
 
-You gain crash safety, clear observability, and a place to hang approvals.
-You accept Workflow history growth and the need to Continue-As-New on long sessions.
+You cut wall-clock time for embarrassingly parallel tool work.
+You increase burst load on downstream systems.
 
 ## Comparison with alternatives
 
-| Approach | Durability | Isolation |
+| Approach | Parallelism | Control flow |
 | :--- | :--- | :--- |
-| This pattern | High | Clear Session/Turn/Step boundaries |
-| In-memory agent loop | None | Lost on restart |
+| Script Fan-Out | High | In script |
+| Sequential tool loop | Low | Model turns |
+| Fan-Out Subagents | High | Child sessions |
 
 ## Best practices
 
-- **Emit events at boundaries.** Record turn and step start/end so UIs can reconstruct the run.
-- **Keep Workflows deterministic.** Put model and IO calls in Activities.
-- **Name Sessions stably.** Use a Session ID that external channels can address.
+- **Cap concurrency.** Protect dependencies.
+- **Keep gather sets independent.** Avoid hidden shared mutable state.
+- **Surface partial failures.** Decide all-or-nothing vs best-effort.
 
 ## Common pitfalls
 
-- **Doing IO in the Workflow.** Non-deterministic calls break replay.
-- **Unbounded history.** Long sessions must Continue-As-New with a state snapshot.
-- **Silent retries on non-idempotent tools.** Gate or key those tools before automatic retry.
+- **Fan-out of non-idempotent tools without keys.**
+- **Unbounded gather over huge lists.**
 
 ## Related patterns
 
-- [Session Workflow](/session-workflow)
-- [Activity Tool](/activity-tool)
-- [Standardized Event Stream](/standardized-event-stream)
+- [Code Mode Orchestrator](/code-mode-orchestrator)
+- [Fan-Out Subagents](/fanout-subagents)
+- [Tools-Only Sandbox](/tools-only-sandbox)
 
 ## Sample code
 
-See `sandbox-runner/patterns/script-fan-out/python/` when a live sample exists for this pattern.
+See related runnable samples under `sandbox-runner/patterns/` when this pattern builds on Session Workflow, Activity Tool, or Code Mode.
 
 ## References
 
-- [Temporal Docs: Workflows](https://docs.temporal.io/workflows)
-- [Temporal Docs: Activities](https://docs.temporal.io/activities)
-- [Temporal Docs: Continue-As-New](https://docs.temporal.io/workflow-execution/continue-as-new)
+- [Temporal Docs: Activity concurrent execution](https://docs.temporal.io/activities)
