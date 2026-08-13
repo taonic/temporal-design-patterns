@@ -51,8 +51,9 @@ Authenticate to the remote API; do not embed long-lived secrets in Workflow hist
 
 ## When to use
 
-Use when the child must run in another cluster, language, or scaling domain.
-Prefer local Child Workflows when both agents share a Temporal namespace.
+Use when the child must run in another cluster, language, or scaling domain and speaks your session HTTP API.
+Prefer [Nexus Tool](/nexus-tool) when both sides are Temporal and you can expose a Nexus Operation contract.
+Prefer local Child Workflows when both agents share a Temporal Namespace.
 
 ## Benefits and trade-offs
 
@@ -63,7 +64,8 @@ You take on distributed failure modes and schema drift between sides.
 
 | Approach | Location | Coupling |
 | :--- | :--- | :--- |
-| Remote Subagent | Other cluster | HTTP protocol |
+| Nexus Tool | Other Temporal Namespace | Nexus Endpoint |
+| Remote Subagent | Other cluster | HTTP session API |
 | Local subagent | Same Temporal | Child Workflow |
 | Ad-hoc webhook | Other cluster | Weak semantics |
 
@@ -80,6 +82,7 @@ You take on distributed failure modes and schema drift between sides.
 
 ## Related patterns
 
+- [Nexus Tool](/nexus-tool)
 - [Subagent Toolset](/subagent-toolset)
 - [HTTP Channel Agent](/http-channel-agent)
 - [HTTP and Client](/http-and-client)

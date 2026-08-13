@@ -95,6 +95,15 @@ Having these patterns in your toolbox helps you keep sessions, tools, approvals,
 </a>
 </div>
 <div class="pattern-tile">
+<a href="nexus-tool">
+<div class="pattern-tile-header">
+<img src="/images/worker-specific-taskqueue-icon.svg" alt="Nexus Tool">
+<span>Nexus Tool</span>
+</div>
+<p>Cross-Namespace tools via Temporal Nexus Operations.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="durable-model-call">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Durable Model Call">
@@ -414,6 +423,15 @@ Having these patterns in your toolbox helps you keep sessions, tools, approvals,
 <span>Externalized Memory</span>
 </div>
 <p>Push large memory behind durable tools.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="claim-check-payloads">
+<div class="pattern-tile-header">
+<img src="/images/batch-iterator-icon.svg" alt="Claim-Check Payloads">
+<span>Claim-Check Payloads</span>
+</div>
+<p>Store large model/tool blobs by reference, not in history.</p>
 </a>
 </div>
 <div class="pattern-tile">

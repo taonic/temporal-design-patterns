@@ -44,8 +44,25 @@ results = [await h for h in handles]
 ## Implementation
 
 Bound concurrency (`maxSubagents`) and timeouts.
-Propagate cancellation when the parent Turn is cancelled.
 Keep parent/child links in the event stream for UI trees.
+
+### Parent close policy
+
+Set `ParentClosePolicy` deliberately when starting each child Session.
+Default `ABANDON` leaves children running after the parent cancels—continuing to spend model tokens and Worker slots.
+For most agent fan-out, use `REQUEST_CANCEL` or `TERMINATE` so `/stop`, parent failure, or Turn cancel stops the tree.
+
+```python
+handles = [
+    await workflow.start_child_workflow(
+        SubagentSession.run,
+        item,
+        id=f"{session_id}-{item}",
+        parent_close_policy=workflow.ParentClosePolicy.REQUEST_CANCEL,
+    )
+    for item in items
+]
+```
 
 ## When to use
 
@@ -74,13 +91,16 @@ You pay Child Workflow overhead and must merge partial failures deliberately.
 ## Common pitfalls
 
 - **Unbounded Promise fan-out.** Exhausts workers and downstream quotas.
-- **Orphan children on parent Continue-As-New.** Set Parent Close Policy intentionally.
+- **Leaving ParentClosePolicy at ABANDON.** Cancelled parents leak burning subagents.
+- **Orphan children on parent Continue-As-New.** Set Parent Close Policy intentionally; reattach or cancel before CAN.
 
 ## Related patterns
 
 - [Subagent Toolset](/subagent-toolset)
+- [Best-Effort Parallel Tools](/best-effort-parallel-tools)
 - [Script Fan-Out](/script-fan-out)
 - [Persistent Subagent Threads](/persistent-subagent-threads)
+- [Nexus Tool](/nexus-tool)
 
 ## Sample code
 

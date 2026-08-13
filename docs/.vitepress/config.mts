@@ -46,6 +46,7 @@ export default withMermaid(defineConfig({
           { text: 'Activity Tool', link: '/activity-tool' },
           { text: 'Workflow Tool', link: '/workflow-tool' },
           { text: 'Callback Tool', link: '/callback-tool' },
+          { text: 'Nexus Tool', link: '/nexus-tool' },
           { text: 'Durable Model Call', link: '/durable-model-call' },
           { text: 'Agent Tool Loop', link: '/agent-tool-loop' },
           { text: 'Structured Model Output', link: '/structured-model-output' },
@@ -104,6 +105,7 @@ export default withMermaid(defineConfig({
           { text: 'Session Memory', link: '/session-memory' },
           { text: 'Cross-Session Memory', link: '/cross-session-memory' },
           { text: 'Externalized Memory', link: '/externalized-memory' },
+          { text: 'Claim-Check Payloads', link: '/claim-check-payloads' },
         ]
       },
       {

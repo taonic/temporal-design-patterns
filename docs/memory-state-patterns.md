@@ -32,6 +32,15 @@ These patterns keep conversation and knowledge durable across turns and sessions
 <p>Push large memory behind durable tools.</p>
 </a>
 </div>
+<div class="pattern-tile">
+<a href="claim-check-payloads">
+<div class="pattern-tile-header">
+<img src="/images/batch-iterator-icon.svg" alt="Claim-Check Payloads">
+<span>Claim-Check Payloads</span>
+</div>
+<p>Store large model/tool blobs by reference, not in history.</p>
+</a>
+</div>
 </div>
 
 ## Choosing a Pattern
@@ -41,6 +50,8 @@ These patterns keep conversation and knowledge durable across turns and sessions
 **You need cross-session memory behavior:** Share bounded memory across sessions. Use [Cross-Session Memory](/cross-session-memory).
 
 **You need externalized memory behavior:** Push large memory behind durable tools. Use [Externalized Memory](/externalized-memory).
+
+**You need to keep large Step results out of history:** use [Claim-Check Payloads](/claim-check-payloads).
 
 ## Related Sections
 

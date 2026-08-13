@@ -46,6 +46,12 @@ Pin specs in-repo or validate digests so tool IDs do not churn silently.
 
 Broker credentials in the Activity layer; never ask the model for secrets.
 
+### Stateful vs stateless MCP
+
+Prefer **stateless** MCP (or OpenAPI) tools: each Activity call carries everything needed to succeed after a Worker restart.
+Stateful MCP sessions that live only in a remote process **do not** come back when Temporal retries an Activity or migrates Workers—the Workflow history cannot resurrect that remote session.
+If a server requires session affinity, store a durable session handle you can reattach to, or redesign the tool as idempotent request/response Activities.
+
 ## When to use
 
 Use when integrating many external APIs or MCP servers.
@@ -74,10 +80,12 @@ Generated tools still need safety review.
 
 - **Auto-enabling all generated tools in prod.**
 - **Passing raw user tokens to the model context.**
+- **Assuming a hot MCP process session survives Activity retry.** It does not unless you reattach explicitly.
 
 ## Related patterns
 
 - [Activity Tool](/activity-tool)
+- [Nexus Tool](/nexus-tool)
 - [Safety-Profiled Tools](/safety-profiled-tools)
 - [Security Profiles per Agent](/security-profiles-per-agent)
 

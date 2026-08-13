@@ -80,6 +80,7 @@ External systems add their own failure modes.
 
 ## Related patterns
 
+- [Claim-Check Payloads](/claim-check-payloads)
 - [Session Memory](/session-memory)
 - [Activity Tool](/activity-tool)
 - [Safety-Profiled Tools](/safety-profiled-tools)

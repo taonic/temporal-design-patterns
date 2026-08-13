@@ -33,6 +33,15 @@ These patterns make model and tool calls durable Temporal Activities or determin
 </a>
 </div>
 <div class="pattern-tile">
+<a href="nexus-tool">
+<div class="pattern-tile-header">
+<img src="/images/worker-specific-taskqueue-icon.svg" alt="Nexus Tool">
+<span>Nexus Tool</span>
+</div>
+<p>Cross-Namespace tools via Temporal Nexus Operations.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="durable-model-call">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Durable Model Call">
@@ -122,6 +131,8 @@ These patterns make model and tool calls durable Temporal Activities or determin
 **You need workflow tool behavior:** Deterministic tools as in-Workflow code. Use [Workflow Tool](/workflow-tool).
 
 **You need callback tool behavior:** Tools that run on an attached client. Use [Callback Tool](/callback-tool).
+
+**You need a Temporal-native tool in another Namespace:** use [Nexus Tool](/nexus-tool).
 
 **You need durable model call behavior:** LLM calls as first-class Activity steps. Use [Durable Model Call](/durable-model-call).
 

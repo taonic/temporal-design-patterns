@@ -47,6 +47,26 @@ self.stream.publish("agent", {"type": "tool_call_started", "tool_id": "search"})
 
 For agents, host the stream on the Session that does the work so lifecycle aligns.
 
+### Publish from Activities
+
+Model token deltas usually publish from inside the model Activity (not from Workflow code).
+Batch small deltas; use forced flush only for punctuated markers (start, retry, complete)—not per character.
+
+### Activity retries and consumer reducers
+
+When a streaming Activity retries, earlier attempts may have already published partial tokens.
+On each new attempt, publish a `RETRY` (or equivalent) sentinel with a forced flush, and have UI consumers **clear or annotate** the prior attempt's accumulator before accepting new deltas.
+Treat terminal events (`TEXT_COMPLETE`, final reply) as overwrite points so partial attempts cannot leave sticky garbage in the UI.
+
+### End-of-stream ordering
+
+Do not complete the Workflow Turn before subscribers have observed the terminal stream event (or an explicit consumer-done Signal).
+Racing Workflow return against the last batch can drop the final tokens.
+
+### Continue-As-New
+
+Carry stream state (offsets / stream snapshot) together with Session memory across Continue-As-New so reconnecting clients do not see a gap.
+
 ### Limits
 
 Target modest subscriber counts (UI tabs), not thousands of consumers per Workflow.
@@ -80,12 +100,16 @@ You must manage stream storage across Continue-As-New.
 
 - **Publishing secrets in stream payloads.**
 - **Assuming real-time media suitability.**
+- **Appending retry tokens without a RETRY reset.** UIs show duplicated or garbled text.
+- **Dropping stream state on Continue-As-New.** Clients jump or miss history.
 
 ## Related patterns
 
 - [Standardized Event Stream](/standardized-event-stream)
 - [HTTP Channel Agent](/http-channel-agent)
 - [Session Workflow](/session-workflow)
+- [Continue-As-New Session](/continue-as-new-session)
+- [Durable Model Call](/durable-model-call)
 
 ## Sample code
 
@@ -93,4 +117,6 @@ See related runnable samples under `sandbox-runner/patterns/` when this pattern 
 
 ## References
 
+- [Temporal Docs: Workflow Streams](https://docs.temporal.io/workflow-streams)
+- [Temporal Docs: Workflow Streams — Python](https://docs.temporal.io/develop/python/workflows/workflow-streams)
 - [Temporal Docs: Workflow message passing](https://docs.temporal.io/encyclopedia/workflow-message-passing)

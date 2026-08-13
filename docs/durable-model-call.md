@@ -51,7 +51,7 @@ Production Activities call the real provider.
 
 ### Payload size
 
-Prefer storing large prompts or completions outside Workflow history when needed; keep summaries on the event stream.
+Prefer [Claim-Check Payloads](/claim-check-payloads): store large prompts or completions outside Workflow history and keep refs plus short summaries on the event stream.
 
 ## When to use
 
@@ -90,7 +90,9 @@ Each call schedules an Activity; batching may be needed for tiny calls.
 - [Provider Retry Delegation](/provider-retry-delegation)
 - [Model Error Classification](/model-error-classification)
 - [Structured Model Output](/structured-model-output)
+- [Claim-Check Payloads](/claim-check-payloads)
 - [Cost & Token Accounting](/cost-token-accounting)
+- [Progress Streaming](/progress-streaming)
 - [Standardized Event Stream](/standardized-event-stream)
 
 ## Sample code

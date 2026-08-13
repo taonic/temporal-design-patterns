@@ -46,6 +46,26 @@ In production, your UI or channel sends that Signal after a human decides.
 Safe defaults require approval for non-idempotent tools and allow inherently safe tools.
 Per-session overrides belong in Session state (see Session-Scoped Approvals).
 
+### Timeouts and escalation
+
+Parked approvals must not wait forever without a policy.
+Start a durable timer when you emit `approval_requested`.
+On timeout: fail closed (deny), auto-approve only when product risk allows, or escalate (notify a second reviewer and wait on a longer timer).
+Handle duplicate grant/deny Signals idempotently—operators double-click.
+
+```python
+# Conceptual: wait for decision or timeout, then escalate once
+decision = await workflow.wait_condition(
+    lambda: self._decision is not None,
+    timeout=timedelta(hours=4),
+)
+if self._decision is None:
+    await workflow.execute_activity(notify_escalation, details, start_to_close_timeout=timedelta(seconds=30))
+    await workflow.wait_condition(lambda: self._decision is not None, timeout=timedelta(hours=24))
+if self._decision != "granted":
+    raise ApplicationError("approval_denied_or_timed_out", non_retryable=True)
+```
+
 ## When to use
 
 Use this pattern for payments, destructive operations, or risky changes.
@@ -62,7 +82,7 @@ You add latency and operational load for gated tools.
 | :--- | :--- | :--- |
 | Approval-gated | High | Human-bound |
 | Automatic retries only | Low for non-idempotent | Low |
-| External ticket queue | Medium | High, easy to desync |
+| External ticket queue | Medium | High, prone to desync |
 
 ## Best practices
 
@@ -74,7 +94,8 @@ You add latency and operational load for gated tools.
 
 - **Approving in an external DB without parking the Workflow.** Restarts lose the correlation.
 - **Running the tool before the wait.** The gate must precede the Activity.
-- **No timeout policy.** Decide whether long waits Continue-As-New or expire.
+- **No timeout or escalation.** Approvals stall silently for days with no path forward.
+- **Non-idempotent decision handlers.** Duplicate Signals must not run the tool twice.
 
 ## Related patterns
 
