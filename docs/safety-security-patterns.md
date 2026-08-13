@@ -41,6 +41,24 @@ These patterns label tools and environments so policy can gate or block unsafe c
 <p>Bound sandboxes as data planes under Workflow control.</p>
 </a>
 </div>
+<div class="pattern-tile">
+<a href="split-resume-observe-handles">
+<div class="pattern-tile-header">
+<img src="/images/request-response-icon.svg" alt="Split Resume and Observe Handles">
+<span>Split Resume and Observe Handles</span>
+</div>
+<p>Separate write tokens from observe/stream credentials.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="delivery-authorization-timing">
+<div class="pattern-tile-header">
+<img src="/images/signal-with-start-icon.svg" alt="Delivery Authorization Timing">
+<span>Delivery Authorization Timing</span>
+</div>
+<p>Re-check auth at apply, not only at channel accept.</p>
+</a>
+</div>
 </div>
 
 ## Choosing a Pattern
@@ -52,6 +70,10 @@ These patterns label tools and environments so policy can gate or block unsafe c
 **You need security profiles per agent behavior:** Environment-specific tool and network allowances. Use [Security Profiles per Agent](/security-profiles-per-agent).
 
 **You need network & resource sandboxing behavior:** Bound sandboxes as data planes under Workflow control. Use [Network & Resource Sandboxing](/network-resource-sandboxing).
+
+**You need write credentials separate from stream/watch links:** Use [Split Resume and Observe Handles](/split-resume-observe-handles).
+
+**You need auth re-checked when a queued Delivery applies:** Use [Delivery Authorization Timing](/delivery-authorization-timing).
 
 ## Related Sections
 

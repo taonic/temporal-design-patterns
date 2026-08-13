@@ -119,6 +119,8 @@ You must keep API and validator rules aligned for UX error messages.
 ## Related patterns
 
 - [Idempotent Delivery](/idempotent-delivery)
+- [Split Resume and Observe Handles](/split-resume-observe-handles)
+- [Delivery Authorization Timing](/delivery-authorization-timing)
 - [Session with Signal-and-Start](/session-signal-and-start)
 - [Typed Agent Operations](/typed-agent-operations)
 - [HTTP Channel Agent](/http-channel-agent)

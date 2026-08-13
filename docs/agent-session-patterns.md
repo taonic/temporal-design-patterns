@@ -96,6 +96,24 @@ These patterns model long-lived agent sessions and how turns attach to them.
 </a>
 </div>
 <div class="pattern-tile">
+<a href="catalog-snapshot-pinning">
+<div class="pattern-tile-header">
+<img src="/images/continue-as-new-icon.svg" alt="Catalog Snapshot Pinning">
+<span>Catalog Snapshot Pinning</span>
+</div>
+<p>Pin tool/prompt catalog bytes so park cannot drift.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="binding-readiness-gate">
+<div class="pattern-tile-header">
+<img src="/images/worker-specific-taskqueue-icon.svg" alt="Binding Readiness Gate">
+<span>Binding Readiness Gate</span>
+</div>
+<p>Fail closed when pinned queues or Nexus bindings are down.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="agent-worker-versioning">
 <div class="pattern-tile-header">
 <img src="/images/worker-specific-taskqueue-icon.svg" alt="Agent Worker Versioning">
@@ -145,6 +163,10 @@ These patterns model long-lived agent sessions and how turns attach to them.
 **You need proactive or recurring agent cycles:** Use [Scheduled Agent Turns](/scheduled-agent-turns).
 
 **You need reproducible agent config vs placement:** Use [Agent Definition Versioning](/agent-definition-versioning).
+
+**You need catalog bytes pinned so long parks cannot drift:** Use [Catalog Snapshot Pinning](/catalog-snapshot-pinning).
+
+**You need Session start/resume to fail closed when bindings are down:** Use [Binding Readiness Gate](/binding-readiness-gate).
 
 **You need replay-safe Worker code rollouts for open Sessions:** Use [Agent Worker Versioning](/agent-worker-versioning).
 

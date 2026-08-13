@@ -69,6 +69,7 @@ The trade-off is an API layer you must version, authenticate, and scale separate
 
 - [HTTP Channel Agent](/http-channel-agent)
 - [Messaging Channel Agent](/messaging-channel-agent)
+- [Split Resume and Observe Handles](/split-resume-observe-handles)
 - [Callback Tool](/callback-tool)
 - [Session with Signal-and-Start](/session-signal-and-start)
 - [Progress Streaming](/progress-streaming)

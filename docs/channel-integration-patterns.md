@@ -42,6 +42,33 @@ These patterns bind agents to HTTP, messaging, and external tool catalogs.
 </a>
 </div>
 <div class="pattern-tile">
+<a href="split-resume-observe-handles">
+<div class="pattern-tile-header">
+<img src="/images/request-response-icon.svg" alt="Split Resume and Observe Handles">
+<span>Split Resume and Observe Handles</span>
+</div>
+<p>Separate write tokens from observe/stream credentials.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="delivery-authorization-timing">
+<div class="pattern-tile-header">
+<img src="/images/signal-with-start-icon.svg" alt="Delivery Authorization Timing">
+<span>Delivery Authorization Timing</span>
+</div>
+<p>Re-check auth at apply, not only at channel accept.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="connection-auth-wait">
+<div class="pattern-tile-header">
+<img src="/images/approval-icon.svg" alt="Connection Auth Wait">
+<span>Connection Auth Wait</span>
+</div>
+<p>Park tools that need OAuth without putting secrets in history.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="mcp-openapi-tooling">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="MCP / OpenAPI Tooling">
@@ -61,6 +88,12 @@ These patterns bind agents to HTTP, messaging, and external tool catalogs.
 **You need retry-safe channel posts without double Turns:** Use [Idempotent Delivery](/idempotent-delivery).
 
 **You need schema/auth rejection before Turn enqueue:** Use [Validated Session Ingress](/validated-session-ingress).
+
+**You need write credentials separate from stream/watch links:** Use [Split Resume and Observe Handles](/split-resume-observe-handles).
+
+**You need auth re-checked when a queued Delivery applies:** Use [Delivery Authorization Timing](/delivery-authorization-timing).
+
+**You need OAuth/connection consent mid-Turn without secrets in history:** Use [Connection Auth Wait](/connection-auth-wait).
 
 **You need mcp / openapi tooling behavior:** Compile external tools into Activity tools. Use [MCP / OpenAPI Tooling](/mcp-openapi-tooling).
 

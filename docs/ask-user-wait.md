@@ -131,6 +131,7 @@ You must design channel UX for mid-turn questions and timeout policy.
 - [Agent Tool Loop](/agent-tool-loop)
 - [Updatable Approval Timer](/updatable-approval-timer)
 - [Idempotent Delivery](/idempotent-delivery)
+- [Connection Auth Wait](/connection-auth-wait)
 - [HTTP Channel Agent](/http-channel-agent)
 - [Progress Streaming](/progress-streaming)
 

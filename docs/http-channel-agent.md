@@ -106,7 +106,10 @@ You must operate an API tier in front of Temporal.
 
 - [Session with Signal-and-Start](/session-signal-and-start)
 - [Idempotent Delivery](/idempotent-delivery)
+- [Split Resume and Observe Handles](/split-resume-observe-handles)
+- [Delivery Authorization Timing](/delivery-authorization-timing)
 - [Ask-User Wait](/ask-user-wait)
+- [Connection Auth Wait](/connection-auth-wait)
 - [HTTP and Client](/http-and-client)
 - [Messaging Channel Agent](/messaging-channel-agent)
 - [Progress Streaming](/progress-streaming)

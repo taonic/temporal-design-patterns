@@ -99,6 +99,24 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 </a>
 </div>
 <div class="pattern-tile">
+<a href="catalog-snapshot-pinning">
+<div class="pattern-tile-header">
+<img src="/images/continue-as-new-icon.svg" alt="Catalog Snapshot Pinning">
+<span>Catalog Snapshot Pinning</span>
+</div>
+<p>Pin tool/prompt catalog bytes so park cannot drift.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="binding-readiness-gate">
+<div class="pattern-tile-header">
+<img src="/images/worker-specific-taskqueue-icon.svg" alt="Binding Readiness Gate">
+<span>Binding Readiness Gate</span>
+</div>
+<p>Fail closed when pinned queues or Nexus bindings are down.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="agent-worker-versioning">
 <div class="pattern-tile-header">
 <img src="/images/worker-specific-taskqueue-icon.svg" alt="Agent Worker Versioning">
@@ -107,8 +125,6 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <p>Pin Worker build / Deployment Version separately from config.</p>
 </a>
 </div>
-<div class="pattern-tile">
-<a href="agent-session-patterns">
 <div class="pattern-tile">
 <a href="patched-agent-workflow-evolution">
 <div class="pattern-tile-header">
@@ -127,7 +143,8 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <p>Recover stuck Sessions without orphaning session_id.</p>
 </a>
 </div>
-
+<div class="pattern-tile">
+<a href="agent-session-patterns">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Agent & Session Patterns">
 <span>Agent & Session Patterns Overview</span>
@@ -372,6 +389,15 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 </a>
 </div>
 <div class="pattern-tile">
+<a href="connection-auth-wait">
+<div class="pattern-tile-header">
+<img src="/images/approval-icon.svg" alt="Connection Auth Wait">
+<span>Connection Auth Wait</span>
+</div>
+<p>Park for OAuth/connection consent; store tokens off-history.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="session-scoped-approvals">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Session-Scoped Approvals">
@@ -573,6 +599,24 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <span>Network & Resource Sandboxing</span>
 </div>
 <p>Bound sandboxes as data planes under Workflow control.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="split-resume-observe-handles">
+<div class="pattern-tile-header">
+<img src="/images/request-response-icon.svg" alt="Split Resume and Observe Handles">
+<span>Split Resume and Observe Handles</span>
+</div>
+<p>Separate write tokens from observe/stream credentials.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="delivery-authorization-timing">
+<div class="pattern-tile-header">
+<img src="/images/signal-with-start-icon.svg" alt="Delivery Authorization Timing">
+<span>Delivery Authorization Timing</span>
+</div>
+<p>Re-check auth at apply, not only at channel accept.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -803,8 +847,6 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 </a>
 </div>
 <div class="pattern-tile">
-<a href="mcp-openapi-tooling">
-<div class="pattern-tile">
 <a href="validated-session-ingress">
 <div class="pattern-tile-header">
 <img src="/images/request-response-icon.svg" alt="Validated Session Ingress">
@@ -813,7 +855,35 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <p>Reject bad deliveries in Update validators before Turns.</p>
 </a>
 </div>
-
+<div class="pattern-tile">
+<a href="split-resume-observe-handles">
+<div class="pattern-tile-header">
+<img src="/images/request-response-icon.svg" alt="Split Resume and Observe Handles">
+<span>Split Resume and Observe Handles</span>
+</div>
+<p>Separate write tokens from observe/stream credentials.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="delivery-authorization-timing">
+<div class="pattern-tile-header">
+<img src="/images/signal-with-start-icon.svg" alt="Delivery Authorization Timing">
+<span>Delivery Authorization Timing</span>
+</div>
+<p>Re-check auth at apply, not only at channel accept.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="connection-auth-wait">
+<div class="pattern-tile-header">
+<img src="/images/approval-icon.svg" alt="Connection Auth Wait">
+<span>Connection Auth Wait</span>
+</div>
+<p>Park for OAuth/connection consent; store tokens off-history.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="mcp-openapi-tooling">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="MCP / OpenAPI Tooling">
 <span>MCP / OpenAPI Tooling</span>

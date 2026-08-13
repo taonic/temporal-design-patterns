@@ -42,6 +42,8 @@ export default withMermaid(defineConfig({
           { text: 'Continue-As-New Session', link: '/continue-as-new-session' },
           { text: 'Scheduled Agent Turns', link: '/scheduled-agent-turns' },
           { text: 'Agent Definition Versioning', link: '/agent-definition-versioning' },
+          { text: 'Catalog Snapshot Pinning', link: '/catalog-snapshot-pinning' },
+          { text: 'Binding Readiness Gate', link: '/binding-readiness-gate' },
           { text: 'Agent Worker Versioning', link: '/agent-worker-versioning' },
           { text: 'Patched Agent Workflow Evolution', link: '/patched-agent-workflow-evolution' },
           { text: 'Operator Session Reset', link: '/operator-session-reset' },
@@ -81,6 +83,7 @@ export default withMermaid(defineConfig({
         items: [
           { text: 'Approval-Gated Tools', link: '/approval-gated-tools' },
           { text: 'Ask-User Wait', link: '/ask-user-wait' },
+          { text: 'Connection Auth Wait', link: '/connection-auth-wait' },
           { text: 'Session-Scoped Approvals', link: '/session-scoped-approvals' },
           { text: 'Updatable Approval Timer', link: '/updatable-approval-timer' },
           { text: 'Resumable Correction', link: '/resumable-correction' },
@@ -117,6 +120,8 @@ export default withMermaid(defineConfig({
           { text: 'Guardrail Steps', link: '/guardrail-steps' },
           { text: 'Security Profiles per Agent', link: '/security-profiles-per-agent' },
           { text: 'Network & Resource Sandboxing', link: '/network-resource-sandboxing' },
+          { text: 'Split Resume and Observe Handles', link: '/split-resume-observe-handles' },
+          { text: 'Delivery Authorization Timing', link: '/delivery-authorization-timing' },
         ]
       },
       {
@@ -161,6 +166,9 @@ export default withMermaid(defineConfig({
           { text: 'Messaging Channel Agent', link: '/messaging-channel-agent' },
           { text: 'Idempotent Delivery', link: '/idempotent-delivery' },
           { text: 'Validated Session Ingress', link: '/validated-session-ingress' },
+          { text: 'Split Resume and Observe Handles', link: '/split-resume-observe-handles' },
+          { text: 'Delivery Authorization Timing', link: '/delivery-authorization-timing' },
+          { text: 'Connection Auth Wait', link: '/connection-auth-wait' },
           { text: 'MCP / OpenAPI Tooling', link: '/mcp-openapi-tooling' },
         ]
       },

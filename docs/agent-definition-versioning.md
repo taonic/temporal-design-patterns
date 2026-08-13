@@ -133,6 +133,8 @@ You operate two artifact pipelines and migration rules.
 
 ## Related patterns
 
+- [Catalog Snapshot Pinning](/catalog-snapshot-pinning)
+- [Binding Readiness Gate](/binding-readiness-gate)
 - [Agent Worker Versioning](/agent-worker-versioning)
 - [Prompt Versioning](/prompt-versioning)
 - [Durable Model Call](/durable-model-call)

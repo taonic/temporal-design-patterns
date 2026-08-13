@@ -24,6 +24,15 @@ These patterns pause agents for approvals, corrections, and operator commands.
 </a>
 </div>
 <div class="pattern-tile">
+<a href="connection-auth-wait">
+<div class="pattern-tile-header">
+<img src="/images/approval-icon.svg" alt="Connection Auth Wait">
+<span>Connection Auth Wait</span>
+</div>
+<p>Park for OAuth/connection consent; store tokens off-history.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="session-scoped-approvals">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Session-Scoped Approvals">
@@ -66,6 +75,8 @@ These patterns pause agents for approvals, corrections, and operator commands.
 **You need approval-gated tools behavior:** Require approval before risky tools run. Use [Approval-Gated Tools](/approval-gated-tools).
 
 **You need clarifying answers mid-Turn (not tool authorization):** Use [Ask-User Wait](/ask-user-wait).
+
+**You need OAuth/connection consent without putting secrets in history:** Use [Connection Auth Wait](/connection-auth-wait).
 
 **You need session-scoped approvals behavior:** Approve a tool for the rest of a session. Use [Session-Scoped Approvals](/session-scoped-approvals).
 
