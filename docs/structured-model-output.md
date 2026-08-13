@@ -45,6 +45,9 @@ async def analyze_text(text: str) -> AnalysisResult:
 
 ## Implementation
 
+<DaytonaRunner pattern="structured-model-output" />
+
+
 ### Data converter
 
 Use a Pydantic-friendly data converter on the Temporal Client and Worker so complex models serialize cleanly.
@@ -92,7 +95,7 @@ Schemas must evolve carefully alongside prompts.
 
 ## Sample code
 
-See related runnable samples under `sandbox-runner/patterns/` when this pattern builds on Session Workflow, Activity Tool, or Code Mode.
+- [`sandbox-runner/patterns/structured-model-output/python/`](https://github.com/temporal-sa/temporal-agentic-patterns/tree/main/sandbox-runner/patterns/structured-model-output/python)
 
 ## References
 

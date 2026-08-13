@@ -42,6 +42,15 @@ These patterns make model and tool calls durable Temporal Activities or determin
 </a>
 </div>
 <div class="pattern-tile">
+<a href="typed-agent-operations">
+<div class="pattern-tile-header">
+<img src="/images/request-response-icon.svg" alt="Typed Agent Operations">
+<span>Typed Agent Operations</span>
+</div>
+<p>Versioned Update/Query contracts between agents.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="durable-model-call">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Durable Model Call">
@@ -114,12 +123,66 @@ These patterns make model and tool calls durable Temporal Activities or determin
 </a>
 </div>
 <div class="pattern-tile">
+<a href="heartbeat-long-steps">
+<div class="pattern-tile-header">
+<img src="/images/long-running-activity-icon.svg" alt="Heartbeat Long Steps">
+<span>Heartbeat Long Steps</span>
+</div>
+<p>Liveness, cancel, and checkpoints for long Steps.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="local-activity-tools">
+<div class="pattern-tile-header">
+<img src="/images/local-activities-icon.svg" alt="Local Activity Tools">
+<span>Local Activity Tools</span>
+</div>
+<p>Tiny helpers as Local Activities; keep IO regular.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="fast-slow-tool-retries">
+<div class="pattern-tile-header">
+<img src="/images/fast-slow-retries-icon.svg" alt="Fast/Slow Tool Retries">
+<span>Fast/Slow Tool Retries</span>
+</div>
+<p>Blip recovery then patient outage waits.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="external-tool-polling">
+<div class="pattern-tile-header">
+<img src="/images/polling-icon.svg" alt="External Tool Polling">
+<span>External Tool Polling</span>
+</div>
+<p>Wait on job-based APIs without webhooks.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="tool-compensation">
+<div class="pattern-tile-header">
+<img src="/images/saga-icon.svg" alt="Tool Compensation">
+<span>Tool Compensation</span>
+</div>
+<p>Undo non-idempotent tool writes on failure.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="prompt-versioning">
 <div class="pattern-tile-header">
 <img src="/images/continue-as-new-icon.svg" alt="Prompt Versioning">
 <span>Prompt Versioning</span>
 </div>
 <p>Pin reproducible prompt versions.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="agent-definition-versioning">
+<div class="pattern-tile-header">
+<img src="/images/continue-as-new-icon.svg" alt="Agent Definition Versioning">
+<span>Agent Definition Versioning</span>
+</div>
+<p>Pin definition and binding revisions per Session.</p>
 </a>
 </div>
 </div>
@@ -134,6 +197,8 @@ These patterns make model and tool calls durable Temporal Activities or determin
 
 **You need a Temporal-native tool in another Namespace:** use [Nexus Tool](/nexus-tool).
 
+**You need a typed Update/Query contract between agents or clients:** use [Typed Agent Operations](/typed-agent-operations).
+
 **You need durable model call behavior:** LLM calls as first-class Activity steps. Use [Durable Model Call](/durable-model-call).
 
 **You need tool retry profiles behavior:** Per-tool retry and safety policies. Use [Tool Retry Profiles](/tool-retry-profiles).
@@ -144,7 +209,14 @@ These patterns make model and tool calls durable Temporal Activities or determin
 **You need correct retry vs fail behavior:** use [Model Error Classification](/model-error-classification).
 **You need Retry-After support:** use [Rate-Limit Aware Model Calls](/rate-limit-aware-model-calls).
 **You mix fast and slow models/tools:** use [Model Timeout Profiles](/model-timeout-profiles).
+**You need heartbeats on long model/tool Steps:** use [Heartbeat Long Steps](/heartbeat-long-steps).
+**You measured overhead from tiny helper Activities:** use [Local Activity Tools](/local-activity-tools).
+**You need blip-fast then outage-slow retries:** use [Fast/Slow Tool Retries](/fast-slow-tool-retries).
+**You must poll a job API with no webhook:** use [External Tool Polling](/external-tool-polling).
+**You need undo for multi-write tool Turns:** use [Tool Compensation](/tool-compensation).
 **You need reproducible prompts:** use [Prompt Versioning](/prompt-versioning).
+**You need definition vs binding pins for whole agents:** use [Agent Definition Versioning](/agent-definition-versioning).
+
 ## Related Sections
 
 See Concepts for Session, Turn, Step, and related terms used by these patterns.

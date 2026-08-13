@@ -51,6 +51,11 @@ If you must change prompts for open Sessions, use explicit versioning APIs or Co
 
 Fixtures should assert prompt_version in events or inputs.
 
+### Worker Versioning for long Sessions
+
+Pin Worker build IDs (Worker Versioning) so a mid-session deploy does not change Workflow and Activity code under an open Session.
+Still pin `prompt_version` separately when prompts load from storage—Worker Versioning alone does not freeze mutable prompt files.
+
 ## When to use
 
 Use for any production agent whose prompt affects safety or revenue.
@@ -84,9 +89,11 @@ You maintain a prompt catalog beside code.
 
 ## Related patterns
 
+- [Agent Definition Versioning](/agent-definition-versioning)
 - [Durable Model Call](/durable-model-call)
 - [Eval-Backed Behavior Checks](/eval-backed-behavior-checks)
 - [Continue-As-New Session](/continue-as-new-session)
+- [Context Compaction](/context-compaction)
 
 ## Sample code
 

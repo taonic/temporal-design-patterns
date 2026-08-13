@@ -100,8 +100,10 @@ You add latency and operational load for gated tools.
 ## Related patterns
 
 - [Session-Scoped Approvals](/session-scoped-approvals)
+- [Updatable Approval Timer](/updatable-approval-timer)
 - [Operator Slash Commands](/operator-slash-commands)
 - [Safety-Profiled Tools](/safety-profiled-tools)
+- [Tool Compensation](/tool-compensation)
 
 ## Sample code
 

@@ -23,6 +23,15 @@ These patterns control how multi-tenant agent Sessions and Steps share Worker ca
 <p>Interactive Turns ahead of batch and eval Sessions.</p>
 </a>
 </div>
+<div class="pattern-tile">
+<a href="downstream-tool-rate-limiting">
+<div class="pattern-tile-header">
+<img src="/images/downstream-rate-limiting-icon.svg" alt="Downstream Tool Rate Limiting">
+<span>Downstream Tool Rate Limiting</span>
+</div>
+<p>Cap tool Activities per second on a dedicated queue.</p>
+</a>
+</div>
 </div>
 
 ## Choosing a Pattern
@@ -32,6 +41,8 @@ These patterns control how multi-tenant agent Sessions and Steps share Worker ca
 **You need urgency ordering:** Interactive agent Turns must beat batch, eval, or background Sessions on the same queue. Use [Priority Task Queues](/priority-task-queues).
 
 **You need both:** Set `priority_key` and `fairness_key` together so urgency wins first, then tenants share capacity within each priority level.
+
+**You need a hard RPS cap on a shared tool API:** Use [Downstream Tool Rate Limiting](/downstream-tool-rate-limiting).
 
 ## Related Sections
 

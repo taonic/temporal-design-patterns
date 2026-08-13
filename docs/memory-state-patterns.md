@@ -15,6 +15,15 @@ These patterns keep conversation and knowledge durable across turns and sessions
 </a>
 </div>
 <div class="pattern-tile">
+<a href="context-compaction">
+<div class="pattern-tile-header">
+<img src="/images/event-accumulator-icon.svg" alt="Context Compaction">
+<span>Context Compaction</span>
+</div>
+<p>Summarize and spill context before the next Turn or Continue-As-New.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="cross-session-memory">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Cross-Session Memory">
@@ -46,6 +55,8 @@ These patterns keep conversation and knowledge durable across turns and sessions
 ## Choosing a Pattern
 
 **You need session memory behavior:** Store summaries in session state between turns. Use [Session Memory](/session-memory).
+
+**You need to bound prompts and history on long Sessions:** Use [Context Compaction](/context-compaction).
 
 **You need cross-session memory behavior:** Share bounded memory across sessions. Use [Cross-Session Memory](/cross-session-memory).
 

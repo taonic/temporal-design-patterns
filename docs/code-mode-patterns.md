@@ -41,6 +41,15 @@ These patterns let a model orchestrate tools by writing scripts that call host A
 <p>Concurrent tool and subagent calls from one script.</p>
 </a>
 </div>
+<div class="pattern-tile">
+<a href="sticky-sandbox-task-queues">
+<div class="pattern-tile-header">
+<img src="/images/worker-specific-taskqueue-icon.svg" alt="Sticky Sandbox Task Queues">
+<span>Sticky Sandbox Task Queues</span>
+</div>
+<p>Pin sandbox Activities to the Worker that owns local files.</p>
+</a>
+</div>
 </div>
 
 ## Choosing a Pattern
@@ -52,6 +61,8 @@ These patterns let a model orchestrate tools by writing scripts that call host A
 **You need type-checked scripts behavior:** Reject ill-typed scripts before execution. Use [Type-Checked Scripts](/type-checked-scripts).
 
 **You need script fan-out behavior:** Concurrent tool and subagent calls from one script. Use [Script Fan-Out](/script-fan-out).
+
+**You need host-local sandbox state across Activities:** Use [Sticky Sandbox Task Queues](/sticky-sandbox-task-queues).
 
 ## Related Sections
 

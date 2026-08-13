@@ -50,6 +50,24 @@ These patterns model long-lived agent sessions and how turns attach to them.
 <p>Reset history while preserving session identity.</p>
 </a>
 </div>
+<div class="pattern-tile">
+<a href="scheduled-agent-turns">
+<div class="pattern-tile-header">
+<img src="/images/delayed-start-icon.svg" alt="Scheduled Agent Turns">
+<span>Scheduled Agent Turns</span>
+</div>
+<p>Wake proactive Turns with Temporal Schedules.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="agent-definition-versioning">
+<div class="pattern-tile-header">
+<img src="/images/continue-as-new-icon.svg" alt="Agent Definition Versioning">
+<span>Agent Definition Versioning</span>
+</div>
+<p>Pin definition and binding revisions per Session.</p>
+</a>
+</div>
 </div>
 
 ## Choosing a Pattern
@@ -63,6 +81,10 @@ These patterns model long-lived agent sessions and how turns attach to them.
 **You need entity agent behavior:** One long-lived agent Workflow per business entity. Use [Entity Agent](/entity-agent).
 
 **You need continue-as-new session behavior:** Reset history while preserving session identity. Use [Continue-As-New Session](/continue-as-new-session).
+
+**You need proactive or recurring agent cycles:** Use [Scheduled Agent Turns](/scheduled-agent-turns).
+
+**You need reproducible agent config vs placement:** Use [Agent Definition Versioning](/agent-definition-versioning).
 
 ## Related Sections
 

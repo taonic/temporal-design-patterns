@@ -37,6 +37,8 @@ export default withMermaid(defineConfig({
           { text: 'Session with Signal-and-Start', link: '/session-signal-and-start' },
           { text: 'Entity Agent', link: '/entity-agent' },
           { text: 'Continue-As-New Session', link: '/continue-as-new-session' },
+          { text: 'Scheduled Agent Turns', link: '/scheduled-agent-turns' },
+          { text: 'Agent Definition Versioning', link: '/agent-definition-versioning' },
         ]
       },
       {
@@ -47,6 +49,7 @@ export default withMermaid(defineConfig({
           { text: 'Workflow Tool', link: '/workflow-tool' },
           { text: 'Callback Tool', link: '/callback-tool' },
           { text: 'Nexus Tool', link: '/nexus-tool' },
+          { text: 'Typed Agent Operations', link: '/typed-agent-operations' },
           { text: 'Durable Model Call', link: '/durable-model-call' },
           { text: 'Agent Tool Loop', link: '/agent-tool-loop' },
           { text: 'Structured Model Output', link: '/structured-model-output' },
@@ -55,6 +58,11 @@ export default withMermaid(defineConfig({
           { text: 'Rate-Limit Aware Model Calls', link: '/rate-limit-aware-model-calls' },
           { text: 'Model Timeout Profiles', link: '/model-timeout-profiles' },
           { text: 'Tool Retry Profiles', link: '/tool-retry-profiles' },
+          { text: 'Heartbeat Long Steps', link: '/heartbeat-long-steps' },
+          { text: 'Local Activity Tools', link: '/local-activity-tools' },
+          { text: 'Fast/Slow Tool Retries', link: '/fast-slow-tool-retries' },
+          { text: 'External Tool Polling', link: '/external-tool-polling' },
+          { text: 'Tool Compensation', link: '/tool-compensation' },
           { text: 'Prompt Versioning', link: '/prompt-versioning' },
         ]
       },
@@ -63,7 +71,9 @@ export default withMermaid(defineConfig({
         link: '/human-in-the-loop-patterns',
         items: [
           { text: 'Approval-Gated Tools', link: '/approval-gated-tools' },
+          { text: 'Ask-User Wait', link: '/ask-user-wait' },
           { text: 'Session-Scoped Approvals', link: '/session-scoped-approvals' },
+          { text: 'Updatable Approval Timer', link: '/updatable-approval-timer' },
           { text: 'Resumable Correction', link: '/resumable-correction' },
           { text: 'Operator Slash Commands', link: '/operator-slash-commands' },
         ]
@@ -87,6 +97,7 @@ export default withMermaid(defineConfig({
           { text: 'Tools-Only Sandbox', link: '/tools-only-sandbox' },
           { text: 'Type-Checked Scripts', link: '/type-checked-scripts' },
           { text: 'Script Fan-Out', link: '/script-fan-out' },
+          { text: 'Sticky Sandbox Task Queues', link: '/sticky-sandbox-task-queues' },
         ]
       },
       {
@@ -103,6 +114,7 @@ export default withMermaid(defineConfig({
         link: '/memory-state-patterns',
         items: [
           { text: 'Session Memory', link: '/session-memory' },
+          { text: 'Context Compaction', link: '/context-compaction' },
           { text: 'Cross-Session Memory', link: '/cross-session-memory' },
           { text: 'Externalized Memory', link: '/externalized-memory' },
           { text: 'Claim-Check Payloads', link: '/claim-check-payloads' },
@@ -116,6 +128,7 @@ export default withMermaid(defineConfig({
           { text: 'Progress Streaming', link: '/progress-streaming' },
           { text: 'Agent Tracing', link: '/agent-tracing' },
           { text: 'Cost & Token Accounting', link: '/cost-token-accounting' },
+          { text: 'Agent Step Retry Alerting', link: '/agent-step-retry-alerting' },
           { text: 'Eval-Backed Behavior Checks', link: '/eval-backed-behavior-checks' },
         ]
       },
@@ -125,6 +138,7 @@ export default withMermaid(defineConfig({
         items: [
           { text: 'Fairness', link: '/fairness' },
           { text: 'Priority Task Queues', link: '/priority-task-queues' },
+          { text: 'Downstream Tool Rate Limiting', link: '/downstream-tool-rate-limiting' },
         ]
       },
       {
@@ -133,6 +147,7 @@ export default withMermaid(defineConfig({
         items: [
           { text: 'HTTP Channel Agent', link: '/http-channel-agent' },
           { text: 'Messaging Channel Agent', link: '/messaging-channel-agent' },
+          { text: 'Idempotent Delivery', link: '/idempotent-delivery' },
           { text: 'MCP / OpenAPI Tooling', link: '/mcp-openapi-tooling' },
         ]
       },

@@ -43,14 +43,27 @@ self.stream.publish("agent", {"type": "tool_call_started", "tool_id": "search"})
 
 ## Implementation
 
-### Same-Workflow hosting
+### Same-Workflow vs dedicated stream host
 
-For agents, host the stream on the Session that does the work so lifecycle aligns.
+**Host the stream on the Session (or Turn) that does the work** when events come from that Workflow's Activities—chat UIs, tool timelines, token deltas. Lifecycle aligns; subscribers attach to the same Workflow Id they already know.
+
+**Use a dedicated stream Workflow** only when many producers must fan into one UI channel and you accept an extra hop. Most agents should stay on same-Workflow hosting.
+
+Initialize the stream in `@workflow.init` (or equivalent) so publish handlers exist before the first Activity publishes.
 
 ### Publish from Activities
 
 Model token deltas usually publish from inside the model Activity (not from Workflow code).
+Use the Activity-side stream client (for example `WorkflowStreamClient.from_within_activity()`) so retries can surface without polluting Workflow state.
 Batch small deltas; use forced flush only for punctuated markers (start, retry, complete)—not per character.
+
+### Local Activities
+
+Do not publish long token streams from Local Activities. Local Activities run inside the Workflow Task and fight the Activity-publish model above—keep streaming model/tool Steps as regular Activities ([Local Activity Tools](/local-activity-tools)).
+
+### Codecs and envelopes
+
+Payload codecs (encryption/compression) apply to the Signal/Update **envelope** that carries a batch, not once per token. Design for batch-sized payloads; do not put secrets in stream event bodies even when codecs are enabled.
 
 ### Activity retries and consumer reducers
 
@@ -66,11 +79,16 @@ Racing Workflow return against the last batch can drop the final tokens.
 ### Continue-As-New
 
 Carry stream state (offsets / stream snapshot) together with Session memory across Continue-As-New so reconnecting clients do not see a gap.
+Use the stream library's continue-as-new helper when available so subscribers follow the new run without a cursor hole.
+
+### Cancel
+
+On Turn cancel, publish a terminal `cancelled` (or equivalent) event before closing so UIs stop waiting on an open cursor ([Turn Workflow](/turn-workflow)).
 
 ### Limits
 
 Target modest subscriber counts (UI tabs), not thousands of consumers per Workflow.
-Skip for ultra-low-latency audio streaming.
+Skip for ultra-low-latency audio streaming (~100ms class is wrong for voice).
 
 ## When to use
 
@@ -103,6 +121,8 @@ You must manage stream storage across Continue-As-New.
 - **Appending retry tokens without a RETRY reset.** UIs show duplicated or garbled text.
 - **Dropping stream state on Continue-As-New.** Clients jump or miss history.
 - **Completing the Turn before subscribers see the terminal stream event.** Clients miss completion and hang on an open stream.
+- **Streaming from Local Activities.** Prefer regular Activities for model token publish.
+- **Constructing the stream late in `run`.** Early publishes race handler registration; use Workflow init.
 
 ## Related patterns
 
@@ -111,6 +131,9 @@ You must manage stream storage across Continue-As-New.
 - [Session Workflow](/session-workflow)
 - [Continue-As-New Session](/continue-as-new-session)
 - [Durable Model Call](/durable-model-call)
+- [Heartbeat Long Steps](/heartbeat-long-steps)
+- [Local Activity Tools](/local-activity-tools)
+- [Turn Workflow](/turn-workflow)
 
 ## Sample code
 

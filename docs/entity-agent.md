@@ -91,6 +91,7 @@ You must operate long-lived Workflows carefully (Continue-As-New, visibility).
 - [Session Workflow](/session-workflow)
 - [Continue-As-New Session](/continue-as-new-session)
 - [Session with Signal-and-Start](/session-signal-and-start)
+- [Scheduled Agent Turns](/scheduled-agent-turns)
 
 ## Sample code
 

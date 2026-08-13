@@ -94,6 +94,8 @@ Each call schedules an Activity; batching may be needed for tiny calls.
 - [Claim-Check Payloads](/claim-check-payloads)
 - [Cost & Token Accounting](/cost-token-accounting)
 - [Progress Streaming](/progress-streaming)
+- [Heartbeat Long Steps](/heartbeat-long-steps)
+- [Local Activity Tools](/local-activity-tools)
 - [Standardized Event Stream](/standardized-event-stream)
 
 ## Sample code

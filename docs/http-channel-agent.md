@@ -50,9 +50,24 @@ async def post_message(session_id: str, text: str):
 
 Protect create/message/stream routes; authorize per session.
 
+### Idempotent posts
+
+Require a client `delivery_id` on every message POST and apply [Idempotent Delivery](/idempotent-delivery) via Update-With-Start so retries return the same ack without a second Turn.
+
+### Continuation tokens
+
+When the client parks waiting for a Turn (or mid-Turn ask/approval), return an opaque continuation token that encodes at least `session_id` and `delivery_id` (or `turn_id`).
+On reconnect, the API resumes the same wait—Query/Update status or resume the event cursor—instead of posting a new message.
+Do not put secrets or mutable server memory in the token; Temporal is the source of truth.
+
 ### Streaming
 
 Support cursors so clients reconnect without losing events.
+Pair stream cursors with delivery/turn IDs so a reconnecting client can attach to the in-flight Turn after a browser refresh.
+
+### Ask-user and approvals over HTTP
+
+Map `input_requested` / `approval_requested` events to channel UX, and POST answers/approvals as Updates on the Session (or Turn) with their own delivery IDs ([Ask-User Wait](/ask-user-wait), [Approval-Gated Tools](/approval-gated-tools)).
 
 ## When to use
 
@@ -68,14 +83,15 @@ You must operate an API tier in front of Temporal.
 
 | Layer | Responsibility |
 | :--- | :--- |
-| HTTP API | Auth, session IO, SSE |
-| Session Workflow | Agent logic |
+| HTTP API | Auth, session IO, SSE, continuation |
+| Session Workflow | Agent logic, delivery ledger |
 | Activities | Model/tools |
 
 ## Best practices
 
 - **Stable session_id in responses.**
 - **Cursored event streams.**
+- **Continuation tokens keyed by delivery/turn.**
 - **Do not run model SDKs in the API process.**
 
 ## Common pitfalls
@@ -83,13 +99,17 @@ You must operate an API tier in front of Temporal.
 - **Embedding the agent loop in FastAPI handlers.**
 - **Forgetting auth on stream endpoints.**
 - **Streaming without a cursor after disconnect.** Clients miss or duplicate tokens on reconnect.
+- **New POST on every reconnect** without `delivery_id`—duplicate Turns.
 - **Running model SDKs in the API process.** Bypasses durable Activities and loses work on process crash.
 
 ## Related patterns
 
 - [Session with Signal-and-Start](/session-signal-and-start)
+- [Idempotent Delivery](/idempotent-delivery)
+- [Ask-User Wait](/ask-user-wait)
 - [HTTP and Client](/http-and-client)
 - [Messaging Channel Agent](/messaging-channel-agent)
+- [Progress Streaming](/progress-streaming)
 
 ## Sample code
 

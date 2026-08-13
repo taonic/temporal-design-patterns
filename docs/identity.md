@@ -33,6 +33,20 @@ The following describes each step in the diagram:
 
 Map `session_id` to a Temporal Workflow ID (or a Search Attribute that resolves to one). Keep `actor_id` on approval and command events so audits show who decided, not only which session ran.
 
+### Search Attributes for ops
+
+Upsert custom Search Attributes on Session start and Turn boundaries so operators can find work without knowing the Workflow Id:
+
+| Attribute | Example use |
+| :--- | :--- |
+| `sessionId` | Join channel thread → Workflow |
+| `agentId` | Filter by agent configuration |
+| `tenantId` / fairness key | Multi-tenant ops and Fairness debugging |
+| `turnStatus` | `running` / `awaiting_approval` / `cancelled` |
+| `source` | `interactive` vs `schedule` ([Scheduled Agent Turns](/scheduled-agent-turns)) |
+
+Keep attribute cardinality bounded. Do not index free-form prompts.
+
 ## When to use
 
 Read this page when you choose Workflow ID schemes, wire auth into Signals/Updates, or correlate traces across Sessions and subagents.
@@ -56,12 +70,14 @@ The trade-off is that you must design ID formats and ownership rules up front in
 - **Carry actor_id on human decisions.** Approvals and slash commands need a principal.
 - **Keep Workflow IDs deterministic when you use Signal-with-Start.** Collisions should mean "same Session," not a new run.
 - **Propagate IDs into Activities and events.** Traces and cost records need the same keys.
+- **Mirror critical IDs into Search Attributes** for list/filter in Temporal UI and ops tooling.
 
 ## Common pitfalls
 
 - **Using the User ID as the Workflow ID.** One user may have many concurrent Sessions.
 - **Dropping actor_id after Continue-As-New.** Carry identity in continue-as-new arguments.
 - **Equating Agent ID with a worker process.** Workers are interchangeable; Agent config is not.
+- **High-cardinality Search Attributes** (raw prompts, per-token ids). They blow visibility indexes.
 
 ## Related patterns
 
@@ -78,5 +94,6 @@ See [Session Workflow](/session-workflow) and [Entity Agent](/entity-agent) for 
 ## References
 
 - [Temporal Docs: Workflows](https://docs.temporal.io/workflows)
+- [Temporal Docs: Search Attributes](https://docs.temporal.io/visibility)
 - [Temporal Docs: Workflow IDs](https://docs.temporal.io/workflow-execution/workflowid-runid)
 - [Temporal Docs: Search Attributes](https://docs.temporal.io/search-attribute)

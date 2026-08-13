@@ -91,6 +91,7 @@ You must design failure and cancellation across parent and child.
 - [Fan-Out Subagents](/fanout-subagents)
 - [Persistent Subagent Threads](/persistent-subagent-threads)
 - [Remote Subagent](/remote-subagent)
+- [Typed Agent Operations](/typed-agent-operations)
 
 ## Sample code
 

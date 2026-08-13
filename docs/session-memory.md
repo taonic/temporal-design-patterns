@@ -86,6 +86,7 @@ Summaries can drop detail—design refresh paths.
 
 - [Cross-Session Memory](/cross-session-memory)
 - [Externalized Memory](/externalized-memory)
+- [Context Compaction](/context-compaction)
 - [Continue-As-New Session](/continue-as-new-session)
 
 ## Sample code

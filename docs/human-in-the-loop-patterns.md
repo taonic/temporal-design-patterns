@@ -15,12 +15,30 @@ These patterns pause agents for approvals, corrections, and operator commands.
 </a>
 </div>
 <div class="pattern-tile">
+<a href="ask-user-wait">
+<div class="pattern-tile-header">
+<img src="/images/approval-icon.svg" alt="Ask-User Wait">
+<span>Ask-User Wait</span>
+</div>
+<p>Park a Turn for clarifying user input mid-loop.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="session-scoped-approvals">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Session-Scoped Approvals">
 <span>Session-Scoped Approvals</span>
 </div>
 <p>Approve a tool for the rest of a session.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="updatable-approval-timer">
+<div class="pattern-tile-header">
+<img src="/images/updatable-timer-icon.svg" alt="Updatable Approval Timer">
+<span>Updatable Approval Timer</span>
+</div>
+<p>Extendable SLA deadlines for approval waits.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -47,7 +65,11 @@ These patterns pause agents for approvals, corrections, and operator commands.
 
 **You need approval-gated tools behavior:** Require approval before risky tools run. Use [Approval-Gated Tools](/approval-gated-tools).
 
+**You need clarifying answers mid-Turn (not tool authorization):** Use [Ask-User Wait](/ask-user-wait).
+
 **You need session-scoped approvals behavior:** Approve a tool for the rest of a session. Use [Session-Scoped Approvals](/session-scoped-approvals).
+
+**You need extendable approval SLAs:** Use [Updatable Approval Timer](/updatable-approval-timer).
 
 **You need resumable correction behavior:** Park after repeated failures until a human fixes inputs. Use [Resumable Correction](/resumable-correction).
 

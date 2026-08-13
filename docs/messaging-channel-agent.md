@@ -87,6 +87,7 @@ You maintain per-channel adapters.
 ## Related patterns
 
 - [HTTP Channel Agent](/http-channel-agent)
+- [Idempotent Delivery](/idempotent-delivery)
 - [Session with Signal-and-Start](/session-signal-and-start)
 - [Operator Slash Commands](/operator-slash-commands)
 

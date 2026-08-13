@@ -43,6 +43,9 @@ reply = await handle
 
 ## Implementation
 
+<DaytonaRunner pattern="turn-workflow" />
+
+
 ### Child Workflow turns
 
 Use Child Workflows when turns need strong isolation, independent timeouts, or parallelism with other turns.
@@ -50,6 +53,40 @@ Use Child Workflows when turns need strong isolation, independent timeouts, or p
 ### Embedded turns
 
 Keep turns in Session state when isolation overhead is unnecessary, but still emit `turn_started` / `turn_ended` and track Steps explicitly.
+
+### Cancel in-flight Steps
+
+Expose a Session or Turn cancel path (Signal, Update, or `/stop` slash command) that:
+
+1. Cancels the open Turn Child Workflow (or marks embedded turn state cancelled).
+2. Cancels in-flight Activities with a reason so Workers stop model and tool work instead of finishing spend after the user left.
+3. Cascades to Fan-Out children with an intentional `ParentClosePolicy` (usually cancel, not abandon).
+4. Emits `turn_cancelled` (or equivalent) so Progress Streaming and Cost & Token Accounting close the bracket.
+
+Idempotent tools still matter: cancel is not undo. Design write tools so a cancelled Activity retry does not double-apply.
+
+```python
+import asyncio
+
+@workflow.signal
+async def cancel_turn(self, reason: str) -> None:
+    self._cancel_reason = reason
+    if self._turn_handle:
+        self._turn_handle.cancel()  # Child Turn Workflow
+    # Embedded turns: set a flag; Activities must heartbeat and honor is_cancelled
+
+@activity.defn
+async def call_model(prompt: str) -> str:
+    # Long model/tool Activities should heartbeat and check cancellation.
+    while True:
+        if activity.is_cancelled():
+            # Best-effort provider abort if available; then acknowledge cancel.
+            raise asyncio.CancelledError()
+        activity.heartbeat("streaming")
+        ...
+```
+
+Pair cancel with [Heartbeat Long Steps](/heartbeat-long-steps) so Workers notice cancellation promptly instead of waiting for `start_to_close_timeout`.
 
 ## When to use
 
@@ -74,6 +111,7 @@ You accept Child Workflow overhead or the discipline of explicit sub-state.
 - **Always assign `turn_id`.** Search attributes and events depend on it.
 - **Bound turn duration.** Use timeouts so a hung tool cannot stall the session forever.
 - **Return typed outcomes.** Reply, error, and cancel should be explicit.
+- **Cancel Activities, not only the Workflow wait.** Otherwise model calls keep running after the UI stops.
 
 ## Common pitfalls
 
@@ -82,16 +120,19 @@ You accept Child Workflow overhead or the discipline of explicit sub-state.
 - **Forgetting Parent Close Policy.** Decide whether children survive session stop.
 - **Reusing Child Workflow IDs.** Colliding IDs fail starts or attach to the wrong Turn.
 - **Parent Continue-As-New without snapshotting open turn children.** You lose handles to in-flight Turns.
+- **Stopping the UI without cancelling the Turn.** Tokens and tool side effects continue until timeouts fire.
 
 ## Related patterns
 
 - [Session Workflow](/session-workflow)
 - [Fan-Out Subagents](/fanout-subagents)
+- [Operator Slash Commands](/operator-slash-commands)
+- [Scheduled Agent Turns](/scheduled-agent-turns)
 - [Standardized Event Stream](/standardized-event-stream)
 
 ## Sample code
 
-See related runnable samples under `sandbox-runner/patterns/` when this pattern builds on Session Workflow, Activity Tool, or Code Mode.
+- [`sandbox-runner/patterns/turn-workflow/python/`](https://github.com/temporal-sa/temporal-agentic-patterns/tree/main/sandbox-runner/patterns/turn-workflow/python)
 
 ## References
 

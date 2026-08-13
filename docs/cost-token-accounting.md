@@ -52,6 +52,11 @@ Prefer recording raw tokens in events and applying price tables in analytics, un
 
 Extend the same pattern for billable tools when applicable.
 
+### Retry storms
+
+Failed and retried calls still cost money. Pair usage rollups with [Agent Step Retry Alerting](/agent-step-retry-alerting) so attempt spikes page before invoices do.
+Include `attempt` (or a stable `step_attempt_id`) on usage events so slow-phase retries do not look like unique calls.
+
 ## When to use
 
 Use whenever model calls are in the critical path of production agents.
@@ -87,6 +92,8 @@ You must keep price tables and model names accurate.
 - [Durable Model Call](/durable-model-call)
 - [Standardized Event Stream](/standardized-event-stream)
 - [Agent Tracing](/agent-tracing)
+- [Agent Step Retry Alerting](/agent-step-retry-alerting)
+- [Fast/Slow Tool Retries](/fast-slow-tool-retries)
 
 ## Sample code
 

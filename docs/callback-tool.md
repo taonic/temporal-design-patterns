@@ -80,6 +80,7 @@ You depend on a connected client; without one, the Turn stays parked.
 ## Related patterns
 
 - [Activity Tool](/activity-tool)
+- [External Tool Polling](/external-tool-polling)
 - [HTTP Channel Agent](/http-channel-agent)
 - [Approval-Gated Tools](/approval-gated-tools)
 

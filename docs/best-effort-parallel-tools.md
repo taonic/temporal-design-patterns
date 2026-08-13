@@ -95,6 +95,7 @@ Callers must understand incomplete result sets.
 
 - [Fan-Out Subagents](/fanout-subagents)
 - [Script Fan-Out](/script-fan-out)
+- [Tool Compensation](/tool-compensation)
 - [Model Timeout Profiles](/model-timeout-profiles)
 
 ## Sample code

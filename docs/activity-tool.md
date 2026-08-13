@@ -96,6 +96,8 @@ Each call costs an Activity schedule; very chatty tools may need batching or Cod
 
 - [Workflow Tool](/workflow-tool)
 - [Tool Retry Profiles](/tool-retry-profiles)
+- [Heartbeat Long Steps](/heartbeat-long-steps)
+- [Downstream Tool Rate Limiting](/downstream-tool-rate-limiting)
 - [Approval-Gated Tools](/approval-gated-tools)
 - [Safety-Profiled Tools](/safety-profiled-tools)
 

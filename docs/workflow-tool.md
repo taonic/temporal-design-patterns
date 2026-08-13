@@ -81,6 +81,7 @@ You manage the discipline of keeping those tools pure.
 ## Related patterns
 
 - [Activity Tool](/activity-tool)
+- [Local Activity Tools](/local-activity-tools)
 - [Type-Checked Scripts](/type-checked-scripts)
 
 ## Sample code

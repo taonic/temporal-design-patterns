@@ -3,7 +3,7 @@
 > **Warning:** This catalog is under active development. Content and structure may change.
 
 Temporal provides durable execution primitives that you can compose into common, reusable patterns for AI agents.
-Having these patterns in your toolbox helps you keep sessions, tools, approvals, and subagents durable, observable, and safe.
+This catalog is meant to be the practical DX guide for building agentic workflows on Temporal—sessions, tools, approvals, subagents, QoS, and operations—without renaming Temporal into a new framework.
 
 ## Agent & Session patterns {.pattern-section-title}
 
@@ -54,6 +54,24 @@ Having these patterns in your toolbox helps you keep sessions, tools, approvals,
 </a>
 </div>
 <div class="pattern-tile">
+<a href="scheduled-agent-turns">
+<div class="pattern-tile-header">
+<img src="/images/delayed-start-icon.svg" alt="Scheduled Agent Turns">
+<span>Scheduled Agent Turns</span>
+</div>
+<p>Wake proactive Turns with Temporal Schedules.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="agent-definition-versioning">
+<div class="pattern-tile-header">
+<img src="/images/continue-as-new-icon.svg" alt="Agent Definition Versioning">
+<span>Agent Definition Versioning</span>
+</div>
+<p>Pin definition and binding revisions per Session.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="agent-session-patterns">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Agent & Session Patterns">
@@ -101,6 +119,15 @@ Having these patterns in your toolbox helps you keep sessions, tools, approvals,
 <span>Nexus Tool</span>
 </div>
 <p>Cross-Namespace tools via Temporal Nexus Operations.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="typed-agent-operations">
+<div class="pattern-tile-header">
+<img src="/images/request-response-icon.svg" alt="Typed Agent Operations">
+<span>Typed Agent Operations</span>
+</div>
+<p>Versioned Update/Query contracts between agents.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -185,6 +212,51 @@ Having these patterns in your toolbox helps you keep sessions, tools, approvals,
 </a>
 </div>
 <div class="pattern-tile">
+<a href="heartbeat-long-steps">
+<div class="pattern-tile-header">
+<img src="/images/long-running-activity-icon.svg" alt="Heartbeat Long Steps">
+<span>Heartbeat Long Steps</span>
+</div>
+<p>Liveness, cancel, and checkpoints for long Steps.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="local-activity-tools">
+<div class="pattern-tile-header">
+<img src="/images/local-activities-icon.svg" alt="Local Activity Tools">
+<span>Local Activity Tools</span>
+</div>
+<p>Tiny helpers as Local Activities; keep IO regular.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="fast-slow-tool-retries">
+<div class="pattern-tile-header">
+<img src="/images/fast-slow-retries-icon.svg" alt="Fast/Slow Tool Retries">
+<span>Fast/Slow Tool Retries</span>
+</div>
+<p>Blip recovery then patient outage waits.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="external-tool-polling">
+<div class="pattern-tile-header">
+<img src="/images/polling-icon.svg" alt="External Tool Polling">
+<span>External Tool Polling</span>
+</div>
+<p>Wait on job-based APIs without webhooks.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="tool-compensation">
+<div class="pattern-tile-header">
+<img src="/images/saga-icon.svg" alt="Tool Compensation">
+<span>Tool Compensation</span>
+</div>
+<p>Undo non-idempotent tool writes on failure.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="tool-model-call-patterns">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Tool & Model Call Patterns">
@@ -208,12 +280,30 @@ Having these patterns in your toolbox helps you keep sessions, tools, approvals,
 </a>
 </div>
 <div class="pattern-tile">
+<a href="ask-user-wait">
+<div class="pattern-tile-header">
+<img src="/images/approval-icon.svg" alt="Ask-User Wait">
+<span>Ask-User Wait</span>
+</div>
+<p>Park a Turn for clarifying user input mid-loop.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="session-scoped-approvals">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Session-Scoped Approvals">
 <span>Session-Scoped Approvals</span>
 </div>
 <p>Approve a tool for the rest of a session.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="updatable-approval-timer">
+<div class="pattern-tile-header">
+<img src="/images/updatable-timer-icon.svg" alt="Updatable Approval Timer">
+<span>Updatable Approval Timer</span>
+</div>
+<p>Extendable SLA deadlines for approval waits.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -344,6 +434,15 @@ Having these patterns in your toolbox helps you keep sessions, tools, approvals,
 </a>
 </div>
 <div class="pattern-tile">
+<a href="sticky-sandbox-task-queues">
+<div class="pattern-tile-header">
+<img src="/images/worker-specific-taskqueue-icon.svg" alt="Sticky Sandbox Task Queues">
+<span>Sticky Sandbox Task Queues</span>
+</div>
+<p>Pin sandbox Activities to the Worker that owns local files.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="code-mode-patterns">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Code Mode & Sandbox Patterns">
@@ -405,6 +504,15 @@ Having these patterns in your toolbox helps you keep sessions, tools, approvals,
 <span>Session Memory</span>
 </div>
 <p>Store summaries in session state between turns.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="context-compaction">
+<div class="pattern-tile-header">
+<img src="/images/event-accumulator-icon.svg" alt="Context Compaction">
+<span>Context Compaction</span>
+</div>
+<p>Summarize and spill context before the next Turn or Continue-As-New.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -476,6 +584,15 @@ Having these patterns in your toolbox helps you keep sessions, tools, approvals,
 </a>
 </div>
 <div class="pattern-tile">
+<a href="agent-step-retry-alerting">
+<div class="pattern-tile-header">
+<img src="/images/retry-metrics-icon.svg" alt="Agent Step Retry Alerting">
+<span>Agent Step Retry Alerting</span>
+</div>
+<p>Page when model/tool attempts cross a threshold.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="eval-backed-behavior-checks">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Eval-Backed Behavior Checks">
@@ -526,6 +643,15 @@ Having these patterns in your toolbox helps you keep sessions, tools, approvals,
 </a>
 </div>
 <div class="pattern-tile">
+<a href="downstream-tool-rate-limiting">
+<div class="pattern-tile-header">
+<img src="/images/downstream-rate-limiting-icon.svg" alt="Downstream Tool Rate Limiting">
+<span>Downstream Tool Rate Limiting</span>
+</div>
+<p>Cap tool Activities per second on a dedicated queue.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="qos-throughput-patterns">
 <div class="pattern-tile-header">
 <img src="/images/fairness-icon.svg" alt="QoS & Throughput Patterns">
@@ -555,6 +681,15 @@ Having these patterns in your toolbox helps you keep sessions, tools, approvals,
 <span>Messaging Channel Agent</span>
 </div>
 <p>Map Slack or email into sessions.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="idempotent-delivery">
+<div class="pattern-tile-header">
+<img src="/images/signal-with-start-icon.svg" alt="Idempotent Delivery">
+<span>Idempotent Delivery</span>
+</div>
+<p>Dedupe channel retries with a durable delivery ledger.</p>
 </a>
 </div>
 <div class="pattern-tile">

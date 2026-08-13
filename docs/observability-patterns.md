@@ -33,6 +33,15 @@ These patterns make agent behavior reconstructable from events, traces, and metr
 </a>
 </div>
 <div class="pattern-tile">
+<a href="agent-step-retry-alerting">
+<div class="pattern-tile-header">
+<img src="/images/retry-metrics-icon.svg" alt="Agent Step Retry Alerting">
+<span>Agent Step Retry Alerting</span>
+</div>
+<p>Page when model/tool attempts cross a threshold.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="eval-backed-behavior-checks">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Eval-Backed Behavior Checks">
@@ -59,6 +68,8 @@ These patterns make agent behavior reconstructable from events, traces, and metr
 **You need agent tracing behavior:** Correlate spans with session and step IDs. Use [Agent Tracing](/agent-tracing).
 
 **You need cost & token accounting behavior:** Aggregate usage per call, turn, and session. Use [Cost & Token Accounting](/cost-token-accounting).
+
+**You need paging on silent retry storms:** Use [Agent Step Retry Alerting](/agent-step-retry-alerting).
 
 **You need eval-backed behavior checks behavior:** Regression checks on recorded sessions. Use [Eval-Backed Behavior Checks](/eval-backed-behavior-checks).
 

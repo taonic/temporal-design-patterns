@@ -40,12 +40,33 @@ if workflow.info().is_continue_as_new_suggested():
 Drain pending Signals before Continue-As-New so you do not drop in-flight approvals or messages.
 Carry pending waits explicitly in the snapshot when needed.
 
+### Only between Turns
+
+Continue-As-New only when:
+
+- No Turn child (or in-Workflow turn) is open
+- No approval or ask-user wait is pending—or those waits are serialized into the snapshot and re-armed on the next run
+- No Child Workflow handles would be lost without IDs in the snapshot
+
+Mid-tool Continue-As-New loses Activity completion routing unless you treat the whole Turn as a Child you can reattach—prefer finishing or cancelling the Turn first.
+
+### Compact before you continue
+
+Run [Context Compaction](/context-compaction) so Continue-As-New arguments stay small: memory summary, open waits, delivery ledger slice, definition/binding pins—not full transcripts.
+
 ### What to snapshot
 
 - Memory summary (not full raw transcript unless required)
 - Approval policy and session-scoped allow lists
-- Open callback or approval wait descriptors
+- Open callback, approval, or ask-user wait descriptors
+- Recent [Idempotent Delivery](/idempotent-delivery) ledger entries still needed for channel retries
+- [Agent Definition Versioning](/agent-definition-versioning) pins
 - Event-stream cursor or sequence number if you externalize events
+- Child Workflow IDs for persistent subagent threads you still own
+
+### Delivery and channel continuity
+
+Keep the same Workflow ID / `session_id`. Channel continuation tokens that key on `session_id` + `delivery_id` remain valid across Continue-As-New ([HTTP Channel Agent](/http-channel-agent)).
 
 ## When to use
 
@@ -70,6 +91,7 @@ You must design snapshot schemas carefully and version them.
 - **Continue on turn boundaries.** Avoid Continue-As-New mid-tool when possible.
 - **Use the SDK suggestion.** Prefer `is_continue_as_new_suggested()` over fixed counts alone.
 - **Version snapshots.** Old executions may continue into new code.
+- **Compact first.** Pair with [Context Compaction](/context-compaction).
 
 ## Common pitfalls
 
@@ -77,12 +99,17 @@ You must design snapshot schemas carefully and version them.
 - **Dropping Signals, Updates, approvals, or callbacks.** Drain handlers and carry open waits before continuing.
 - **Changing session_id.** Channels will orphan the previous execution.
 - **Open Child Workflows without handles in the snapshot.** In-flight turns and subagents become unreachable after Continue-As-New.
+- **Wiping the delivery ledger.** Channel retries after Continue-As-New double-apply Turns.
 
 ## Related patterns
 
 - [Session Workflow](/session-workflow)
 - [Entity Agent](/entity-agent)
 - [Session Memory](/session-memory)
+- [Context Compaction](/context-compaction)
+- [Idempotent Delivery](/idempotent-delivery)
+- [Ask-User Wait](/ask-user-wait)
+- [Agent Definition Versioning](/agent-definition-versioning)
 
 ## Sample code
 

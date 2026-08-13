@@ -51,6 +51,9 @@ self._memory["last_completion_ref"] = result["uri"]
 
 ## Implementation
 
+<DaytonaRunner pattern="claim-check-payloads" />
+
+
 ### What to externalize
 
 Externalize full prompts when huge, raw completions, retrieved RAG corpora, images/audio/video, and bulky tool dumps.
@@ -106,7 +109,7 @@ You must manage store retention, access control, and fetch latency.
 
 ## Sample code
 
-Apply the store-then-ref shape inside Durable Model Call and Activity Tool samples when outputs can grow large.
+- [`sandbox-runner/patterns/claim-check-payloads/python/`](https://github.com/temporal-sa/temporal-agentic-patterns/tree/main/sandbox-runner/patterns/claim-check-payloads/python)
 
 ## References
 

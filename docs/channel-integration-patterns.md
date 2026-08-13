@@ -24,6 +24,15 @@ These patterns bind agents to HTTP, messaging, and external tool catalogs.
 </a>
 </div>
 <div class="pattern-tile">
+<a href="idempotent-delivery">
+<div class="pattern-tile-header">
+<img src="/images/signal-with-start-icon.svg" alt="Idempotent Delivery">
+<span>Idempotent Delivery</span>
+</div>
+<p>Dedupe channel retries with a durable delivery ledger.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="mcp-openapi-tooling">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="MCP / OpenAPI Tooling">
@@ -39,6 +48,8 @@ These patterns bind agents to HTTP, messaging, and external tool catalogs.
 **You need http channel agent behavior:** Expose a session API over HTTP and SSE. Use [HTTP Channel Agent](/http-channel-agent).
 
 **You need messaging channel agent behavior:** Map Slack or email into sessions. Use [Messaging Channel Agent](/messaging-channel-agent).
+
+**You need retry-safe channel posts without double Turns:** Use [Idempotent Delivery](/idempotent-delivery).
 
 **You need mcp / openapi tooling behavior:** Compile external tools into Activity tools. Use [MCP / OpenAPI Tooling](/mcp-openapi-tooling).
 

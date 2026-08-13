@@ -78,6 +78,7 @@ You must invest in sandboxing, type stubs, and script size limits.
 - [Tools-Only Sandbox](/tools-only-sandbox)
 - [Type-Checked Scripts](/type-checked-scripts)
 - [Script Fan-Out](/script-fan-out)
+- [Sticky Sandbox Task Queues](/sticky-sandbox-task-queues)
 - [Activity Tool](/activity-tool)
 
 ## Sample code

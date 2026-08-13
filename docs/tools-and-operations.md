@@ -34,6 +34,7 @@ The following describes each step in the diagram:
 5. An Operation is a typed method on another agent or peer Session (for example, "summarize" or "search") rather than an unbounded tool catalog entry.
 
 Prefer Operations when composing agents so callers depend on a versioned interface, not on another agent's internal tool names.
+See [Typed Agent Operations](/typed-agent-operations) for Update/Query handlers, validators, and versioning.
 
 ## When to use
 
@@ -72,6 +73,7 @@ The trade-off is more naming discipline when wrapping existing APIs.
 - [Activity Tool](/activity-tool)
 - [Workflow Tool](/workflow-tool)
 - [Callback Tool](/callback-tool)
+- [Typed Agent Operations](/typed-agent-operations)
 - [Agent Tool Loop](/agent-tool-loop)
 - [Subagent Toolset](/subagent-toolset)
 - [Tool Retry Profiles](/tool-retry-profiles)
