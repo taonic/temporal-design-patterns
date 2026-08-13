@@ -41,6 +41,15 @@ These patterns compose agents as typed toolsets and durable child sessions.
 <p>Drive an agent hosted elsewhere via session HTTP.</p>
 </a>
 </div>
+<div class="pattern-tile">
+<a href="best-effort-parallel-tools">
+<div class="pattern-tile-header">
+<img src="/images/parallel-execution-icon.svg" alt="Best-Effort Parallel Tools">
+<span>Best-Effort Parallel Tools</span>
+</div>
+<p>Parallel tools that continue with partial successes.</p>
+</a>
+</div>
 </div>
 
 ## Choosing a Pattern
@@ -53,6 +62,7 @@ These patterns compose agents as typed toolsets and durable child sessions.
 
 **You need remote subagent behavior:** Drive an agent hosted elsewhere via session HTTP. Use [Remote Subagent](/remote-subagent).
 
+**You need parallel searches that tolerate partial failure:** use [Best-Effort Parallel Tools](/best-effort-parallel-tools).
 ## Related Sections
 
 See Vernacular for Session, Turn, Step, and related terms used by these patterns.

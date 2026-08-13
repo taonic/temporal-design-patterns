@@ -84,6 +84,10 @@ Each call schedules an Activity; batching may be needed for tiny calls.
 ## Related patterns
 
 - [Activity Tool](/activity-tool)
+- [Agent Tool Loop](/agent-tool-loop)
+- [Provider Retry Delegation](/provider-retry-delegation)
+- [Model Error Classification](/model-error-classification)
+- [Structured Model Output](/structured-model-output)
 - [Cost & Token Accounting](/cost-token-accounting)
 - [Standardized Event Stream](/standardized-event-stream)
 

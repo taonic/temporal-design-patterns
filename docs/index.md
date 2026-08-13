@@ -113,6 +113,69 @@ Having these patterns in your toolbox helps you keep sessions, tools, approvals,
 </a>
 </div>
 <div class="pattern-tile">
+<a href="agent-tool-loop">
+<div class="pattern-tile-header">
+<img src="/images/polling-icon.svg" alt="Agent Tool Loop">
+<span>Agent Tool Loop</span>
+</div>
+<p>Durable model↔tool loop until a final reply.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="structured-model-output">
+<div class="pattern-tile-header">
+<img src="/images/request-response-icon.svg" alt="Structured Model Output">
+<span>Structured Model Output</span>
+</div>
+<p>Schema-validated model responses.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="provider-retry-delegation">
+<div class="pattern-tile-header">
+<img src="/images/fixed-count-retries-icon.svg" alt="Provider Retry Delegation">
+<span>Provider Retry Delegation</span>
+</div>
+<p>Disable provider SDK retries; Temporal owns backoff.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="model-error-classification">
+<div class="pattern-tile-header">
+<img src="/images/non-retryable-errors-icon.svg" alt="Model Error Classification">
+<span>Model Error Classification</span>
+</div>
+<p>Retryable vs non-retryable provider errors.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="rate-limit-aware-model-calls">
+<div class="pattern-tile-header">
+<img src="/images/downstream-rate-limiting-icon.svg" alt="Rate-Limit Aware Model Calls">
+<span>Rate-Limit Aware Model Calls</span>
+</div>
+<p>Honor Retry-After via next_retry_delay.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="model-timeout-profiles">
+<div class="pattern-tile-header">
+<img src="/images/updatable-timer-icon.svg" alt="Model Timeout Profiles">
+<span>Model Timeout Profiles</span>
+</div>
+<p>Timeouts by chat, reasoning, search, and tools.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="prompt-versioning">
+<div class="pattern-tile-header">
+<img src="/images/continue-as-new-icon.svg" alt="Prompt Versioning">
+<span>Prompt Versioning</span>
+</div>
+<p>Pin reproducible prompt IDs for in-flight sessions.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="tool-model-call-patterns">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Tool & Model Call Patterns">
@@ -210,6 +273,15 @@ Having these patterns in your toolbox helps you keep sessions, tools, approvals,
 <span>Remote Subagent</span>
 </div>
 <p>Drive an agent hosted elsewhere via session HTTP.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="best-effort-parallel-tools">
+<div class="pattern-tile-header">
+<img src="/images/parallel-execution-icon.svg" alt="Best-Effort Parallel Tools">
+<span>Best-Effort Parallel Tools</span>
+</div>
+<p>Parallel tools that continue with partial successes.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -392,6 +464,15 @@ Having these patterns in your toolbox helps you keep sessions, tools, approvals,
 <span>Eval-Backed Behavior Checks</span>
 </div>
 <p>Regression checks on recorded sessions.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="progress-streaming">
+<div class="pattern-tile-header">
+<img src="/images/event-accumulator-icon.svg" alt="Progress Streaming">
+<span>Progress Streaming</span>
+</div>
+<p>Durable cursored live progress for agent UIs.</p>
 </a>
 </div>
 <div class="pattern-tile">

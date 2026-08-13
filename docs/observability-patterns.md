@@ -41,6 +41,15 @@ These patterns make agent behavior reconstructable from events, traces, and metr
 <p>Regression checks on recorded sessions.</p>
 </a>
 </div>
+<div class="pattern-tile">
+<a href="progress-streaming">
+<div class="pattern-tile-header">
+<img src="/images/event-accumulator-icon.svg" alt="Progress Streaming">
+<span>Progress Streaming</span>
+</div>
+<p>Durable cursored live progress for agent UIs.</p>
+</a>
+</div>
 </div>
 
 ## Choosing a Pattern
@@ -53,6 +62,7 @@ These patterns make agent behavior reconstructable from events, traces, and metr
 
 **You need eval-backed behavior checks behavior:** Regression checks on recorded sessions. Use [Eval-Backed Behavior Checks](/eval-backed-behavior-checks).
 
+**You need live UI progress with reconnect:** use [Progress Streaming](/progress-streaming).
 ## Related Sections
 
 See Vernacular for Session, Turn, Step, and related terms used by these patterns.

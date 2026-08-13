@@ -46,7 +46,14 @@ export default withMermaid(defineConfig({
           { text: 'Workflow Tool', link: '/workflow-tool' },
           { text: 'Callback Tool', link: '/callback-tool' },
           { text: 'Durable Model Call', link: '/durable-model-call' },
+          { text: 'Agent Tool Loop', link: '/agent-tool-loop' },
+          { text: 'Structured Model Output', link: '/structured-model-output' },
+          { text: 'Provider Retry Delegation', link: '/provider-retry-delegation' },
+          { text: 'Model Error Classification', link: '/model-error-classification' },
+          { text: 'Rate-Limit Aware Model Calls', link: '/rate-limit-aware-model-calls' },
+          { text: 'Model Timeout Profiles', link: '/model-timeout-profiles' },
           { text: 'Tool Retry Profiles', link: '/tool-retry-profiles' },
+          { text: 'Prompt Versioning', link: '/prompt-versioning' },
         ]
       },
       {
@@ -66,6 +73,7 @@ export default withMermaid(defineConfig({
           { text: 'Subagent Toolset', link: '/subagent-toolset' },
           { text: 'Persistent Subagent Threads', link: '/persistent-subagent-threads' },
           { text: 'Fan-Out Subagents', link: '/fanout-subagents' },
+          { text: 'Best-Effort Parallel Tools', link: '/best-effort-parallel-tools' },
           { text: 'Remote Subagent', link: '/remote-subagent' },
         ]
       },
@@ -102,6 +110,7 @@ export default withMermaid(defineConfig({
         link: '/observability-patterns',
         items: [
           { text: 'Standardized Event Stream', link: '/standardized-event-stream' },
+          { text: 'Progress Streaming', link: '/progress-streaming' },
           { text: 'Agent Tracing', link: '/agent-tracing' },
           { text: 'Cost & Token Accounting', link: '/cost-token-accounting' },
           { text: 'Eval-Backed Behavior Checks', link: '/eval-backed-behavior-checks' },
