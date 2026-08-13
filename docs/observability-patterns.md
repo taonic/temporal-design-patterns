@@ -42,6 +42,15 @@ These patterns make agent behavior reconstructable from events, traces, and metr
 </a>
 </div>
 <div class="pattern-tile">
+<a href="session-spend-caps">
+<div class="pattern-tile-header">
+<img src="/images/retry-metrics-icon.svg" alt="Session Spend Caps">
+<span>Session Spend Caps</span>
+</div>
+<p>Hard Workflow ceilings on tokens, cost, or tool calls.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="agent-step-retry-alerting">
 <div class="pattern-tile-header">
 <img src="/images/retry-metrics-icon.svg" alt="Agent Step Retry Alerting">
@@ -79,6 +88,8 @@ These patterns make agent behavior reconstructable from events, traces, and metr
 **You need to list Sessions by status/tenant in Temporal Visibility:** Use [Session Visibility Attributes](/session-visibility-attributes).
 
 **You need cost & token accounting behavior:** Aggregate usage per call, turn, and session. Use [Cost & Token Accounting](/cost-token-accounting).
+
+**You need hard Session ceilings that stop spend:** Use [Session Spend Caps](/session-spend-caps).
 
 **You need paging on silent retry storms:** Use [Agent Step Retry Alerting](/agent-step-retry-alerting).
 

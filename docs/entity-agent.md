@@ -54,6 +54,7 @@ HTTP and messaging channels must derive the entity ID deterministically so retri
 ### Lifecycle
 
 Define when the entity agent completes (account closed) versus idles durably forever.
+For interactive chat Sessions that should release sandboxes, use [Session Idle Eviction](/session-idle-eviction); Entity Agents usually park (Continue-As-New) rather than auto-complete.
 
 ## When to use
 
@@ -90,6 +91,7 @@ You must operate long-lived Workflows carefully (Continue-As-New, visibility).
 
 - [Session Workflow](/session-workflow)
 - [Continue-As-New Session](/continue-as-new-session)
+- [Session Idle Eviction](/session-idle-eviction)
 - [Session with Signal-and-Start](/session-signal-and-start)
 - [Scheduled Agent Turns](/scheduled-agent-turns)
 

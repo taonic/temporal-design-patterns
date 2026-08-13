@@ -84,6 +84,7 @@ Authors must classify tools honestly.
 ## Related patterns
 
 - [Tool Retry Profiles](/tool-retry-profiles)
+- [Guardrail Steps](/guardrail-steps)
 - [Approval-Gated Tools](/approval-gated-tools)
 - [Security Profiles per Agent](/security-profiles-per-agent)
 

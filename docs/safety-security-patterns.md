@@ -15,6 +15,15 @@ These patterns label tools and environments so policy can gate or block unsafe c
 </a>
 </div>
 <div class="pattern-tile">
+<a href="guardrail-steps">
+<div class="pattern-tile-header">
+<img src="/images/non-retryable-errors-icon.svg" alt="Guardrail Steps">
+<span>Guardrail Steps</span>
+</div>
+<p>Durable pre/post policy checks around model and tools.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="security-profiles-per-agent">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Security Profiles per Agent">
@@ -37,6 +46,8 @@ These patterns label tools and environments so policy can gate or block unsafe c
 ## Choosing a Pattern
 
 **You need safety-profiled tools behavior:** Declare inherently safe, idempotent, or non-idempotent tools. Use [Safety-Profiled Tools](/safety-profiled-tools).
+
+**You need durable content/policy checks around model and tools:** Use [Guardrail Steps](/guardrail-steps).
 
 **You need security profiles per agent behavior:** Environment-specific tool and network allowances. Use [Security Profiles per Agent](/security-profiles-per-agent).
 

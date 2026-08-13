@@ -51,6 +51,15 @@ These patterns model long-lived agent sessions and how turns attach to them.
 </a>
 </div>
 <div class="pattern-tile">
+<a href="session-idle-eviction">
+<div class="pattern-tile-header">
+<img src="/images/updatable-timer-icon.svg" alt="Session Idle Eviction">
+<span>Session Idle Eviction</span>
+</div>
+<p>Close or park Sessions after a durable idle timeout.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="continue-as-new-session">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Continue-As-New Session">
@@ -99,6 +108,8 @@ These patterns model long-lived agent sessions and how turns attach to them.
 **You need session with signal-and-start behavior:** Create or signal a session from the first message. Use [Session with Signal-and-Start](/session-signal-and-start).
 
 **You need entity agent behavior:** One long-lived agent Workflow per business entity. Use [Entity Agent](/entity-agent).
+
+**You need to release idle chat Sessions / sandboxes:** Use [Session Idle Eviction](/session-idle-eviction).
 
 **You need continue-as-new session behavior:** Reset history while preserving session identity. Use [Continue-As-New Session](/continue-as-new-session).
 

@@ -37,6 +37,7 @@ export default withMermaid(defineConfig({
           { text: 'Cancel In-Flight Turn', link: '/cancel-in-flight-turn' },
           { text: 'Session with Signal-and-Start', link: '/session-signal-and-start' },
           { text: 'Entity Agent', link: '/entity-agent' },
+          { text: 'Session Idle Eviction', link: '/session-idle-eviction' },
           { text: 'Continue-As-New Session', link: '/continue-as-new-session' },
           { text: 'Scheduled Agent Turns', link: '/scheduled-agent-turns' },
           { text: 'Agent Definition Versioning', link: '/agent-definition-versioning' },
@@ -107,6 +108,7 @@ export default withMermaid(defineConfig({
         link: '/safety-security-patterns',
         items: [
           { text: 'Safety-Profiled Tools', link: '/safety-profiled-tools' },
+          { text: 'Guardrail Steps', link: '/guardrail-steps' },
           { text: 'Security Profiles per Agent', link: '/security-profiles-per-agent' },
           { text: 'Network & Resource Sandboxing', link: '/network-resource-sandboxing' },
         ]
@@ -131,6 +133,7 @@ export default withMermaid(defineConfig({
           { text: 'Agent Tracing', link: '/agent-tracing' },
           { text: 'Session Visibility Attributes', link: '/session-visibility-attributes' },
           { text: 'Cost & Token Accounting', link: '/cost-token-accounting' },
+          { text: 'Session Spend Caps', link: '/session-spend-caps' },
           { text: 'Agent Step Retry Alerting', link: '/agent-step-retry-alerting' },
           { text: 'Eval-Backed Behavior Checks', link: '/eval-backed-behavior-checks' },
         ]

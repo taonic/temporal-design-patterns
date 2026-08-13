@@ -54,6 +54,15 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 </a>
 </div>
 <div class="pattern-tile">
+<a href="session-idle-eviction">
+<div class="pattern-tile-header">
+<img src="/images/updatable-timer-icon.svg" alt="Session Idle Eviction">
+<span>Session Idle Eviction</span>
+</div>
+<p>Close or park Sessions after a durable idle timeout.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="continue-as-new-session">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Continue-As-New Session">
@@ -484,6 +493,15 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 </a>
 </div>
 <div class="pattern-tile">
+<a href="guardrail-steps">
+<div class="pattern-tile-header">
+<img src="/images/non-retryable-errors-icon.svg" alt="Guardrail Steps">
+<span>Guardrail Steps</span>
+</div>
+<p>Durable pre/post policy checks around model and tools.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="security-profiles-per-agent">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Security Profiles per Agent">
@@ -608,6 +626,15 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <span>Cost & Token Accounting</span>
 </div>
 <p>Aggregate usage per call, turn, and session.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="session-spend-caps">
+<div class="pattern-tile-header">
+<img src="/images/retry-metrics-icon.svg" alt="Session Spend Caps">
+<span>Session Spend Caps</span>
+</div>
+<p>Hard Workflow ceilings on tokens, cost, or tool calls.</p>
 </a>
 </div>
 <div class="pattern-tile">

@@ -78,7 +78,7 @@ You must keep price tables and model names accurate.
 ## Best practices
 
 - **Always bind usage to turn_id and session_id.**
-- **Alert on session budgets.**
+- **Enforce hard ceilings with [Session Spend Caps](/session-spend-caps)**—alerts alone do not stop spend.
 - **Include model name in events.**
 
 ## Common pitfalls
@@ -86,9 +86,11 @@ You must keep price tables and model names accurate.
 - **Counting only successful calls.** Failed calls still cost money.
 - **Aggregating only in logs without session rollups.**
 - **Emitting `token_usage` on every Activity attempt without an attempt key.** Retries double-count the same call.
+- **Alerting without Workflow caps.** Invoices still grow until someone reacts.
 
 ## Related patterns
 
+- [Session Spend Caps](/session-spend-caps)
 - [Durable Model Call](/durable-model-call)
 - [Standardized Event Stream](/standardized-event-stream)
 - [Agent Tracing](/agent-tracing)
