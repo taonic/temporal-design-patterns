@@ -45,8 +45,6 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 </a>
 </div>
 <div class="pattern-tile">
-<a href="entity-agent">
-<div class="pattern-tile">
 <a href="eager-interactive-session-start">
 <div class="pattern-tile-header">
 <img src="/images/eager-workflow-start-icon.svg" alt="Eager Interactive Session Start">
@@ -55,7 +53,8 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <p>Cut first-Turn latency with Eager Workflow Start.</p>
 </a>
 </div>
-
+<div class="pattern-tile">
+<a href="entity-agent">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Entity Agent">
 <span>Entity Agent</span>
