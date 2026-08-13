@@ -148,6 +148,7 @@ You operate Deployment Versioning plus definition/binding pipelines.
 
 ## Related patterns
 
+- [Patched Agent Workflow Evolution](/patched-agent-workflow-evolution)
 - [Agent Definition Versioning](/agent-definition-versioning)
 - [Prompt Versioning](/prompt-versioning)
 - [Continue-As-New Session](/continue-as-new-session)

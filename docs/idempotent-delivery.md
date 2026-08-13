@@ -132,6 +132,7 @@ You must issue and store delivery IDs and bound the ledger.
 
 ## Related patterns
 
+- [Validated Session Ingress](/validated-session-ingress)
 - [Session with Signal-and-Start](/session-signal-and-start)
 - [HTTP Channel Agent](/http-channel-agent)
 - [Messaging Channel Agent](/messaging-channel-agent)

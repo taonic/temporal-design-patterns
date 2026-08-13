@@ -119,6 +119,8 @@ You must design Signal or Update handlers that queue work safely under Continue-
 
 ## Related patterns
 
+- [Validated Session Ingress](/validated-session-ingress)
+- [Eager Interactive Session Start](/eager-interactive-session-start)
 - [Session Workflow](/session-workflow)
 - [Continue-As-New Session](/continue-as-new-session)
 - [HTTP Channel Agent](/http-channel-agent)

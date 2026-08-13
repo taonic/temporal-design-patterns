@@ -1,0 +1,8 @@
+[project]
+name = "operator_session_reset"
+version = "0.1.0"
+description = "Agentic pattern sample"
+requires-python = ">=3.12"
+dependencies = ["temporalio==1.9.0"]
+[tool.uv]
+package = false

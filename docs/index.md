@@ -46,6 +46,16 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 </div>
 <div class="pattern-tile">
 <a href="entity-agent">
+<div class="pattern-tile">
+<a href="eager-interactive-session-start">
+<div class="pattern-tile-header">
+<img src="/images/eager-workflow-start-icon.svg" alt="Eager Interactive Session Start">
+<span>Eager Interactive Session Start</span>
+</div>
+<p>Cut first-Turn latency with Eager Workflow Start.</p>
+</a>
+</div>
+
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Entity Agent">
 <span>Entity Agent</span>
@@ -100,6 +110,25 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 </div>
 <div class="pattern-tile">
 <a href="agent-session-patterns">
+<div class="pattern-tile">
+<a href="patched-agent-workflow-evolution">
+<div class="pattern-tile-header">
+<img src="/images/continue-as-new-icon.svg" alt="Patched Agent Workflow Evolution">
+<span>Patched Agent Workflow Evolution</span>
+</div>
+<p>Evolve Session/Turn branching with workflow.patched.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="operator-session-reset">
+<div class="pattern-tile-header">
+<img src="/images/resumable-activity-icon.svg" alt="Operator Session Reset">
+<span>Operator Session Reset</span>
+</div>
+<p>Recover stuck Sessions without orphaning session_id.</p>
+</a>
+</div>
+
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Agent & Session Patterns">
 <span>Agent & Session Patterns Overview</span>
@@ -168,6 +197,16 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 </div>
 <div class="pattern-tile">
 <a href="tool-retry-profiles">
+<div class="pattern-tile">
+<a href="cached-model-call">
+<div class="pattern-tile-header">
+<img src="/images/local-activities-icon.svg" alt="Cached Model Call">
+<span>Cached Model Call</span>
+</div>
+<p>Activity-boundary cache for identical model inputs.</p>
+</a>
+</div>
+
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Tool Retry Profiles">
 <span>Tool Retry Profiles</span>
@@ -236,6 +275,24 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <span>Prompt Versioning</span>
 </div>
 <p>Pin reproducible prompt IDs for in-flight sessions.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="prompt-experiment-pins">
+<div class="pattern-tile-header">
+<img src="/images/continue-as-new-icon.svg" alt="Prompt Experiment Pins">
+<span>Prompt Experiment Pins</span>
+</div>
+<p>Sticky A/B prompt or model variant per Session.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="poison-tool-quarantine">
+<div class="pattern-tile-header">
+<img src="/images/non-retryable-errors-icon.svg" alt="Poison Tool Quarantine">
+<span>Poison Tool Quarantine</span>
+</div>
+<p>Stop poison tool payloads from retrying forever.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -748,6 +805,16 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 </div>
 <div class="pattern-tile">
 <a href="mcp-openapi-tooling">
+<div class="pattern-tile">
+<a href="validated-session-ingress">
+<div class="pattern-tile-header">
+<img src="/images/request-response-icon.svg" alt="Validated Session Ingress">
+<span>Validated Session Ingress</span>
+</div>
+<p>Reject bad deliveries in Update validators before Turns.</p>
+</a>
+</div>
+
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="MCP / OpenAPI Tooling">
 <span>MCP / OpenAPI Tooling</span>

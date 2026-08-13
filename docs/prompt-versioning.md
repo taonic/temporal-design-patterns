@@ -89,6 +89,7 @@ You maintain a prompt catalog beside code.
 
 ## Related patterns
 
+- [Prompt Experiment Pins](/prompt-experiment-pins)
 - [Agent Definition Versioning](/agent-definition-versioning)
 - [Durable Model Call](/durable-model-call)
 - [Eval-Backed Behavior Checks](/eval-backed-behavior-checks)

@@ -33,6 +33,15 @@ These patterns bind agents to HTTP, messaging, and external tool catalogs.
 </a>
 </div>
 <div class="pattern-tile">
+<a href="validated-session-ingress">
+<div class="pattern-tile-header">
+<img src="/images/request-response-icon.svg" alt="Validated Session Ingress">
+<span>Validated Session Ingress</span>
+</div>
+<p>Reject bad deliveries in Update validators before Turns.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="mcp-openapi-tooling">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="MCP / OpenAPI Tooling">
@@ -50,6 +59,8 @@ These patterns bind agents to HTTP, messaging, and external tool catalogs.
 **You need messaging channel agent behavior:** Map Slack or email into sessions. Use [Messaging Channel Agent](/messaging-channel-agent).
 
 **You need retry-safe channel posts without double Turns:** Use [Idempotent Delivery](/idempotent-delivery).
+
+**You need schema/auth rejection before Turn enqueue:** Use [Validated Session Ingress](/validated-session-ingress).
 
 **You need mcp / openapi tooling behavior:** Compile external tools into Activity tools. Use [MCP / OpenAPI Tooling](/mcp-openapi-tooling).
 

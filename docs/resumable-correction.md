@@ -85,6 +85,7 @@ You add operational waits that need clear SLAs.
 
 ## Related patterns
 
+- [Poison Tool Quarantine](/poison-tool-quarantine)
 - [Tool Retry Profiles](/tool-retry-profiles)
 - [Approval-Gated Tools](/approval-gated-tools)
 - [Session Workflow](/session-workflow)

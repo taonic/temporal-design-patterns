@@ -60,6 +60,15 @@ These patterns make model and tool calls durable Temporal Activities or determin
 </a>
 </div>
 <div class="pattern-tile">
+<a href="cached-model-call">
+<div class="pattern-tile-header">
+<img src="/images/local-activities-icon.svg" alt="Cached Model Call">
+<span>Cached Model Call</span>
+</div>
+<p>Activity-boundary cache for identical model inputs.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="tool-retry-profiles">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Tool Retry Profiles">
@@ -168,6 +177,15 @@ These patterns make model and tool calls durable Temporal Activities or determin
 </a>
 </div>
 <div class="pattern-tile">
+<a href="poison-tool-quarantine">
+<div class="pattern-tile-header">
+<img src="/images/non-retryable-errors-icon.svg" alt="Poison Tool Quarantine">
+<span>Poison Tool Quarantine</span>
+</div>
+<p>Stop poison tool payloads from retrying forever.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="prompt-versioning">
 <div class="pattern-tile-header">
 <img src="/images/continue-as-new-icon.svg" alt="Prompt Versioning">
@@ -183,6 +201,15 @@ These patterns make model and tool calls durable Temporal Activities or determin
 <span>Agent Definition Versioning</span>
 </div>
 <p>Pin definition and binding revisions per Session.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="prompt-experiment-pins">
+<div class="pattern-tile-header">
+<img src="/images/continue-as-new-icon.svg" alt="Prompt Experiment Pins">
+<span>Prompt Experiment Pins</span>
+</div>
+<p>Sticky A/B prompt or model variant per Session.</p>
 </a>
 </div>
 </div>
@@ -201,6 +228,8 @@ These patterns make model and tool calls durable Temporal Activities or determin
 
 **You need durable model call behavior:** LLM calls as first-class Activity steps. Use [Durable Model Call](/durable-model-call).
 
+**You need to skip duplicate provider calls:** Use [Cached Model Call](/cached-model-call).
+
 **You need tool retry profiles behavior:** Per-tool retry and safety policies. Use [Tool Retry Profiles](/tool-retry-profiles).
 
 **You need a multi-step tool-using turn:** use [Agent Tool Loop](/agent-tool-loop).
@@ -216,6 +245,8 @@ These patterns make model and tool calls durable Temporal Activities or determin
 **You need undo for multi-write tool Turns:** use [Tool Compensation](/tool-compensation).
 **You need reproducible prompts:** use [Prompt Versioning](/prompt-versioning).
 **You need definition vs binding pins for whole agents:** use [Agent Definition Versioning](/agent-definition-versioning).
+**You need sticky A/B prompt variants:** use [Prompt Experiment Pins](/prompt-experiment-pins).
+**You need to stop poison tool retry storms:** use [Poison Tool Quarantine](/poison-tool-quarantine).
 
 ## Related Sections
 

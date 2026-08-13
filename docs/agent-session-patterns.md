@@ -42,6 +42,15 @@ These patterns model long-lived agent sessions and how turns attach to them.
 </a>
 </div>
 <div class="pattern-tile">
+<a href="eager-interactive-session-start">
+<div class="pattern-tile-header">
+<img src="/images/eager-workflow-start-icon.svg" alt="Eager Interactive Session Start">
+<span>Eager Interactive Session Start</span>
+</div>
+<p>Cut first-Turn latency with Eager Workflow Start.</p>
+</a>
+</div>
+<div class="pattern-tile">
 <a href="entity-agent">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Entity Agent">
@@ -95,6 +104,24 @@ These patterns model long-lived agent sessions and how turns attach to them.
 <p>Pin Worker build / Deployment Version separately from config.</p>
 </a>
 </div>
+<div class="pattern-tile">
+<a href="patched-agent-workflow-evolution">
+<div class="pattern-tile-header">
+<img src="/images/continue-as-new-icon.svg" alt="Patched Agent Workflow Evolution">
+<span>Patched Agent Workflow Evolution</span>
+</div>
+<p>Evolve Session/Turn branching with workflow.patched.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="operator-session-reset">
+<div class="pattern-tile-header">
+<img src="/images/resumable-activity-icon.svg" alt="Operator Session Reset">
+<span>Operator Session Reset</span>
+</div>
+<p>Recover stuck Sessions without orphaning session_id.</p>
+</a>
+</div>
 </div>
 
 ## Choosing a Pattern
@@ -107,6 +134,8 @@ These patterns model long-lived agent sessions and how turns attach to them.
 
 **You need session with signal-and-start behavior:** Create or signal a session from the first message. Use [Session with Signal-and-Start](/session-signal-and-start).
 
+**You need lower first-Turn start latency:** Use [Eager Interactive Session Start](/eager-interactive-session-start).
+
 **You need entity agent behavior:** One long-lived agent Workflow per business entity. Use [Entity Agent](/entity-agent).
 
 **You need to release idle chat Sessions / sandboxes:** Use [Session Idle Eviction](/session-idle-eviction).
@@ -118,6 +147,10 @@ These patterns model long-lived agent sessions and how turns attach to them.
 **You need reproducible agent config vs placement:** Use [Agent Definition Versioning](/agent-definition-versioning).
 
 **You need replay-safe Worker code rollouts for open Sessions:** Use [Agent Worker Versioning](/agent-worker-versioning).
+
+**You need to change Workflow branching under open histories:** Use [Patched Agent Workflow Evolution](/patched-agent-workflow-evolution).
+
+**You need an operator playbook for stuck Sessions:** Use [Operator Session Reset](/operator-session-reset).
 
 ## Related Sections
 

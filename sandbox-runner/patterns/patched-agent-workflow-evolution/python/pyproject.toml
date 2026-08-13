@@ -1,0 +1,8 @@
+[project]
+name = "patched_agent_workflow_evolution"
+version = "0.1.0"
+description = "Agentic pattern sample"
+requires-python = ">=3.12"
+dependencies = ["temporalio==1.9.0"]
+[tool.uv]
+package = false

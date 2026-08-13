@@ -36,12 +36,15 @@ export default withMermaid(defineConfig({
           { text: 'Turn Workflow', link: '/turn-workflow' },
           { text: 'Cancel In-Flight Turn', link: '/cancel-in-flight-turn' },
           { text: 'Session with Signal-and-Start', link: '/session-signal-and-start' },
+          { text: 'Eager Interactive Session Start', link: '/eager-interactive-session-start' },
           { text: 'Entity Agent', link: '/entity-agent' },
           { text: 'Session Idle Eviction', link: '/session-idle-eviction' },
           { text: 'Continue-As-New Session', link: '/continue-as-new-session' },
           { text: 'Scheduled Agent Turns', link: '/scheduled-agent-turns' },
           { text: 'Agent Definition Versioning', link: '/agent-definition-versioning' },
           { text: 'Agent Worker Versioning', link: '/agent-worker-versioning' },
+          { text: 'Patched Agent Workflow Evolution', link: '/patched-agent-workflow-evolution' },
+          { text: 'Operator Session Reset', link: '/operator-session-reset' },
         ]
       },
       {
@@ -54,6 +57,7 @@ export default withMermaid(defineConfig({
           { text: 'Nexus Tool', link: '/nexus-tool' },
           { text: 'Typed Agent Operations', link: '/typed-agent-operations' },
           { text: 'Durable Model Call', link: '/durable-model-call' },
+          { text: 'Cached Model Call', link: '/cached-model-call' },
           { text: 'Agent Tool Loop', link: '/agent-tool-loop' },
           { text: 'Structured Model Output', link: '/structured-model-output' },
           { text: 'Provider Retry Delegation', link: '/provider-retry-delegation' },
@@ -61,12 +65,14 @@ export default withMermaid(defineConfig({
           { text: 'Rate-Limit Aware Model Calls', link: '/rate-limit-aware-model-calls' },
           { text: 'Model Timeout Profiles', link: '/model-timeout-profiles' },
           { text: 'Tool Retry Profiles', link: '/tool-retry-profiles' },
+          { text: 'Poison Tool Quarantine', link: '/poison-tool-quarantine' },
           { text: 'Heartbeat Long Steps', link: '/heartbeat-long-steps' },
           { text: 'Local Activity Tools', link: '/local-activity-tools' },
           { text: 'Fast/Slow Tool Retries', link: '/fast-slow-tool-retries' },
           { text: 'External Tool Polling', link: '/external-tool-polling' },
           { text: 'Tool Compensation', link: '/tool-compensation' },
           { text: 'Prompt Versioning', link: '/prompt-versioning' },
+          { text: 'Prompt Experiment Pins', link: '/prompt-experiment-pins' },
         ]
       },
       {
@@ -154,6 +160,7 @@ export default withMermaid(defineConfig({
           { text: 'HTTP Channel Agent', link: '/http-channel-agent' },
           { text: 'Messaging Channel Agent', link: '/messaging-channel-agent' },
           { text: 'Idempotent Delivery', link: '/idempotent-delivery' },
+          { text: 'Validated Session Ingress', link: '/validated-session-ingress' },
           { text: 'MCP / OpenAPI Tooling', link: '/mcp-openapi-tooling' },
         ]
       },

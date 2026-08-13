@@ -86,6 +86,7 @@ Each call schedules an Activity; batching may be needed for tiny calls.
 
 ## Related patterns
 
+- [Cached Model Call](/cached-model-call)
 - [Activity Tool](/activity-tool)
 - [Agent Tool Loop](/agent-tool-loop)
 - [Provider Retry Delegation](/provider-retry-delegation)
