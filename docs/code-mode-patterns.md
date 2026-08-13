@@ -55,4 +55,4 @@ These patterns let a model orchestrate tools by writing scripts that call host A
 
 ## Related Sections
 
-See Vernacular for Session, Turn, Step, and related terms used by these patterns.
+See Concepts for Session, Turn, Step, and related terms used by these patterns.

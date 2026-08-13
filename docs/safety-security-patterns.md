@@ -44,4 +44,4 @@ These patterns label tools and environments so policy can gate or block unsafe c
 
 ## Related Sections
 
-See Vernacular for Session, Turn, Step, and related terms used by these patterns.
+See Concepts for Session, Turn, Step, and related terms used by these patterns.

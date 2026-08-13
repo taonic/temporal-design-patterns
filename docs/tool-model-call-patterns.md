@@ -136,4 +136,4 @@ These patterns make model and tool calls durable Temporal Activities or determin
 **You need reproducible prompts:** use [Prompt Versioning](/prompt-versioning).
 ## Related Sections
 
-See Vernacular for Session, Turn, Step, and related terms used by these patterns.
+See Concepts for Session, Turn, Step, and related terms used by these patterns.

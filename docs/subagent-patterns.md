@@ -65,4 +65,4 @@ These patterns compose agents as typed toolsets and durable child sessions.
 **You need parallel searches that tolerate partial failure:** use [Best-Effort Parallel Tools](/best-effort-parallel-tools).
 ## Related Sections
 
-See Vernacular for Session, Turn, Step, and related terms used by these patterns.
+See Concepts for Session, Turn, Step, and related terms used by these patterns.

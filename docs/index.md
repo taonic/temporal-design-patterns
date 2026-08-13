@@ -486,6 +486,38 @@ Having these patterns in your toolbox helps you keep sessions, tools, approvals,
 </div>
 </div>
 
+## QoS & Throughput patterns {.pattern-section-title}
+
+<div class="pattern-grid">
+<div class="pattern-tile">
+<a href="fairness">
+<div class="pattern-tile-header">
+<img src="/images/fairness-icon.svg" alt="Fairness">
+<span>Fairness</span>
+</div>
+<p>Proportional Worker share per tenant on one queue.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="priority-task-queues">
+<div class="pattern-tile-header">
+<img src="/images/priority-task-queues-icon.svg" alt="Priority Task Queues">
+<span>Priority Task Queues</span>
+</div>
+<p>Interactive Turns ahead of batch and eval Sessions.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="qos-throughput-patterns">
+<div class="pattern-tile-header">
+<img src="/images/fairness-icon.svg" alt="QoS & Throughput Patterns">
+<span>QoS & Throughput Patterns Overview</span>
+</div>
+<p>These patterns control how multi-tenant agent Sessions and Steps share Worker capacity.</p>
+</a>
+</div>
+</div>
+
 ## Channel & Integration patterns {.pattern-section-title}
 
 <div class="pattern-grid">

@@ -15,14 +15,15 @@ export default withMermaid(defineConfig({
     ],
     sidebar: [
       {
-        text: 'Vernacular',
+        text: 'Concepts',
+        link: '/concepts',
         items: [
           { text: 'Identity', link: '/identity' },
           { text: 'Session, Turn, and Step', link: '/session-turn-step' },
           { text: 'Event Stream', link: '/event-stream' },
           { text: 'Tools and Operations', link: '/tools-and-operations' },
-          { text: 'Approvals', link: '/approvals-vernacular' },
-          { text: 'Sandbox and Code Mode', link: '/sandbox-vernacular' },
+          { text: 'Approvals', link: '/approvals' },
+          { text: 'Sandbox and Code Mode', link: '/sandbox-and-code-mode' },
           { text: 'HTTP and Client', link: '/http-and-client' },
           { text: 'Filesystem Authoring', link: '/filesystem-authoring' },
         ]
@@ -114,6 +115,14 @@ export default withMermaid(defineConfig({
           { text: 'Agent Tracing', link: '/agent-tracing' },
           { text: 'Cost & Token Accounting', link: '/cost-token-accounting' },
           { text: 'Eval-Backed Behavior Checks', link: '/eval-backed-behavior-checks' },
+        ]
+      },
+      {
+        text: 'QoS & Throughput Patterns',
+        link: '/qos-throughput-patterns',
+        items: [
+          { text: 'Fairness', link: '/fairness' },
+          { text: 'Priority Task Queues', link: '/priority-task-queues' },
         ]
       },
       {

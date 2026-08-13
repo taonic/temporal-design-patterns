@@ -2,67 +2,82 @@
 
 ## Overview
 
-Session APIs and client drivers for agents.
-This page defines the term as used across the catalog so pattern pages can stay concise.
+HTTP and Client describe how external callers attach to a Session: request/response and streaming over HTTP, plus clients that stay connected to run Callback Tools or deliver Signals.
+These terms cover the channel edge, not the agent loop itself.
 
 ## Problem
 
-Without shared names for agent work units, teams invent conflicting models for conversations, tool calls, and approvals.
-You then cannot compare designs or reconstruct what an agent did from a single record.
+Product UIs and services need a stable way to start Sessions, send Turns, and observe events.
+If each client invents its own polling or writes directly to Workflow APIs without a channel contract, you get duplicated session creation, lost callbacks, and no shared auth story.
+You need catalog terms for the HTTP channel and for an attached client.
 
 ## Solution
 
-Use a small vernacular that maps cleanly onto Temporal durability:
+Expose a Session-oriented HTTP API and, when needed, keep a client attached for callbacks:
 
 ```mermaid
 flowchart TB
-    Session --> Turn
-    Turn --> Step
-    Step --> Events[Event stream]
+    UI[UI / service] -->|HTTP start / message| Channel[HTTP channel]
+    Channel -->|Signal-with-Start / Signal| Session[Session Workflow]
+    Session -->|SSE / NDJSON events| UI
+    Client[Attached client] -->|register| Session
+    Session -->|Callback Tool request| Client
+    Client -->|result Signal / Update| Session
 ```
 
 The following describes each step in the diagram:
 
-1. A Session is the long-lived unit that owns cross-turn state and the ordered event stream.
-2. A Turn is one input and the agent work that follows until a reply, error, or cancel.
-3. A Step is the smallest durable unit inside a turn (model call, tool call, approval wait, and similar).
-4. Events record session, turn, and step lifecycle so observers can reconstruct the run.
+1. The HTTP channel maps REST (or similar) routes to Session lifecycle: create or attach, post a Turn input, cancel, and query status.
+2. The channel uses Temporal Signal-with-Start (or equivalent) so the first message creates the Session Workflow when needed.
+3. Progress and lifecycle flow back as an app event stream over SSE or chunked responses—not as raw Temporal history.
+4. An attached client registers with the Session to run Callback Tools locally (browser, IDE, or private network) and returns results via Signal or Update.
+
+Messaging channels (chat, email) reuse the same Session terms; only the adapter differs.
 
 ## When to use
 
-Read this page when you adopt a new pattern and need the definition of a term used in Overview or Solution.
+Use an HTTP channel when browsers or backend services drive agents over the public or private API edge.
+Attach a client when Tools must run outside the worker (local files, user SSO cookies, device APIs).
 
 ## Benefits and trade-offs
 
-Shared vernacular keeps pattern pages consistent.
-The trade-off is that you must learn a small vocabulary before the catalog reads fluently.
+A channel contract keeps Temporal details off product clients and supports streaming UX.
+The trade-off is an API layer you must version, authenticate, and scale separately from workers.
 
 ## Comparison with alternatives
 
-| Approach | Consistency | Cost |
+| Approach | Streaming UX | Local side effects |
 | :--- | :--- | :--- |
-| Shared vernacular | High | Learn a few terms |
-| Ad-hoc per team | Low | Rework and confusion |
+| HTTP channel + event stream | Strong | Via Callback Tools |
+| Clients calling Temporal SDK directly | Possible | Possible, couples clients |
+| Sync request until Turn ends | Weak for long Turns | Limited |
 
 ## Best practices
 
-- **Reuse catalog terms.** Prefer Session, Turn, and Step over inventing synonyms.
-- **Map to Temporal clearly.** Document which Workflow or Activity backs each term when durability matters.
+- **Auth at the channel.** Map credentials to `user_id` / `actor_id` before Signals reach the Workflow.
+- **Idempotent start.** Use deterministic Session IDs with Signal-with-Start to avoid duplicate Workflows.
+- **Time out attached clients.** Callback Tools need heartbeat or lease semantics so Sessions do not wait forever.
+- **Keep payloads bounded.** Large files belong in object storage referenced by ID, not in every Signal.
 
 ## Common pitfalls
 
-- **Treating turns as free-floating processes.** Turns belong to a Session so memory and approvals stay coherent.
-- **Skipping events.** Without an event stream, UIs and audits cannot reconstruct the agent lifecycle.
+- **Creating a new Workflow per HTTP request** without a stable Session ID.
+- **Streaming Temporal history to browsers.** Use the app event stream instead.
+- **Assuming the worker can reach the user's machine.** That is what Callback Tools and attached clients are for.
 
 ## Related patterns
 
-See the Agent & Session and Observability pattern sections.
+- [HTTP Channel Agent](/http-channel-agent)
+- [Messaging Channel Agent](/messaging-channel-agent)
+- [Callback Tool](/callback-tool)
+- [Session with Signal-and-Start](/session-signal-and-start)
+- [Progress Streaming](/progress-streaming)
 
 ## Sample code
 
-See pattern pages that apply this vernacular, such as [Session Workflow](/session-workflow).
+See [HTTP Channel Agent](/http-channel-agent) and [Callback Tool](/callback-tool).
 
 ## References
 
-- [Temporal Docs: Workflows](https://docs.temporal.io/workflows)
-- [Temporal Docs: Activities](https://docs.temporal.io/activities)
+- [Temporal Docs: Signal-With-Start](https://docs.temporal.io/encyclopedia/workflow-message-passing#signal-with-start)
+- [Temporal Docs: Signals](https://docs.temporal.io/encyclopedia/workflow-message-passing#sending-signals)

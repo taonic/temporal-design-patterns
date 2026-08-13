@@ -2,67 +2,86 @@
 
 ## Overview
 
-The ordered record of session, turn, and step lifecycle.
-This page defines the term as used across the catalog so pattern pages can stay concise.
+An event stream is the ordered, application-level record of Session, Turn, and Step lifecycle.
+It is what UIs, audits, and evals consume—distinct from Temporal Workflow history, even though both are ordered.
 
 ## Problem
 
-Without shared names for agent work units, teams invent conflicting models for conversations, tool calls, and approvals.
-You then cannot compare designs or reconstruct what an agent did from a single record.
+Temporal history is complete for replay, but it is verbose, worker-oriented, and awkward for product UIs.
+Ad-hoc logs omit IDs, reorder under concurrency, or vanish when a process dies.
+You need a stable contract of agent events that observers can tail without reading Temporal history.
 
 ## Solution
 
-Use a small vernacular that maps cleanly onto Temporal durability:
+Append typed events as the Session executes, with shared metadata on every record:
 
 ```mermaid
-flowchart TB
-    Session --> Turn
-    Turn --> Step
-    Step --> Events[Event stream]
+sequenceDiagram
+    participant Client
+    participant Session
+    participant Stream as App event stream
+    participant Hist as Temporal history
+    Client->>Session: message
+    Session->>Hist: Workflow / Activity events
+    Session->>Stream: session_started / turn_started
+    Session->>Stream: tool_call_started / completed
+    Session->>Stream: turn_ended
+    Client->>Stream: subscribe (SSE / query)
 ```
 
 The following describes each step in the diagram:
 
-1. A Session is the long-lived unit that owns cross-turn state and the ordered event stream.
-2. A Turn is one input and the agent work that follows until a reply, error, or cancel.
-3. A Step is the smallest durable unit inside a turn (model call, tool call, approval wait, and similar).
-4. Events record session, turn, and step lifecycle so observers can reconstruct the run.
+1. Client input starts or continues a Session Workflow; Temporal records Workflow and Activity history for durability and replay.
+2. The Session appends application events (`session_started`, `turn_started`, step and tool events, approvals, `turn_ended`).
+3. Each event carries `session_id`, `turn_id`, `step_id` (when applicable), sequence number, and a type-specific payload.
+4. Clients subscribe to the app stream (SSE, NDJSON, or queries)—not to raw Temporal history—to render progress and audits.
+
+Keep sequence numbers (or causal links) so late consumers can rebuild order even if delivery is at-least-once.
 
 ## When to use
 
-Read this page when you adopt a new pattern and need the definition of a term used in Overview or Solution.
+Define an event stream for any Session that surfaces progress, powers evals, or needs an audit trail.
+Skip a separate stream only for throwaway prototypes where Temporal history is enough.
 
 ## Benefits and trade-offs
 
-Shared vernacular keeps pattern pages consistent.
-The trade-off is that you must learn a small vocabulary before the catalog reads fluently.
+A dedicated stream gives product and ops a stable schema without exposing Temporal internals.
+The trade-off is storage and an append path you must keep consistent with Workflow state.
 
 ## Comparison with alternatives
 
-| Approach | Consistency | Cost |
+| Approach | UI-friendly | Replay source of truth |
 | :--- | :--- | :--- |
-| Shared vernacular | High | Learn a few terms |
-| Ad-hoc per team | Low | Rework and confusion |
+| App event stream + Temporal history | High | Temporal history |
+| Temporal history only | Low | Temporal history |
+| Unstructured logs | Medium | Neither |
 
 ## Best practices
 
-- **Reuse catalog terms.** Prefer Session, Turn, and Step over inventing synonyms.
-- **Map to Temporal clearly.** Document which Workflow or Activity backs each term when durability matters.
+- **Version the protocol.** Include `protocol_version` so consumers can evolve.
+- **Emit start and end (or failure) for Turns and Steps.** Partial streams are hard to render.
+- **Externalize long streams.** Keep sequence state in the Workflow; append payloads via Activities when history would bloat.
+- **Mirror key fields as Search Attributes** for operations (`sessionId`, status).
 
 ## Common pitfalls
 
-- **Treating turns as free-floating processes.** Turns belong to a Session so memory and approvals stay coherent.
-- **Skipping events.** Without an event stream, UIs and audits cannot reconstruct the agent lifecycle.
+- **Treating Temporal history as the product API.** Schema and volume are wrong for clients.
+- **Events without IDs.** Correlation across subagents and Continue-As-New fails.
+- **Mutating past events.** Append-only streams keep audits honest.
 
 ## Related patterns
 
-See the Agent & Session and Observability pattern sections.
+- [Standardized Event Stream](/standardized-event-stream)
+- [Progress Streaming](/progress-streaming)
+- [Agent Tracing](/agent-tracing)
+- [Cost & Token Accounting](/cost-token-accounting)
+- [Session Workflow](/session-workflow)
 
 ## Sample code
 
-See pattern pages that apply this vernacular, such as [Session Workflow](/session-workflow).
+See [Standardized Event Stream](/standardized-event-stream) for event types and storage notes.
 
 ## References
 
 - [Temporal Docs: Workflows](https://docs.temporal.io/workflows)
-- [Temporal Docs: Activities](https://docs.temporal.io/activities)
+- [Temporal Docs: Event History](https://docs.temporal.io/encyclopedia/event-history)

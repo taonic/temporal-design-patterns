@@ -2,67 +2,82 @@
 
 ## Overview
 
-Organizing agent code so identity follows paths.
-This page defines the term as used across the catalog so pattern pages can stay concise.
+Filesystem Authoring treats files and directories as durable artifacts an agent creates, revises, and hands off—plans, code, reports, and patches—rather than only chat text in Session memory.
+Paths and content hashes become part of the agent's observable work product.
 
 ## Problem
 
-Without shared names for agent work units, teams invent conflicting models for conversations, tool calls, and approvals.
-You then cannot compare designs or reconstruct what an agent did from a single record.
+If agents keep all outputs in message history, large artifacts bloat the event stream and disappear when you summarize memory.
+Ad-hoc temp directories on a worker are not durable across retries and are hard to audit.
+You need shared terms for authored files as first-class Session outputs.
 
 ## Solution
 
-Use a small vernacular that maps cleanly onto Temporal durability:
+Write artifacts through Tools (or sandbox host Tools) into a durable store, and reference them by path or content ID in events and memory:
 
 ```mermaid
 flowchart TB
-    Session --> Turn
-    Turn --> Step
-    Step --> Events[Event stream]
+    Turn[Turn / Code Mode] --> Tool[Write / patch Tool]
+    Tool --> Store[Durable artifact store]
+    Store --> Path[path + content hash]
+    Path --> Events[Event stream refs]
+    Path --> Mem[Session memory pointers]
+    Next[Later Turn] -->|read / edit| Tool
 ```
 
 The following describes each step in the diagram:
 
-1. A Session is the long-lived unit that owns cross-turn state and the ordered event stream.
-2. A Turn is one input and the agent work that follows until a reply, error, or cancel.
-3. A Step is the smallest durable unit inside a turn (model call, tool call, approval wait, and similar).
-4. Events record session, turn, and step lifecycle so observers can reconstruct the run.
+1. A Turn decides to author or revise an artifact (document, script, patch set).
+2. A Tool Activity writes bytes to durable storage (object store, repo, or workspace volume under Workflow control)—not to ephemeral worker disk alone.
+3. The Session records path (or URI) and content hash on the event stream and may keep a short pointer in Session memory.
+4. Later Turns read or patch the same artifact by reference, so Continue-As-New does not need to carry full file bodies in Workflow state.
+
+Identity of an artifact is the stable path or ID within a workspace scoped to the Session (or entity), plus hashes for versions.
 
 ## When to use
 
-Read this page when you adopt a new pattern and need the definition of a term used in Overview or Solution.
+Use filesystem authoring when outputs are large, multi-file, or meant for humans and downstream systems to consume outside the chat transcript.
+Skip it for tiny structured replies that belong in the Turn result.
 
 ## Benefits and trade-offs
 
-Shared vernacular keeps pattern pages consistent.
-The trade-off is that you must learn a small vocabulary before the catalog reads fluently.
+Artifacts stay inspectable, diffable, and reusable across Turns without bloating Workflow history.
+The trade-off is storage, path conventions, and cleanup policy for abandoned Sessions.
 
 ## Comparison with alternatives
 
-| Approach | Consistency | Cost |
+| Approach | Size limits | Audit / handoff |
 | :--- | :--- | :--- |
-| Shared vernacular | High | Learn a few terms |
-| Ad-hoc per team | Low | Rework and confusion |
+| Durable artifact store + refs | High | Strong |
+| Full files in Session memory | Low | Weak |
+| Worker `/tmp` only | Medium | Lost on retry |
 
 ## Best practices
 
-- **Reuse catalog terms.** Prefer Session, Turn, and Step over inventing synonyms.
-- **Map to Temporal clearly.** Document which Workflow or Activity backs each term when durability matters.
+- **Scope workspaces to Session or entity IDs.** Avoid shared writable roots across tenants.
+- **Emit hashes on write.** Consumers can detect silent mutation.
+- **Prefer patch Tools over rewrite** for large files when the model can target hunks.
+- **Garbage-collect with Session lifetime.** Tie retention to Session end or entity archival.
 
 ## Common pitfalls
 
-- **Treating turns as free-floating processes.** Turns belong to a Session so memory and approvals stay coherent.
-- **Skipping events.** Without an event stream, UIs and audits cannot reconstruct the agent lifecycle.
+- **Writing only to the sandbox temp dir** without persisting through a host Tool.
+- **Putting entire file contents into Signals or events.** Store refs instead.
+- **Unclear ownership of paths** when fan-out subagents write concurrently—namespace by `turn_id` or lock.
 
 ## Related patterns
 
-See the Agent & Session and Observability pattern sections.
+- [Externalized Memory](/externalized-memory)
+- [Code Mode Orchestrator](/code-mode-orchestrator)
+- [Tools-Only Sandbox](/tools-only-sandbox)
+- [Session Memory](/session-memory)
+- [Callback Tool](/callback-tool)
 
 ## Sample code
 
-See pattern pages that apply this vernacular, such as [Session Workflow](/session-workflow).
+See [Externalized Memory](/externalized-memory) and [Code Mode Orchestrator](/code-mode-orchestrator) for patterns that move large content out of Workflow state.
 
 ## References
 
-- [Temporal Docs: Workflows](https://docs.temporal.io/workflows)
 - [Temporal Docs: Activities](https://docs.temporal.io/activities)
+- [Temporal Docs: Continue-As-New](https://docs.temporal.io/workflows#continue-as-new)

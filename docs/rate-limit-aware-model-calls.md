@@ -83,6 +83,7 @@ Header formats differ by vendor—keep parsers tested.
 - [Provider Retry Delegation](/provider-retry-delegation)
 - [Model Error Classification](/model-error-classification)
 - [Model Timeout Profiles](/model-timeout-profiles)
+- [Fairness](/fairness)
 
 ## Sample code
 

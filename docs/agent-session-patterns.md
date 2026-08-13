@@ -66,4 +66,4 @@ These patterns model long-lived agent sessions and how turns attach to them.
 
 ## Related Sections
 
-See Vernacular for Session, Turn, Step, and related terms used by these patterns.
+See Concepts for Session, Turn, Step, and related terms used by these patterns.

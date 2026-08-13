@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate vernacular, category, and pattern Markdown stubs plus wave-1 samples."""
+"""Generate concept, category, and pattern Markdown stubs plus wave-1 samples."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -9,13 +9,13 @@ DOCS = ROOT / "docs"
 PATTERNS = ROOT / "sandbox-runner" / "patterns"
 ICONS = "/images/child-workflows-icon.svg"  # reuse existing icon until custom SVGs land
 
-VERNACULAR = [
+CONCEPTS = [
     ("identity", "Identity", "Stable identifiers for agents, sessions, turns, and steps."),
     ("session-turn-step", "Session, Turn, and Step", "How durable agent work is nested and bounded."),
     ("event-stream", "Event Stream", "The ordered record of session, turn, and step lifecycle."),
     ("tools-and-operations", "Tools and Operations", "Callable tools and typed agent operations."),
-    ("approvals-vernacular", "Approvals", "When tool calls pause for human decisions."),
-    ("sandbox-vernacular", "Sandbox and Code Mode", "Running model-authored scripts over host tools."),
+    ("approvals", "Approvals", "When tool calls pause for human decisions."),
+    ("sandbox-and-code-mode", "Sandbox and Code Mode", "Running model-authored scripts over host tools."),
     ("http-and-client", "HTTP and Client", "Session APIs and client drivers for agents."),
     ("filesystem-authoring", "Filesystem Authoring", "Organizing agent code so identity follows paths."),
 ]
@@ -132,14 +132,14 @@ WAVE1 = {
 }
 
 
-def vernacular_page(slug: str, title: str, blurb: str) -> str:
+def concept_page(slug: str, title: str, blurb: str) -> str:
     return f"""\
 # {title}
 
 ## Overview
 
 {blurb}
-This page defines the term as used across the catalog so pattern pages can stay concise.
+This page defines the catalog term so pattern pages can stay concise.
 
 ## Problem
 
@@ -148,7 +148,7 @@ You then cannot compare designs or reconstruct what an agent did from a single r
 
 ## Solution
 
-Use a small vernacular that maps cleanly onto Temporal durability:
+Use a small set of shared terms that map cleanly onto Temporal durability:
 
 ```mermaid
 flowchart TB
@@ -170,14 +170,14 @@ Read this page when you adopt a new pattern and need the definition of a term us
 
 ## Benefits and trade-offs
 
-Shared vernacular keeps pattern pages consistent.
+Shared catalog terms keep pattern pages consistent.
 The trade-off is that you must learn a small vocabulary before the catalog reads fluently.
 
 ## Comparison with alternatives
 
 | Approach | Consistency | Cost |
 | :--- | :--- | :--- |
-| Shared vernacular | High | Learn a few terms |
+| Shared catalog terms | High | Learn a few terms |
 | Ad-hoc per team | Low | Rework and confusion |
 
 ## Best practices
@@ -196,7 +196,7 @@ See the Agent & Session and Observability pattern sections.
 
 ## Sample code
 
-See pattern pages that apply this vernacular, such as [Session Workflow](/session-workflow).
+See pattern pages that apply these terms, such as [Session Workflow](/session-workflow).
 
 ## References
 
@@ -244,7 +244,7 @@ def category_page(slug: str, title: str, intro: str, patterns: list[tuple[str, s
 
 ## Related Sections
 
-See Vernacular for Session, Turn, Step, and related terms used by these patterns.
+See Concepts for Session, Turn, Step, and related terms used by these patterns.
 """
 
 
@@ -408,8 +408,8 @@ Having these patterns in your toolbox helps you keep sessions, tools, approvals,
 
 
 def write_docs() -> None:
-    for slug, title, blurb in VERNACULAR:
-        (DOCS / f"{slug}.md").write_text(vernacular_page(slug, title, blurb))
+    for slug, title, blurb in CONCEPTS:
+        (DOCS / f"{slug}.md").write_text(concept_page(slug, title, blurb))
     for slug, title, intro, patterns in CATEGORIES:
         (DOCS / f"{slug}.md").write_text(category_page(slug, title, intro, patterns))
         for pslug, pname, pdesc in patterns:

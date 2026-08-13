@@ -6,7 +6,7 @@ This file provides guidance when working with code in this repository.
 
 This is a documentation site cataloging **design patterns for Temporal-native AI agents**, built with [VitePress](https://vitepress.dev/). Content is Markdown with Mermaid diagrams. Samples are **Python only**.
 
-Public docs teach patterns and agent vernacular only. Do not name third-party agent runtimes or protocol product brands in reader-facing Markdown, Sample code, or References.
+Public docs teach patterns and shared agent terms only. Do not name third-party agent runtimes or protocol product brands in reader-facing Markdown, Sample code, or References.
 
 ## Commands
 
@@ -26,7 +26,7 @@ There are no test or lint commands.
 
 ## Architecture
 
-- `docs/` — Pattern and vernacular content as Markdown
+- `docs/` — Pattern and concept content as Markdown
 - `docs/.vitepress/config.mts` — Sidebar, Mermaid, search, `/api` proxy
 - `docs/.vitepress/theme/components/DaytonaRunner.vue` — Live runner (`pattern="..."`)
 - `sandbox-runner/src/` — Express + Daytona launcher (host is Node; samples are Python)
@@ -62,7 +62,7 @@ Match the Workflow design-patterns catalog voice and section order.
 
 **Implementation headings:** Use descriptive headings, not "Step N — Gerund" format.
 
-**Terminology:** Prefer agent vernacular (Session, Turn, Step, Tool, Approval) in the main narrative; use Temporal terms (Workflow, Activity, Signal, Continue-As-New) when durability mechanics require them.
+**Terminology:** Prefer agent terms (Session, Turn, Step, Tool, Approval) in the main narrative; use Temporal terms (Workflow, Activity, Signal, Continue-As-New) when durability mechanics require them.
 
 ## Adding a new pattern
 

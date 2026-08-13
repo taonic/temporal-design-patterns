@@ -55,4 +55,4 @@ These patterns pause agents for approvals, corrections, and operator commands.
 
 ## Related Sections
 
-See Vernacular for Session, Turn, Step, and related terms used by these patterns.
+See Concepts for Session, Turn, Step, and related terms used by these patterns.

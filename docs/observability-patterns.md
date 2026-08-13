@@ -65,4 +65,6 @@ These patterns make agent behavior reconstructable from events, traces, and metr
 **You need live UI progress with reconnect:** use [Progress Streaming](/progress-streaming).
 ## Related Sections
 
-See Vernacular for Session, Turn, Step, and related terms used by these patterns.
+See [QoS & Throughput Patterns](/qos-throughput-patterns) when you need fairness or priority controls that shape the same Worker capacity these metrics observe.
+
+See Concepts for Session, Turn, Step, and related terms used by these patterns.

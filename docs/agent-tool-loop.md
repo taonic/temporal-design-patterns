@@ -50,6 +50,8 @@ while True:
 
 ## Implementation
 
+<DaytonaRunner pattern="agent-tool-loop" />
+
 ### Loop limits
 
 Cap iterations and total tokens so a runaway model cannot loop forever.
@@ -97,7 +99,7 @@ Long loops grow history—combine with Continue-As-New Session on long jobs.
 
 ## Sample code
 
-See related runnable samples under `sandbox-runner/patterns/` when this pattern builds on Session Workflow, Activity Tool, or Code Mode.
+- [`sandbox-runner/patterns/agent-tool-loop/python/`](https://github.com/temporal-sa/temporal-agentic-patterns/tree/main/sandbox-runner/patterns/agent-tool-loop/python)
 
 ## References
 

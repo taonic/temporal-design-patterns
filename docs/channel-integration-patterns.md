@@ -44,4 +44,4 @@ These patterns bind agents to HTTP, messaging, and external tool catalogs.
 
 ## Related Sections
 
-See Vernacular for Session, Turn, Step, and related terms used by these patterns.
+See Concepts for Session, Turn, Step, and related terms used by these patterns.

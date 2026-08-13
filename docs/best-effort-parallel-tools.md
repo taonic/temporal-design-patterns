@@ -50,6 +50,8 @@ ok = [r for r in results if not isinstance(r, Exception)]
 
 ## Implementation
 
+<DaytonaRunner pattern="best-effort-parallel-tools" />
+
 ### When to fail the Turn anyway
 
 If zero successes return, fail the Turn.
@@ -96,7 +98,7 @@ Callers must understand incomplete result sets.
 
 ## Sample code
 
-See related runnable samples under `sandbox-runner/patterns/` when this pattern builds on Session Workflow, Activity Tool, or Code Mode.
+- [`sandbox-runner/patterns/best-effort-parallel-tools/python/`](https://github.com/temporal-sa/temporal-agentic-patterns/tree/main/sandbox-runner/patterns/best-effort-parallel-tools/python)
 
 ## References
 

@@ -22,7 +22,7 @@ Open `http://localhost:5173/temporal-agentic-patterns/` to preview the site. The
 
 ### Sidebar Categories
 
-See `docs/.vitepress/config.mts` for Vernacular, Agent & Session, Tool & Model Call, Human-in-the-loop, Subagent, Code Mode, Safety, Memory, Observability, and Channel sections.
+See `docs/.vitepress/config.mts` for Concepts, Agent & Session, Tool & Model Call, Human-in-the-loop, Subagent, Code Mode, Safety, Memory, Observability, and Channel sections.
 
 ## Pattern Structure
 
@@ -47,7 +47,7 @@ Use this section order on every pattern page:
 - Write in second person ("you configure…").
 - Avoid first person ("I", "we", "let's").
 - Avoid banned fluff: simple/simply, easy/easily, just, straightforward, obviously, trivial, "dive into", "leverage", utilize, powerful, robust, seamless.
-- Prefer agent vernacular (Session, Turn, Step, Tool, Approval); use Temporal terms when durability requires them.
+- Prefer agent terms (Session, Turn, Step, Tool, Approval); use Temporal terms when durability requires them.
 - Do not name third-party agent runtimes or protocol product brands in docs.
 
 ### Diagrams

@@ -42,6 +42,8 @@ async def call_model(prompt: str, model: str) -> dict:
 
 ## Implementation
 
+<DaytonaRunner pattern="durable-model-call" />
+
 ### Stubbing for demos
 
 Catalog samples may return deterministic stub text so Daytona runs without API keys.
@@ -93,7 +95,7 @@ Each call schedules an Activity; batching may be needed for tiny calls.
 
 ## Sample code
 
-See related runnable samples under `sandbox-runner/patterns/` when this pattern builds on Session Workflow, Activity Tool, or Code Mode.
+- [`sandbox-runner/patterns/durable-model-call/python/`](https://github.com/temporal-sa/temporal-agentic-patterns/tree/main/sandbox-runner/patterns/durable-model-call/python)
 
 ## References
 
