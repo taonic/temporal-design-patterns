@@ -34,15 +34,18 @@ class AgentSessionWorkflow:
 
     @workflow.update
     async def deliver(self, d: Delivery) -> str:
+        if self._owner and d.tenant_id != self._owner:
+            return "forbidden"
         self._queue.append(d)
         return "accepted"
 
     @deliver.validator
     def validate_deliver(self, d: Delivery) -> None:
-        if d.tenant_id != self._owner:
-            raise ValueError("forbidden")
         if not d.delivery_id or not d.text.strip():
             raise ValueError("invalid_delivery")
+        # Skip tenant check until run() has assigned owner (Update can race first Task).
+        if self._owner and d.tenant_id != self._owner:
+            raise ValueError("forbidden")
 
     @workflow.run
     async def run(self, session_id: str, owner: str) -> str:
@@ -51,7 +54,7 @@ class AgentSessionWorkflow:
             await workflow.wait_condition(lambda: bool(self._queue) or self._stop)
             while self._queue:
                 d = self._queue.pop(0)
-                if d.actor_id in self._revoked:
+                if d.tenant_id != self._owner or d.actor_id in self._revoked:
                     self._outcomes.append(f"{d.delivery_id}:rejected_at_apply")
                     continue
                 out = await workflow.execute_activity(

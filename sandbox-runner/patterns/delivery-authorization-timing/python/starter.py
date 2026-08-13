@@ -17,6 +17,7 @@ async def main() -> None:
         id=session_id,
         task_queue=TASK_QUEUE,
     )
+    await asyncio.sleep(0.3)
     await handle.execute_update(
         AgentSessionWorkflow.deliver,
         Delivery("d1", "hello", "user-1", owner),

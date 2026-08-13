@@ -35,15 +35,18 @@ class AgentSessionWorkflow:
 
     @workflow.update
     async def deliver(self, d: Delivery) -> str:
+        if not self._caps or d.resume_token != self._caps.resume_token:
+            return "resume_forbidden"
         self._queue.append(d.text)
         return "accepted"
 
     @deliver.validator
     def validate_deliver(self, d: Delivery) -> None:
-        if not self._caps or d.resume_token != self._caps.resume_token:
-            raise ValueError("resume_forbidden")
         if not d.delivery_id or not d.text.strip():
             raise ValueError("invalid_delivery")
+        # Caps are set on first Workflow Task; skip resume check until then.
+        if self._caps and d.resume_token != self._caps.resume_token:
+            raise ValueError("resume_forbidden")
 
     @workflow.signal
     def stop(self) -> None:

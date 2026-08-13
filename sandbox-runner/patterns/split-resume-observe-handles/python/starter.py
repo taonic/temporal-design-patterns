@@ -18,6 +18,12 @@ async def main() -> None:
         id=session_id,
         task_queue=TASK_QUEUE,
     )
+    # Wait until first Workflow Task has applied caps.
+    for _ in range(20):
+        obs = await handle.query(AgentSessionWorkflow.observe, caps.observe_token)
+        if obs.get("ok"):
+            break
+        await asyncio.sleep(0.1)
     obs_ok = await handle.query(AgentSessionWorkflow.observe, caps.observe_token)
     obs_bad = await handle.query(AgentSessionWorkflow.observe, "wrong")
     rejected = "ok"
