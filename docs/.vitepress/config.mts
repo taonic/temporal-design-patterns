@@ -29,8 +29,8 @@ export default withMermaid(defineConfig({
         ]
       },
       {
-        text: 'Agent & Session Patterns',
-        link: '/agent-session-patterns',
+        text: 'Sessions',
+        link: '/sessions',
         items: [
           { text: 'Session Workflow', link: '/session-workflow' },
           { text: 'Turn Workflow', link: '/turn-workflow' },
@@ -41,31 +41,32 @@ export default withMermaid(defineConfig({
           { text: 'Session Idle Eviction', link: '/session-idle-eviction' },
           { text: 'Continue-As-New Session', link: '/continue-as-new-session' },
           { text: 'Scheduled Agent Turns', link: '/scheduled-agent-turns' },
+          { text: 'Operator Session Reset', link: '/operator-session-reset' },
+        ]
+      },
+      {
+        text: 'Versioning',
+        link: '/versioning',
+        items: [
           { text: 'Agent Definition Versioning', link: '/agent-definition-versioning' },
           { text: 'Catalog Snapshot Pinning', link: '/catalog-snapshot-pinning' },
           { text: 'Binding Readiness Gate', link: '/binding-readiness-gate' },
           { text: 'Agent Worker Versioning', link: '/agent-worker-versioning' },
           { text: 'Patched Agent Workflow Evolution', link: '/patched-agent-workflow-evolution' },
-          { text: 'Operator Session Reset', link: '/operator-session-reset' },
+          { text: 'Prompt Versioning', link: '/prompt-versioning' },
+          { text: 'Prompt Experiment Pins', link: '/prompt-experiment-pins' },
         ]
       },
       {
-        text: 'Tool & Model Call Patterns',
-        link: '/tool-model-call-patterns',
+        text: 'Tools',
+        link: '/tools',
         items: [
           { text: 'Activity Tool', link: '/activity-tool' },
           { text: 'Workflow Tool', link: '/workflow-tool' },
           { text: 'Callback Tool', link: '/callback-tool' },
           { text: 'Nexus Tool', link: '/nexus-tool' },
           { text: 'Typed Agent Operations', link: '/typed-agent-operations' },
-          { text: 'Durable Model Call', link: '/durable-model-call' },
-          { text: 'Cached Model Call', link: '/cached-model-call' },
           { text: 'Agent Tool Loop', link: '/agent-tool-loop' },
-          { text: 'Structured Model Output', link: '/structured-model-output' },
-          { text: 'Provider Retry Delegation', link: '/provider-retry-delegation' },
-          { text: 'Model Error Classification', link: '/model-error-classification' },
-          { text: 'Rate-Limit Aware Model Calls', link: '/rate-limit-aware-model-calls' },
-          { text: 'Model Timeout Profiles', link: '/model-timeout-profiles' },
           { text: 'Tool Retry Profiles', link: '/tool-retry-profiles' },
           { text: 'Poison Tool Quarantine', link: '/poison-tool-quarantine' },
           { text: 'Heartbeat Long Steps', link: '/heartbeat-long-steps' },
@@ -73,13 +74,25 @@ export default withMermaid(defineConfig({
           { text: 'Fast/Slow Tool Retries', link: '/fast-slow-tool-retries' },
           { text: 'External Tool Polling', link: '/external-tool-polling' },
           { text: 'Tool Compensation', link: '/tool-compensation' },
-          { text: 'Prompt Versioning', link: '/prompt-versioning' },
-          { text: 'Prompt Experiment Pins', link: '/prompt-experiment-pins' },
+          { text: 'MCP / OpenAPI Tooling', link: '/mcp-openapi-tooling' },
         ]
       },
       {
-        text: 'Human-in-the-loop Patterns',
-        link: '/human-in-the-loop-patterns',
+        text: 'Model Calls',
+        link: '/model-calls',
+        items: [
+          { text: 'Durable Model Call', link: '/durable-model-call' },
+          { text: 'Cached Model Call', link: '/cached-model-call' },
+          { text: 'Structured Model Output', link: '/structured-model-output' },
+          { text: 'Provider Retry Delegation', link: '/provider-retry-delegation' },
+          { text: 'Model Error Classification', link: '/model-error-classification' },
+          { text: 'Rate-Limit Aware Model Calls', link: '/rate-limit-aware-model-calls' },
+          { text: 'Model Timeout Profiles', link: '/model-timeout-profiles' },
+        ]
+      },
+      {
+        text: 'Human Interaction',
+        link: '/human-interaction',
         items: [
           { text: 'Approval-Gated Tools', link: '/approval-gated-tools' },
           { text: 'Ask-User Wait', link: '/ask-user-wait' },
@@ -91,8 +104,8 @@ export default withMermaid(defineConfig({
         ]
       },
       {
-        text: 'Subagent & Multi-agent Patterns',
-        link: '/subagent-patterns',
+        text: 'Subagents',
+        link: '/subagents',
         items: [
           { text: 'Subagent Toolset', link: '/subagent-toolset' },
           { text: 'Persistent Subagent Threads', link: '/persistent-subagent-threads' },
@@ -102,8 +115,8 @@ export default withMermaid(defineConfig({
         ]
       },
       {
-        text: 'Code Mode & Sandbox Patterns',
-        link: '/code-mode-patterns',
+        text: 'Code Mode',
+        link: '/code-mode',
         items: [
           { text: 'Code Mode Orchestrator', link: '/code-mode-orchestrator' },
           { text: 'Tools-Only Sandbox', link: '/tools-only-sandbox' },
@@ -113,20 +126,18 @@ export default withMermaid(defineConfig({
         ]
       },
       {
-        text: 'Safety & Security Patterns',
-        link: '/safety-security-patterns',
+        text: 'Safety',
+        link: '/safety',
         items: [
           { text: 'Safety-Profiled Tools', link: '/safety-profiled-tools' },
           { text: 'Guardrail Steps', link: '/guardrail-steps' },
           { text: 'Security Profiles per Agent', link: '/security-profiles-per-agent' },
           { text: 'Network & Resource Sandboxing', link: '/network-resource-sandboxing' },
-          { text: 'Split Resume and Observe Handles', link: '/split-resume-observe-handles' },
-          { text: 'Delivery Authorization Timing', link: '/delivery-authorization-timing' },
         ]
       },
       {
-        text: 'Memory & State Patterns',
-        link: '/memory-state-patterns',
+        text: 'Memory',
+        link: '/memory',
         items: [
           { text: 'Session Memory', link: '/session-memory' },
           { text: 'Context Compaction', link: '/context-compaction' },
@@ -136,8 +147,8 @@ export default withMermaid(defineConfig({
         ]
       },
       {
-        text: 'Observability & Operations Patterns',
-        link: '/observability-patterns',
+        text: 'Observability',
+        link: '/observability',
         items: [
           { text: 'Standardized Event Stream', link: '/standardized-event-stream' },
           { text: 'Progress Streaming', link: '/progress-streaming' },
@@ -150,8 +161,8 @@ export default withMermaid(defineConfig({
         ]
       },
       {
-        text: 'QoS & Throughput Patterns',
-        link: '/qos-throughput-patterns',
+        text: 'Throughput',
+        link: '/throughput',
         items: [
           { text: 'Fairness', link: '/fairness' },
           { text: 'Priority Task Queues', link: '/priority-task-queues' },
@@ -159,8 +170,8 @@ export default withMermaid(defineConfig({
         ]
       },
       {
-        text: 'Channel & Integration Patterns',
-        link: '/channel-integration-patterns',
+        text: 'Channels',
+        link: '/channels',
         items: [
           { text: 'HTTP Channel Agent', link: '/http-channel-agent' },
           { text: 'Messaging Channel Agent', link: '/messaging-channel-agent' },
@@ -168,8 +179,6 @@ export default withMermaid(defineConfig({
           { text: 'Validated Session Ingress', link: '/validated-session-ingress' },
           { text: 'Split Resume and Observe Handles', link: '/split-resume-observe-handles' },
           { text: 'Delivery Authorization Timing', link: '/delivery-authorization-timing' },
-          { text: 'Connection Auth Wait', link: '/connection-auth-wait' },
-          { text: 'MCP / OpenAPI Tooling', link: '/mcp-openapi-tooling' },
         ]
       },
     ],

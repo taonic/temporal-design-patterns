@@ -5,7 +5,7 @@
 Temporal provides durable execution primitives that you can compose into common, reusable patterns for AI agents.
 This catalog is meant to be the practical DX guide for building agentic workflows on Temporal—sessions, tools, approvals, subagents, QoS, and operations—without renaming Temporal into a new framework.
 
-## Agent & Session patterns {.pattern-section-title}
+## Sessions {.pattern-section-title}
 
 <div class="pattern-grid">
 <div class="pattern-tile">
@@ -90,6 +90,29 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 </a>
 </div>
 <div class="pattern-tile">
+<a href="operator-session-reset">
+<div class="pattern-tile-header">
+<img src="/images/resumable-activity-icon.svg" alt="Operator Session Reset">
+<span>Operator Session Reset</span>
+</div>
+<p>Recover stuck Sessions without orphaning session_id.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="sessions">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="Sessions">
+<span>Sessions Overview</span>
+</div>
+<p>Long-lived agent Sessions, Turns, and lifecycle controls.</p>
+</a>
+</div>
+</div>
+
+## Versioning {.pattern-section-title}
+
+<div class="pattern-grid">
+<div class="pattern-tile">
 <a href="agent-definition-versioning">
 <div class="pattern-tile-header">
 <img src="/images/continue-as-new-icon.svg" alt="Agent Definition Versioning">
@@ -135,26 +158,35 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 </a>
 </div>
 <div class="pattern-tile">
-<a href="operator-session-reset">
+<a href="prompt-versioning">
 <div class="pattern-tile-header">
-<img src="/images/resumable-activity-icon.svg" alt="Operator Session Reset">
-<span>Operator Session Reset</span>
+<img src="/images/continue-as-new-icon.svg" alt="Prompt Versioning">
+<span>Prompt Versioning</span>
 </div>
-<p>Recover stuck Sessions without orphaning session_id.</p>
+<p>Version prompts separately from Workflow code.</p>
 </a>
 </div>
 <div class="pattern-tile">
-<a href="agent-session-patterns">
+<a href="prompt-experiment-pins">
 <div class="pattern-tile-header">
-<img src="/images/child-workflows-icon.svg" alt="Agent & Session Patterns">
-<span>Agent & Session Patterns Overview</span>
+<img src="/images/continue-as-new-icon.svg" alt="Prompt Experiment Pins">
+<span>Prompt Experiment Pins</span>
 </div>
-<p>These patterns model long-lived agent sessions and how turns attach to them.</p>
+<p>Pin experiment variants for the life of a Session.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="versioning">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="Versioning">
+<span>Versioning Overview</span>
+</div>
+<p>Pin definition, catalog, binding, Worker, and prompt revisions so parks and rollouts stay reproducible.</p>
 </a>
 </div>
 </div>
 
-## Tool & Model Call patterns {.pattern-section-title}
+## Tools {.pattern-section-title}
 
 <div class="pattern-grid">
 <div class="pattern-tile">
@@ -203,6 +235,101 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 </a>
 </div>
 <div class="pattern-tile">
+<a href="agent-tool-loop">
+<div class="pattern-tile-header">
+<img src="/images/polling-icon.svg" alt="Agent Tool Loop">
+<span>Agent Tool Loop</span>
+</div>
+<p>Durable model↔tool loop until a final reply.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="tool-retry-profiles">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="Tool Retry Profiles">
+<span>Tool Retry Profiles</span>
+</div>
+<p>Per-tool retry and safety policies.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="poison-tool-quarantine">
+<div class="pattern-tile-header">
+<img src="/images/non-retryable-errors-icon.svg" alt="Poison Tool Quarantine">
+<span>Poison Tool Quarantine</span>
+</div>
+<p>Stop poison tool retry storms with non-retryable classification.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="heartbeat-long-steps">
+<div class="pattern-tile-header">
+<img src="/images/long-running-activity-icon.svg" alt="Heartbeat Long Steps">
+<span>Heartbeat Long Steps</span>
+</div>
+<p>Heartbeats for long-running tool/model Activities.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="local-activity-tools">
+<div class="pattern-tile-header">
+<img src="/images/local-activities-icon.svg" alt="Local Activity Tools">
+<span>Local Activity Tools</span>
+</div>
+<p>Low-latency tools as Local Activities.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="fast-slow-tool-retries">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="Fast/Slow Tool Retries">
+<span>Fast/Slow Tool Retries</span>
+</div>
+<p>Separate fast local retries from slow durable ones.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="external-tool-polling">
+<div class="pattern-tile-header">
+<img src="/images/polling-icon.svg" alt="External Tool Polling">
+<span>External Tool Polling</span>
+</div>
+<p>Poll external jobs without blocking Workers forever.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="tool-compensation">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="Tool Compensation">
+<span>Tool Compensation</span>
+</div>
+<p>Compensate or undo tool side effects.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="mcp-openapi-tooling">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="MCP / OpenAPI Tooling">
+<span>MCP / OpenAPI Tooling</span>
+</div>
+<p>Compile external tools into Activity tools.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="tools">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="Tools">
+<span>Tools Overview</span>
+</div>
+<p>How agents invoke side effects: Activity, Workflow, Callback, Nexus, and tool-loop mechanics.</p>
+</a>
+</div>
+</div>
+
+## Model Calls {.pattern-section-title}
+
+<div class="pattern-grid">
+<div class="pattern-tile">
 <a href="durable-model-call">
 <div class="pattern-tile-header">
 <img src="/images/child-workflows-icon.svg" alt="Durable Model Call">
@@ -212,31 +339,12 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 </a>
 </div>
 <div class="pattern-tile">
-<a href="tool-retry-profiles">
-<div class="pattern-tile">
 <a href="cached-model-call">
 <div class="pattern-tile-header">
 <img src="/images/local-activities-icon.svg" alt="Cached Model Call">
 <span>Cached Model Call</span>
 </div>
 <p>Activity-boundary cache for identical model inputs.</p>
-</a>
-</div>
-
-<div class="pattern-tile-header">
-<img src="/images/child-workflows-icon.svg" alt="Tool Retry Profiles">
-<span>Tool Retry Profiles</span>
-</div>
-<p>Per-tool retry and safety policies.</p>
-</a>
-</div>
-<div class="pattern-tile">
-<a href="agent-tool-loop">
-<div class="pattern-tile-header">
-<img src="/images/polling-icon.svg" alt="Agent Tool Loop">
-<span>Agent Tool Loop</span>
-</div>
-<p>Durable model↔tool loop until a final reply.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -251,10 +359,10 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <div class="pattern-tile">
 <a href="provider-retry-delegation">
 <div class="pattern-tile-header">
-<img src="/images/fixed-count-retries-icon.svg" alt="Provider Retry Delegation">
+<img src="/images/child-workflows-icon.svg" alt="Provider Retry Delegation">
 <span>Provider Retry Delegation</span>
 </div>
-<p>Disable provider SDK retries; Temporal owns backoff.</p>
+<p>Let the provider retry transient errors inside one Activity.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -263,16 +371,16 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <img src="/images/non-retryable-errors-icon.svg" alt="Model Error Classification">
 <span>Model Error Classification</span>
 </div>
-<p>Retryable vs non-retryable provider errors.</p>
+<p>Map provider errors to retryable vs terminal.</p>
 </a>
 </div>
 <div class="pattern-tile">
 <a href="rate-limit-aware-model-calls">
 <div class="pattern-tile-header">
-<img src="/images/downstream-rate-limiting-icon.svg" alt="Rate-Limit Aware Model Calls">
+<img src="/images/child-workflows-icon.svg" alt="Rate-Limit Aware Model Calls">
 <span>Rate-Limit Aware Model Calls</span>
 </div>
-<p>Honor Retry-After via next_retry_delay.</p>
+<p>Back off when providers throttle.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -281,93 +389,21 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <img src="/images/updatable-timer-icon.svg" alt="Model Timeout Profiles">
 <span>Model Timeout Profiles</span>
 </div>
-<p>Timeouts by chat, reasoning, search, and tools.</p>
+<p>Timeout budgets for model Activities.</p>
 </a>
 </div>
 <div class="pattern-tile">
-<a href="prompt-versioning">
+<a href="model-calls">
 <div class="pattern-tile-header">
-<img src="/images/continue-as-new-icon.svg" alt="Prompt Versioning">
-<span>Prompt Versioning</span>
+<img src="/images/child-workflows-icon.svg" alt="Model Calls">
+<span>Model Calls Overview</span>
 </div>
-<p>Pin reproducible prompt IDs for in-flight sessions.</p>
-</a>
-</div>
-<div class="pattern-tile">
-<a href="prompt-experiment-pins">
-<div class="pattern-tile-header">
-<img src="/images/continue-as-new-icon.svg" alt="Prompt Experiment Pins">
-<span>Prompt Experiment Pins</span>
-</div>
-<p>Sticky A/B prompt or model variant per Session.</p>
-</a>
-</div>
-<div class="pattern-tile">
-<a href="poison-tool-quarantine">
-<div class="pattern-tile-header">
-<img src="/images/non-retryable-errors-icon.svg" alt="Poison Tool Quarantine">
-<span>Poison Tool Quarantine</span>
-</div>
-<p>Stop poison tool payloads from retrying forever.</p>
-</a>
-</div>
-<div class="pattern-tile">
-<a href="heartbeat-long-steps">
-<div class="pattern-tile-header">
-<img src="/images/long-running-activity-icon.svg" alt="Heartbeat Long Steps">
-<span>Heartbeat Long Steps</span>
-</div>
-<p>Liveness, cancel, and checkpoints for long Steps.</p>
-</a>
-</div>
-<div class="pattern-tile">
-<a href="local-activity-tools">
-<div class="pattern-tile-header">
-<img src="/images/local-activities-icon.svg" alt="Local Activity Tools">
-<span>Local Activity Tools</span>
-</div>
-<p>Tiny helpers as Local Activities; keep IO regular.</p>
-</a>
-</div>
-<div class="pattern-tile">
-<a href="fast-slow-tool-retries">
-<div class="pattern-tile-header">
-<img src="/images/fast-slow-retries-icon.svg" alt="Fast/Slow Tool Retries">
-<span>Fast/Slow Tool Retries</span>
-</div>
-<p>Blip recovery then patient outage waits.</p>
-</a>
-</div>
-<div class="pattern-tile">
-<a href="external-tool-polling">
-<div class="pattern-tile-header">
-<img src="/images/polling-icon.svg" alt="External Tool Polling">
-<span>External Tool Polling</span>
-</div>
-<p>Wait on job-based APIs without webhooks.</p>
-</a>
-</div>
-<div class="pattern-tile">
-<a href="tool-compensation">
-<div class="pattern-tile-header">
-<img src="/images/saga-icon.svg" alt="Tool Compensation">
-<span>Tool Compensation</span>
-</div>
-<p>Undo non-idempotent tool writes on failure.</p>
-</a>
-</div>
-<div class="pattern-tile">
-<a href="tool-model-call-patterns">
-<div class="pattern-tile-header">
-<img src="/images/child-workflows-icon.svg" alt="Tool & Model Call Patterns">
-<span>Tool & Model Call Patterns Overview</span>
-</div>
-<p>These patterns make model and tool calls durable Temporal Activities or deterministic Workflow code.</p>
+<p>Durable LLM Steps: caching, structure, timeouts, and provider-aware retries.</p>
 </a>
 </div>
 </div>
 
-## Human-in-the-loop patterns {.pattern-section-title}
+## Human Interaction {.pattern-section-title}
 
 <div class="pattern-grid">
 <div class="pattern-tile">
@@ -434,17 +470,17 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 </a>
 </div>
 <div class="pattern-tile">
-<a href="human-in-the-loop-patterns">
+<a href="human-interaction">
 <div class="pattern-tile-header">
-<img src="/images/child-workflows-icon.svg" alt="Human-in-the-loop Patterns">
-<span>Human-in-the-loop Patterns Overview</span>
+<img src="/images/child-workflows-icon.svg" alt="Human Interaction">
+<span>Human Interaction Overview</span>
 </div>
-<p>These patterns pause agents for approvals, corrections, and operator commands.</p>
+<p>Pause Turns for approvals, clarifying answers, connection grants, and operator commands.</p>
 </a>
 </div>
 </div>
 
-## Subagent & Multi-agent patterns {.pattern-section-title}
+## Subagents {.pattern-section-title}
 
 <div class="pattern-grid">
 <div class="pattern-tile">
@@ -453,7 +489,7 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <img src="/images/child-workflows-icon.svg" alt="Subagent Toolset">
 <span>Subagent Toolset</span>
 </div>
-<p>Drive another agent through typed operations.</p>
+<p>Expose a child agent as a tool.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -462,7 +498,7 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <img src="/images/child-workflows-icon.svg" alt="Persistent Subagent Threads">
 <span>Persistent Subagent Threads</span>
 </div>
-<p>Reusable durable threads per topic or user.</p>
+<p>Keep subagent Sessions across parent Turns.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -471,39 +507,39 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <img src="/images/child-workflows-icon.svg" alt="Fan-Out Subagents">
 <span>Fan-Out Subagents</span>
 </div>
-<p>Spawn many subagent sessions in parallel.</p>
-</a>
-</div>
-<div class="pattern-tile">
-<a href="remote-subagent">
-<div class="pattern-tile-header">
-<img src="/images/child-workflows-icon.svg" alt="Remote Subagent">
-<span>Remote Subagent</span>
-</div>
-<p>Drive an agent hosted elsewhere via session HTTP.</p>
+<p>Run many subagents in parallel.</p>
 </a>
 </div>
 <div class="pattern-tile">
 <a href="best-effort-parallel-tools">
 <div class="pattern-tile-header">
-<img src="/images/parallel-execution-icon.svg" alt="Best-Effort Parallel Tools">
+<img src="/images/child-workflows-icon.svg" alt="Best-Effort Parallel Tools">
 <span>Best-Effort Parallel Tools</span>
 </div>
-<p>Parallel tools that continue with partial successes.</p>
+<p>Parallel tools with partial-success budgets.</p>
 </a>
 </div>
 <div class="pattern-tile">
-<a href="subagent-patterns">
+<a href="remote-subagent">
 <div class="pattern-tile-header">
-<img src="/images/child-workflows-icon.svg" alt="Subagent & Multi-agent Patterns">
-<span>Subagent & Multi-agent Patterns Overview</span>
+<img src="/images/worker-specific-taskqueue-icon.svg" alt="Remote Subagent">
+<span>Remote Subagent</span>
 </div>
-<p>These patterns compose agents as typed toolsets and durable child sessions.</p>
+<p>Cross-Namespace or remote agent delegation.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="subagents">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="Subagents">
+<span>Subagents Overview</span>
+</div>
+<p>Delegate work to child agents, fan-out, and remote agent boundaries.</p>
 </a>
 </div>
 </div>
 
-## Code Mode & Sandbox patterns {.pattern-section-title}
+## Code Mode {.pattern-section-title}
 
 <div class="pattern-grid">
 <div class="pattern-tile">
@@ -512,7 +548,7 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <img src="/images/child-workflows-icon.svg" alt="Code Mode Orchestrator">
 <span>Code Mode Orchestrator</span>
 </div>
-<p>One run-code tool over many host tools.</p>
+<p>Orchestrate sandboxed code execution from a Session.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -521,7 +557,7 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <img src="/images/child-workflows-icon.svg" alt="Tools-Only Sandbox">
 <span>Tools-Only Sandbox</span>
 </div>
-<p>Scripts may only call host tools.</p>
+<p>Restrict sandboxes to approved tool surfaces.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -530,7 +566,7 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <img src="/images/child-workflows-icon.svg" alt="Type-Checked Scripts">
 <span>Type-Checked Scripts</span>
 </div>
-<p>Reject ill-typed scripts before execution.</p>
+<p>Validate generated scripts before run.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -539,7 +575,7 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <img src="/images/child-workflows-icon.svg" alt="Script Fan-Out">
 <span>Script Fan-Out</span>
 </div>
-<p>Concurrent tool and subagent calls from one script.</p>
+<p>Fan out sandboxed script work.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -548,21 +584,21 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <img src="/images/worker-specific-taskqueue-icon.svg" alt="Sticky Sandbox Task Queues">
 <span>Sticky Sandbox Task Queues</span>
 </div>
-<p>Pin sandbox Activities to the Worker that owns local files.</p>
+<p>Pin sandbox Workers with sticky queues.</p>
 </a>
 </div>
 <div class="pattern-tile">
-<a href="code-mode-patterns">
+<a href="code-mode">
 <div class="pattern-tile-header">
-<img src="/images/child-workflows-icon.svg" alt="Code Mode & Sandbox Patterns">
-<span>Code Mode & Sandbox Patterns Overview</span>
+<img src="/images/child-workflows-icon.svg" alt="Code Mode">
+<span>Code Mode Overview</span>
 </div>
-<p>These patterns let a model orchestrate tools by writing scripts that call host APIs.</p>
+<p>Sandbox orchestration, typed scripts, and sticky Worker placement for code-running agents.</p>
 </a>
 </div>
 </div>
 
-## Safety & Security patterns {.pattern-section-title}
+## Safety {.pattern-section-title}
 
 <div class="pattern-grid">
 <div class="pattern-tile">
@@ -602,35 +638,17 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 </a>
 </div>
 <div class="pattern-tile">
-<a href="split-resume-observe-handles">
+<a href="safety">
 <div class="pattern-tile-header">
-<img src="/images/request-response-icon.svg" alt="Split Resume and Observe Handles">
-<span>Split Resume and Observe Handles</span>
+<img src="/images/child-workflows-icon.svg" alt="Safety">
+<span>Safety Overview</span>
 </div>
-<p>Separate write tokens from observe/stream credentials.</p>
-</a>
-</div>
-<div class="pattern-tile">
-<a href="delivery-authorization-timing">
-<div class="pattern-tile-header">
-<img src="/images/signal-with-start-icon.svg" alt="Delivery Authorization Timing">
-<span>Delivery Authorization Timing</span>
-</div>
-<p>Re-check auth at apply, not only at channel accept.</p>
-</a>
-</div>
-<div class="pattern-tile">
-<a href="safety-security-patterns">
-<div class="pattern-tile-header">
-<img src="/images/child-workflows-icon.svg" alt="Safety & Security Patterns">
-<span>Safety & Security Patterns Overview</span>
-</div>
-<p>These patterns label tools and environments so policy can gate or block unsafe calls.</p>
+<p>Label tools and environments so policy can gate or block unsafe calls.</p>
 </a>
 </div>
 </div>
 
-## Memory & State patterns {.pattern-section-title}
+## Memory {.pattern-section-title}
 
 <div class="pattern-grid">
 <div class="pattern-tile">
@@ -639,16 +657,16 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <img src="/images/child-workflows-icon.svg" alt="Session Memory">
 <span>Session Memory</span>
 </div>
-<p>Store summaries in session state between turns.</p>
+<p>Durable conversational state in the Session.</p>
 </a>
 </div>
 <div class="pattern-tile">
 <a href="context-compaction">
 <div class="pattern-tile-header">
-<img src="/images/event-accumulator-icon.svg" alt="Context Compaction">
+<img src="/images/child-workflows-icon.svg" alt="Context Compaction">
 <span>Context Compaction</span>
 </div>
-<p>Summarize and spill context before the next Turn or Continue-As-New.</p>
+<p>Summarize history to keep model context bounded.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -657,7 +675,7 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <img src="/images/child-workflows-icon.svg" alt="Cross-Session Memory">
 <span>Cross-Session Memory</span>
 </div>
-<p>Share bounded memory across sessions.</p>
+<p>Share memory across Sessions.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -666,39 +684,48 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <img src="/images/child-workflows-icon.svg" alt="Externalized Memory">
 <span>Externalized Memory</span>
 </div>
-<p>Push large memory behind durable tools.</p>
+<p>Store large memory outside Workflow history.</p>
 </a>
 </div>
 <div class="pattern-tile">
 <a href="claim-check-payloads">
 <div class="pattern-tile-header">
-<img src="/images/batch-iterator-icon.svg" alt="Claim-Check Payloads">
+<img src="/images/child-workflows-icon.svg" alt="Claim-Check Payloads">
 <span>Claim-Check Payloads</span>
 </div>
-<p>Store large model/tool blobs by reference, not in history.</p>
+<p>Pass large blobs by reference, not in history.</p>
 </a>
 </div>
 <div class="pattern-tile">
-<a href="memory-state-patterns">
+<a href="memory">
 <div class="pattern-tile-header">
-<img src="/images/child-workflows-icon.svg" alt="Memory & State Patterns">
-<span>Memory & State Patterns Overview</span>
+<img src="/images/child-workflows-icon.svg" alt="Memory">
+<span>Memory Overview</span>
 </div>
-<p>These patterns keep conversation and knowledge durable across turns and sessions.</p>
+<p>What a Session remembers, compacts, externalizes, and claim-checks.</p>
 </a>
 </div>
 </div>
 
-## Observability & Operations patterns {.pattern-section-title}
+## Observability {.pattern-section-title}
 
 <div class="pattern-grid">
 <div class="pattern-tile">
 <a href="standardized-event-stream">
 <div class="pattern-tile-header">
-<img src="/images/child-workflows-icon.svg" alt="Standardized Event Stream">
+<img src="/images/event-accumulator-icon.svg" alt="Standardized Event Stream">
 <span>Standardized Event Stream</span>
 </div>
-<p>One ordered stream per session.</p>
+<p>A stable event schema for Sessions and Turns.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="progress-streaming">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="Progress Streaming">
+<span>Progress Streaming</span>
+</div>
+<p>Stream tokens and Step progress to clients.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -707,7 +734,7 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <img src="/images/child-workflows-icon.svg" alt="Agent Tracing">
 <span>Agent Tracing</span>
 </div>
-<p>Correlate spans with session and step IDs.</p>
+<p>Correlate Session/Turn/Step traces.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -716,7 +743,7 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <img src="/images/event-accumulator-icon.svg" alt="Session Visibility Attributes">
 <span>Session Visibility Attributes</span>
 </div>
-<p>Search Attributes so ops can list Sessions by status and tenant.</p>
+<p>Search Attributes for listing Sessions in Visibility.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -725,25 +752,25 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <img src="/images/child-workflows-icon.svg" alt="Cost & Token Accounting">
 <span>Cost & Token Accounting</span>
 </div>
-<p>Aggregate usage per call, turn, and session.</p>
+<p>Record model and tool spend per Session.</p>
 </a>
 </div>
 <div class="pattern-tile">
 <a href="session-spend-caps">
 <div class="pattern-tile-header">
-<img src="/images/retry-metrics-icon.svg" alt="Session Spend Caps">
+<img src="/images/child-workflows-icon.svg" alt="Session Spend Caps">
 <span>Session Spend Caps</span>
 </div>
-<p>Hard Workflow ceilings on tokens, cost, or tool calls.</p>
+<p>Hard caps that stop Turns when budget is exhausted.</p>
 </a>
 </div>
 <div class="pattern-tile">
 <a href="agent-step-retry-alerting">
 <div class="pattern-tile-header">
-<img src="/images/retry-metrics-icon.svg" alt="Agent Step Retry Alerting">
+<img src="/images/child-workflows-icon.svg" alt="Agent Step Retry Alerting">
 <span>Agent Step Retry Alerting</span>
 </div>
-<p>Page when model/tool attempts cross a threshold.</p>
+<p>Alert when Steps retry past a threshold.</p>
 </a>
 </div>
 <div class="pattern-tile">
@@ -752,71 +779,62 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 <img src="/images/child-workflows-icon.svg" alt="Eval-Backed Behavior Checks">
 <span>Eval-Backed Behavior Checks</span>
 </div>
-<p>Regression checks on recorded sessions.</p>
+<p>Regression gates for agent behavior.</p>
 </a>
 </div>
 <div class="pattern-tile">
-<a href="progress-streaming">
+<a href="observability">
 <div class="pattern-tile-header">
-<img src="/images/event-accumulator-icon.svg" alt="Progress Streaming">
-<span>Progress Streaming</span>
+<img src="/images/child-workflows-icon.svg" alt="Observability">
+<span>Observability Overview</span>
 </div>
-<p>Durable cursored live progress for agent UIs.</p>
-</a>
-</div>
-<div class="pattern-tile">
-<a href="observability-patterns">
-<div class="pattern-tile-header">
-<img src="/images/child-workflows-icon.svg" alt="Observability & Operations Patterns">
-<span>Observability & Operations Patterns Overview</span>
-</div>
-<p>These patterns make agent behavior reconstructable from events, traces, and metrics.</p>
+<p>Events, streams, traces, Visibility, cost, and eval gates for agent work.</p>
 </a>
 </div>
 </div>
 
-## QoS & Throughput patterns {.pattern-section-title}
+## Throughput {.pattern-section-title}
 
 <div class="pattern-grid">
 <div class="pattern-tile">
 <a href="fairness">
 <div class="pattern-tile-header">
-<img src="/images/fairness-icon.svg" alt="Fairness">
+<img src="/images/child-workflows-icon.svg" alt="Fairness">
 <span>Fairness</span>
 </div>
-<p>Proportional Worker share per tenant on one queue.</p>
+<p>Share Worker capacity fairly across tenants.</p>
 </a>
 </div>
 <div class="pattern-tile">
 <a href="priority-task-queues">
 <div class="pattern-tile-header">
-<img src="/images/priority-task-queues-icon.svg" alt="Priority Task Queues">
+<img src="/images/child-workflows-icon.svg" alt="Priority Task Queues">
 <span>Priority Task Queues</span>
 </div>
-<p>Interactive Turns ahead of batch and eval Sessions.</p>
+<p>Route urgent work to higher-priority queues.</p>
 </a>
 </div>
 <div class="pattern-tile">
 <a href="downstream-tool-rate-limiting">
 <div class="pattern-tile-header">
-<img src="/images/downstream-rate-limiting-icon.svg" alt="Downstream Tool Rate Limiting">
+<img src="/images/child-workflows-icon.svg" alt="Downstream Tool Rate Limiting">
 <span>Downstream Tool Rate Limiting</span>
 </div>
-<p>Cap tool Activities per second on a dedicated queue.</p>
+<p>Limit calls to fragile downstream APIs.</p>
 </a>
 </div>
 <div class="pattern-tile">
-<a href="qos-throughput-patterns">
+<a href="throughput">
 <div class="pattern-tile-header">
-<img src="/images/fairness-icon.svg" alt="QoS & Throughput Patterns">
-<span>QoS & Throughput Patterns Overview</span>
+<img src="/images/child-workflows-icon.svg" alt="Throughput">
+<span>Throughput Overview</span>
 </div>
-<p>These patterns control how multi-tenant agent Sessions and Steps share Worker capacity.</p>
+<p>Fairness, priority, and downstream rate limits across shared Workers.</p>
 </a>
 </div>
 </div>
 
-## Channel & Integration patterns {.pattern-section-title}
+## Channels {.pattern-section-title}
 
 <div class="pattern-grid">
 <div class="pattern-tile">
@@ -874,31 +892,12 @@ This catalog is meant to be the practical DX guide for building agentic workflow
 </a>
 </div>
 <div class="pattern-tile">
-<a href="connection-auth-wait">
+<a href="channels">
 <div class="pattern-tile-header">
-<img src="/images/approval-icon.svg" alt="Connection Auth Wait">
-<span>Connection Auth Wait</span>
+<img src="/images/child-workflows-icon.svg" alt="Channels">
+<span>Channels Overview</span>
 </div>
-<p>Park for OAuth/connection consent; store tokens off-history.</p>
-</a>
-</div>
-<div class="pattern-tile">
-<a href="mcp-openapi-tooling">
-<div class="pattern-tile-header">
-<img src="/images/child-workflows-icon.svg" alt="MCP / OpenAPI Tooling">
-<span>MCP / OpenAPI Tooling</span>
-</div>
-<p>Compile external tools into Activity tools.</p>
-</a>
-</div>
-<div class="pattern-tile">
-<a href="channel-integration-patterns">
-<div class="pattern-tile-header">
-<img src="/images/child-workflows-icon.svg" alt="Channel & Integration Patterns">
-<span>Channel & Integration Patterns Overview</span>
-</div>
-<p>These patterns bind agents to HTTP, messaging, and external tool catalogs.</p>
+<p>HTTP and messaging ingress, delivery ledgers, and capability-separated handles.</p>
 </a>
 </div>
 </div>
-

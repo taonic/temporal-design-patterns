@@ -81,4 +81,4 @@ Shared terms used across the catalog. Pattern pages assume these definitions so 
 
 ## Related Sections
 
-See [Agent & Session Patterns](/agent-session-patterns) for how Sessions and Turns become Workflows.
+See [Sessions](/sessions) for how Sessions and Turns become Workflows.
