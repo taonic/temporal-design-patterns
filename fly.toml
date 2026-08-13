@@ -2,7 +2,7 @@
 # Set the DAYTONA_KEY secret before deploying:
 #   fly secrets set DAYTONA_KEY=...
 
-app = "temporal-design-patterns"
+app = "temporal-agentic-patterns"
 primary_region = "iad"
 
 [build]

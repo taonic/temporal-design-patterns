@@ -1,485 +1,448 @@
-# Temporal Design Patterns
+# Temporal Agentic Patterns
 
 > **Warning:** This catalog is under active development. Content and structure may change.
 
-Temporal provides a set of durable execution primitives that you can compose into common, reusable, and proven patterns.
-Having these patterns in your toolbox helps you solve recurring problems in a battle-tested way.
+Temporal provides durable execution primitives that you can compose into common, reusable patterns for AI agents.
+Having these patterns in your toolbox helps you keep sessions, tools, approvals, and subagents durable, observable, and safe.
 
-## Task orchestration patterns {.pattern-section-title}
-
-<div class="pattern-grid">
-<div class="pattern-tile">
-<a href="child-workflows">
-<div class="pattern-tile-header">
-<img src="/images/child-workflows-icon.svg" alt="Child Workflows">
-<span>Child Workflows</span>
-</div>
-<p>Decomposes complex Workflows into smaller, reusable units. Each child has an independent Workflow ID, history, and lifecycle.</p>
-</a>
-</div>
-
-<div class="pattern-tile">
-<a href="parallel-execution">
-<div class="pattern-tile-header">
-<img src="/images/parallel-execution-icon.svg" alt="Parallel Execution">
-<span>Parallel Execution</span>
-</div>
-<p>Executes multiple Activities concurrently for maximum throughput with error handling and controlled parallelism.</p>
-</a>
-</div>
-
-<div class="pattern-tile">
-<a href="pick-first">
-<div class="pattern-tile-header">
-<img src="/images/pick-first-icon.svg" alt="Pick First">
-<span>Pick First (Race)</span>
-</div>
-<p>Starts multiple Activities in parallel and uses the first result, cancelling the rest.</p>
-</a>
-</div>
-
-<div class="pattern-tile">
-<a href="task-orchestration-patterns">
-<div class="pattern-tile-header">
-<img src="/images/child-workflows-icon.svg" alt="Task Orchestration Patterns Overview">
-<span>Task Orchestration Patterns Overview</span>
-</div>
-<p>Pattern selection guide for composing and coordinating multiple units of work within a Workflow.</p>
-</a>
-</div>
-
-</div>
-
-## Workflow messaging patterns {.pattern-section-title}
+## Agent & Session patterns {.pattern-section-title}
 
 <div class="pattern-grid">
 <div class="pattern-tile">
-<a href="signal-with-start">
+<a href="session-workflow">
 <div class="pattern-tile-header">
-<img src="/images/signal-with-start-icon.svg" alt="Signal with Start">
-<span>Signal with Start</span>
+<img src="/images/child-workflows-icon.svg" alt="Session Workflow">
+<span>Session Workflow</span>
 </div>
-<p>Starts a Workflow when Signaling it if it does not already exist. If already running, it receives the Signal directly.</p>
+<p>One Workflow owns a session, memory, and event stream.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="request-response-via-updates">
+<a href="turn-workflow">
 <div class="pattern-tile-header">
-<img src="/images/request-response-icon.svg" alt="Request-Response via Updates">
-<span>Request-Response via Updates</span>
+<img src="/images/child-workflows-icon.svg" alt="Turn Workflow">
+<span>Turn Workflow</span>
 </div>
-<p>Synchronous request-response with validation. Updates modify state and return results directly.</p>
+<p>Isolate each turn as a child Workflow or sub-state.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="workflow-messaging-patterns">
+<a href="session-signal-and-start">
 <div class="pattern-tile-header">
-<img src="/images/signal-with-start-icon.svg" alt="Workflow Messaging Patterns Overview">
-<span>Workflow Messaging Patterns Overview</span>
+<img src="/images/child-workflows-icon.svg" alt="Session with Signal-and-Start">
+<span>Session with Signal-and-Start</span>
 </div>
-<p>Pattern selection guide for sending data into running Workflows and receiving responses or triggering behavior changes.</p>
+<p>Create or signal a session from the first message.</p>
 </a>
 </div>
-
+<div class="pattern-tile">
+<a href="entity-agent">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="Entity Agent">
+<span>Entity Agent</span>
+</div>
+<p>One long-lived agent Workflow per business entity.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="continue-as-new-session">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="Continue-As-New Session">
+<span>Continue-As-New Session</span>
+</div>
+<p>Reset history while preserving session identity.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="agent-session-patterns">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="Agent & Session Patterns">
+<span>Agent & Session Patterns Overview</span>
+</div>
+<p>These patterns model long-lived agent sessions and how turns attach to them.</p>
+</a>
+</div>
 </div>
 
-## Entity & lifecycle patterns {.pattern-section-title}
+## Tool & Model Call patterns {.pattern-section-title}
 
 <div class="pattern-grid">
 <div class="pattern-tile">
-<a href="entity-workflow">
+<a href="activity-tool">
 <div class="pattern-tile-header">
-<img src="/images/entity-workflow-icon.svg" alt="Entity Workflow">
-<span>Entity Workflow</span>
+<img src="/images/child-workflows-icon.svg" alt="Activity Tool">
+<span>Activity Tool</span>
 </div>
-<p>Models long-lived business entities as individual Workflows that persist for the entity's entire lifetime, handling all state transitions through Signals and Updates.</p>
+<p>Side-effecting tools as durable Activities.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="continue-as-new">
+<a href="workflow-tool">
 <div class="pattern-tile-header">
-<img src="/images/continue-as-new-icon.svg" alt="Continue-As-New">
-<span>Continue-As-New</span>
+<img src="/images/child-workflows-icon.svg" alt="Workflow Tool">
+<span>Workflow Tool</span>
 </div>
-<p>Prevents unbounded history growth by completing the current execution and starting a new one with fresh history.</p>
+<p>Deterministic tools as in-Workflow code.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="updatable-timer">
+<a href="callback-tool">
 <div class="pattern-tile-header">
-<img src="/images/updatable-timer-icon.svg" alt="Updatable Timer">
-<span>Updatable Timer</span>
+<img src="/images/child-workflows-icon.svg" alt="Callback Tool">
+<span>Callback Tool</span>
 </div>
-<p>Dynamically adjustable timers that respond to Signals or Updates. Extend, shorten, or cancel timers based on external events.</p>
+<p>Tools that run on an attached client.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="entity-lifecycle-patterns">
+<a href="durable-model-call">
 <div class="pattern-tile-header">
-<img src="/images/entity-workflow-icon.svg" alt="Entity & Lifecycle Patterns Overview">
-<span>Entity & Lifecycle Patterns Overview</span>
+<img src="/images/child-workflows-icon.svg" alt="Durable Model Call">
+<span>Durable Model Call</span>
 </div>
-<p>Pattern selection guide for modeling long-lived stateful entities and managing Workflow history growth over time.</p>
+<p>LLM calls as first-class Activity steps.</p>
 </a>
 </div>
-
+<div class="pattern-tile">
+<a href="tool-retry-profiles">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="Tool Retry Profiles">
+<span>Tool Retry Profiles</span>
+</div>
+<p>Per-tool retry and safety policies.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="tool-model-call-patterns">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="Tool & Model Call Patterns">
+<span>Tool & Model Call Patterns Overview</span>
+</div>
+<p>These patterns make model and tool calls durable Temporal Activities or deterministic Workflow code.</p>
+</a>
+</div>
 </div>
 
-## External interaction patterns {.pattern-section-title}
+## Human-in-the-loop patterns {.pattern-section-title}
 
 <div class="pattern-grid">
 <div class="pattern-tile">
-<a href="polling">
+<a href="approval-gated-tools">
 <div class="pattern-tile-header">
-<img src="/images/polling-icon.svg" alt="Polling">
-<span>Polling External Services</span>
+<img src="/images/child-workflows-icon.svg" alt="Approval-Gated Tools">
+<span>Approval-Gated Tools</span>
 </div>
-<p>Strategies for polling external resources with varying frequencies: frequent, infrequent, and periodic patterns.</p>
+<p>Require approval before risky tools run.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="long-running-activity">
+<a href="session-scoped-approvals">
 <div class="pattern-tile-header">
-<img src="/images/long-running-activity-icon.svg" alt="Long-Running Activity">
-<span>Long-Running Activity</span>
+<img src="/images/child-workflows-icon.svg" alt="Session-Scoped Approvals">
+<span>Session-Scoped Approvals</span>
 </div>
-<p>Long-running Activities report progress via heartbeats and enable resumption after failures with cancellation support.</p>
+<p>Approve a tool for the rest of a session.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="delayed-start">
+<a href="resumable-correction">
 <div class="pattern-tile-header">
-<img src="/images/delayed-start-icon.svg" alt="Delayed Start">
-<span>Delayed Start</span>
+<img src="/images/child-workflows-icon.svg" alt="Resumable Correction">
+<span>Resumable Correction</span>
 </div>
-<p>Creates Workflows immediately but defers execution until a specified delay expires. Fits one-time scheduled operations and grace periods.</p>
+<p>Park after repeated failures until a human fixes inputs.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="delayed-callback">
+<a href="operator-slash-commands">
 <div class="pattern-tile-header">
-<img src="/images/webhooks-icon.svg" alt="Delayed Callback (Webhooks)">
-<span>Delayed Callback (Webhooks)</span>
+<img src="/images/child-workflows-icon.svg" alt="Operator Slash Commands">
+<span>Operator Slash Commands</span>
 </div>
-<p>Integrates webhooks durably: receive inbound webhooks via Signals, fire delayed outbound callbacks with durable timers, and complete Activities asynchronously via task tokens.</p>
+<p>Deterministic textual commands inside the session.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="approval">
+<a href="human-in-the-loop-patterns">
 <div class="pattern-tile-header">
-<img src="/images/approval-icon.svg" alt="Approval">
-<span>Approval</span>
+<img src="/images/child-workflows-icon.svg" alt="Human-in-the-loop Patterns">
+<span>Human-in-the-loop Patterns Overview</span>
 </div>
-<p>Human-in-the-loop Workflows that block until external approval decisions are made. Uses Signals to capture approval data with metadata.</p>
+<p>These patterns pause agents for approvals, corrections, and operator commands.</p>
 </a>
 </div>
-
-<div class="pattern-tile">
-<a href="external-interaction-patterns">
-<div class="pattern-tile-header">
-<img src="/images/polling-icon.svg" alt="External Interaction Patterns Overview">
-<span>External Interaction Patterns Overview</span>
-</div>
-<p>Pattern selection guide for waiting on or interacting with systems and actors outside the Workflow.</p>
-</a>
 </div>
 
-</div>
-
-## Distributed transaction patterns {.pattern-section-title}
+## Subagent & Multi-agent patterns {.pattern-section-title}
 
 <div class="pattern-grid">
 <div class="pattern-tile">
-<a href="saga-pattern">
+<a href="subagent-toolset">
 <div class="pattern-tile-header">
-<img src="/images/saga-icon.svg" alt="Saga Pattern">
-<span>Saga Pattern</span>
+<img src="/images/child-workflows-icon.svg" alt="Subagent Toolset">
+<span>Subagent Toolset</span>
 </div>
-<p>Manages distributed transactions with compensating actions. Each step has a compensation that undoes its effects if subsequent steps fail.</p>
+<p>Drive another agent through typed operations.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="early-return">
+<a href="persistent-subagent-threads">
 <div class="pattern-tile-header">
-<img src="/images/early-return-icon.svg" alt="Early Return">
-<span>Early Return</span>
+<img src="/images/child-workflows-icon.svg" alt="Persistent Subagent Threads">
+<span>Persistent Subagent Threads</span>
 </div>
-<p>Synchronous initialization with asynchronous completion. Returns results immediately while processing continues in the background.</p>
+<p>Reusable durable threads per topic or user.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="distributed-transaction-patterns">
+<a href="fanout-subagents">
 <div class="pattern-tile-header">
-<img src="/images/saga-icon.svg" alt="Distributed Transaction Patterns Overview">
-<span>Distributed Transaction Patterns Overview</span>
+<img src="/images/child-workflows-icon.svg" alt="Fan-Out Subagents">
+<span>Fan-Out Subagents</span>
 </div>
-<p>Pattern selection guide for distributed transactions, with a decision tree for choosing between Saga and Early Return.</p>
+<p>Spawn many subagent sessions in parallel.</p>
 </a>
 </div>
-
+<div class="pattern-tile">
+<a href="remote-subagent">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="Remote Subagent">
+<span>Remote Subagent</span>
+</div>
+<p>Drive an agent hosted elsewhere via session HTTP.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="subagent-patterns">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="Subagent & Multi-agent Patterns">
+<span>Subagent & Multi-agent Patterns Overview</span>
+</div>
+<p>These patterns compose agents as typed toolsets and durable child sessions.</p>
+</a>
+</div>
 </div>
 
-## Error handling & retry patterns {.pattern-section-title}
+## Code Mode & Sandbox patterns {.pattern-section-title}
 
 <div class="pattern-grid">
 <div class="pattern-tile">
-<a href="fixed-count-retries">
+<a href="code-mode-orchestrator">
 <div class="pattern-tile-header">
-<img src="/images/fixed-count-retries-icon.svg" alt="Fixed Count of Retries">
-<span>Fixed Count of Retries</span>
+<img src="/images/child-workflows-icon.svg" alt="Code Mode Orchestrator">
+<span>Code Mode Orchestrator</span>
 </div>
-<p>Cap the number of Activity retry attempts to control cost when each attempt consumes a paid or limited resource.</p>
+<p>One run-code tool over many host tools.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="fixed-wall-time-retries">
+<a href="tools-only-sandbox">
 <div class="pattern-tile-header">
-<img src="/images/fixed-wall-time-retries-icon.svg" alt="Fixed Wall-Time Retries">
-<span>Fixed Wall-Time Retries</span>
+<img src="/images/child-workflows-icon.svg" alt="Tools-Only Sandbox">
+<span>Tools-Only Sandbox</span>
 </div>
-<p>Bound the total elapsed time across all retry attempts to enforce a business SLA, regardless of how many individual attempts occur.</p>
+<p>Scripts may only call host tools.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="non-retryable-errors">
+<a href="type-checked-scripts">
 <div class="pattern-tile-header">
-<img src="/images/non-retryable-errors-icon.svg" alt="Non-Retryable Errors">
-<span>Non-Retryable Errors</span>
+<img src="/images/child-workflows-icon.svg" alt="Type-Checked Scripts">
+<span>Type-Checked Scripts</span>
 </div>
-<p>Mark error types that will never succeed — such as validation failures or missing records — so Temporal fails fast instead of retrying indefinitely.</p>
+<p>Reject ill-typed scripts before execution.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="delayed-retry">
+<a href="script-fan-out">
 <div class="pattern-tile-header">
-<img src="/images/delayed-retry-icon.svg" alt="Delayed Retry">
-<span>Delayed Retry</span>
+<img src="/images/child-workflows-icon.svg" alt="Script Fan-Out">
+<span>Script Fan-Out</span>
 </div>
-<p>Override the next retry interval for a specific failure using nextRetryDelay on ApplicationFailure. Use when an error carries information about how long to wait before retrying.</p>
+<p>Concurrent tool and subagent calls from one script.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="fast-slow-retries">
+<a href="code-mode-patterns">
 <div class="pattern-tile-header">
-<img src="/images/fast-slow-retries-icon.svg" alt="Fast/Slow Retries">
-<span>Fast/Slow Retries</span>
+<img src="/images/child-workflows-icon.svg" alt="Code Mode & Sandbox Patterns">
+<span>Code Mode & Sandbox Patterns Overview</span>
 </div>
-<p>Try aggressively with a short interval first, then shift to a long interval when fast retries are exhausted, keeping the Workflow alive until the downstream system recovers.</p>
+<p>These patterns let a model orchestrate tools by writing scripts that call host APIs.</p>
 </a>
 </div>
-
-<div class="pattern-tile">
-<a href="retry-metrics">
-<div class="pattern-tile-header">
-<img src="/images/retry-metrics-icon.svg" alt="Retry Alerting via Metrics">
-<span>Retry Alerting via Metrics</span>
-</div>
-<p>Emit a custom metric from inside the Activity when the attempt count crosses a threshold, surfacing silent persistent failures to on-call teams before an SLA breach.</p>
-</a>
 </div>
 
-<div class="pattern-tile">
-<a href="resumable-activity">
-<div class="pattern-tile-header">
-<img src="/images/resumable-activity-icon.svg" alt="Resumable Activity">
-<span>Resumable Activity</span>
-</div>
-<p>Park the Workflow after retries are exhausted and wait for a human to signal a correction, then resume execution from where it left off.</p>
-</a>
-</div>
-
-<div class="pattern-tile">
-<a href="error-handling-patterns">
-<div class="pattern-tile-header">
-<img src="/images/pick-first-icon.svg" alt="Error Handling & Retry Patterns Overview">
-<span>Error Handling & Retry Patterns Overview</span>
-</div>
-<p>Pattern selection guide and decision tree for choosing the right retry strategy based on your error type, cost constraints, and recovery requirements.</p>
-</a>
-</div>
-
-</div>
-
-## Batch processing patterns {.pattern-section-title}
+## Safety & Security patterns {.pattern-section-title}
 
 <div class="pattern-grid">
 <div class="pattern-tile">
-<a href="fanout-child-workflows">
+<a href="safety-profiled-tools">
 <div class="pattern-tile-header">
-<img src="/images/fanout-child-workflows-icon.svg" alt="Fan-Out with Child Workflows">
-<span>Fan-Out with Child Workflows</span>
+<img src="/images/child-workflows-icon.svg" alt="Safety-Profiled Tools">
+<span>Safety-Profiled Tools</span>
 </div>
-<p>Distributes a large record set across parallel Child Workflows for concurrent processing with automatic scaling.</p>
+<p>Declare inherently safe, idempotent, or non-idempotent tools.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="batch-iterator">
+<a href="security-profiles-per-agent">
 <div class="pattern-tile-header">
-<img src="/images/batch-iterator-icon.svg" alt="Batch Iterator">
-<span>Batch Iterator</span>
+<img src="/images/child-workflows-icon.svg" alt="Security Profiles per Agent">
+<span>Security Profiles per Agent</span>
 </div>
-<p>Pages through unbounded datasets using Continue-As-New to prevent history overflow while maintaining exactly-once processing guarantees.</p>
+<p>Environment-specific tool and network allowances.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="sliding-window">
+<a href="network-resource-sandboxing">
 <div class="pattern-tile-header">
-<img src="/images/sliding-window-icon.svg" alt="Sliding Window">
-<span>Sliding Window</span>
+<img src="/images/child-workflows-icon.svg" alt="Network & Resource Sandboxing">
+<span>Network & Resource Sandboxing</span>
 </div>
-<p>Maintains a fixed number of concurrently active Child Workflows, starting a new one each time an existing one completes.</p>
+<p>Bound sandboxes as data planes under Workflow control.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="mapreduce-tree">
+<a href="safety-security-patterns">
 <div class="pattern-tile-header">
-<img src="/images/mapreduce-tree-icon.svg" alt="MapReduce Tree">
-<span>MapReduce Tree</span>
+<img src="/images/child-workflows-icon.svg" alt="Safety & Security Patterns">
+<span>Safety & Security Patterns Overview</span>
 </div>
-<p>Recursively splits a dataset into a binary tree of Child Workflows, processes leaves in parallel, then aggregates results back up the tree.</p>
+<p>These patterns label tools and environments so policy can gate or block unsafe calls.</p>
 </a>
 </div>
 </div>
 
-## QoS & throughput patterns {.pattern-section-title}
+## Memory & State patterns {.pattern-section-title}
 
 <div class="pattern-grid">
 <div class="pattern-tile">
-<a href="downstream-rate-limiting">
+<a href="session-memory">
 <div class="pattern-tile-header">
-<img src="/images/downstream-rate-limiting-icon.svg" alt="Downstream Rate Limiting">
-<span>Downstream Rate Limiting</span>
+<img src="/images/child-workflows-icon.svg" alt="Session Memory">
+<span>Session Memory</span>
 </div>
-<p>Caps Activity execution rate against a downstream service by routing throttled Activities to a dedicated Task Queue backed by Workers configured with a throughput limit.</p>
+<p>Store summaries in session state between turns.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="priority-task-queues">
+<a href="cross-session-memory">
 <div class="pattern-tile-header">
-<img src="/images/priority-task-queues-icon.svg" alt="Priority Task Queues">
-<span>Priority Task Queues</span>
+<img src="/images/child-workflows-icon.svg" alt="Cross-Session Memory">
+<span>Cross-Session Memory</span>
 </div>
-<p>Assigns a priority level to Workflows and Activities so that time-sensitive work executes ahead of lower-priority work within a single Task Queue.</p>
+<p>Share bounded memory across sessions.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="fairness">
+<a href="externalized-memory">
 <div class="pattern-tile-header">
-<img src="/images/fairness-icon.svg" alt="Fairness">
-<span>Fairness</span>
+<img src="/images/child-workflows-icon.svg" alt="Externalized Memory">
+<span>Externalized Memory</span>
 </div>
-<p>Distributes Worker capacity evenly across tenants or users so that a burst from one caller does not starve the others.</p>
+<p>Push large memory behind durable tools.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="qos-throughput-patterns">
+<a href="memory-state-patterns">
 <div class="pattern-tile-header">
-<img src="/images/downstream-rate-limiting-icon.svg" alt="QoS & Throughput Patterns Overview">
-<span>QoS & Throughput Patterns Overview</span>
+<img src="/images/child-workflows-icon.svg" alt="Memory & State Patterns">
+<span>Memory & State Patterns Overview</span>
 </div>
-<p>Pattern selection guide for controlling execution rate, protecting downstream services from overload, and ensuring fair capacity distribution across tenants.</p>
+<p>These patterns keep conversation and knowledge durable across turns and sessions.</p>
 </a>
 </div>
-
 </div>
 
-## Performance & latency patterns {.pattern-section-title}
+## Observability & Operations patterns {.pattern-section-title}
 
 <div class="pattern-grid">
 <div class="pattern-tile">
-<a href="local-activities">
+<a href="standardized-event-stream">
 <div class="pattern-tile-header">
-<img src="/images/local-activities-icon.svg" alt="Local Activities">
-<span>Local Activities</span>
+<img src="/images/child-workflows-icon.svg" alt="Standardized Event Stream">
+<span>Standardized Event Stream</span>
 </div>
-<p>Run Activity functions in-process inside the Workflow Task, eliminating all server scheduling round-trips. Best for short, idempotent Activities on a latency-sensitive path.</p>
+<p>One ordered stream per session.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="early-return-local-activities">
+<a href="agent-tracing">
 <div class="pattern-tile-header">
-<img src="/images/early-return-local-activities-icon.svg" alt="Early Return + Local Activities">
-<span>Early Return + Local Activities</span>
+<img src="/images/child-workflows-icon.svg" alt="Agent Tracing">
+<span>Agent Tracing</span>
 </div>
-<p>Extends Early Return by running Phase 1 Activities as Local Activities. The client receives its response after Phase 1 completes entirely in-process, achieving the lowest possible first-response latency.</p>
+<p>Correlate spans with session and step IDs.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="eager-workflow-start">
+<a href="cost-token-accounting">
 <div class="pattern-tile-header">
-<img src="/images/eager-workflow-start-icon.svg" alt="Eager Workflow Start">
-<span>Eager Workflow Start</span>
+<img src="/images/child-workflows-icon.svg" alt="Cost & Token Accounting">
+<span>Cost & Token Accounting</span>
 </div>
-<p>Dispatch the first Workflow Task directly to a co-located Worker, bypassing the Temporal Matching Service. Requires the starter and Worker to share the same process and client connection.</p>
+<p>Aggregate usage per call, turn, and session.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="performance-latency-patterns">
+<a href="eval-backed-behavior-checks">
 <div class="pattern-tile-header">
-<img src="/images/performance-latency-icon.svg" alt="Performance & Latency Patterns Overview">
-<span>Performance & Latency Patterns Overview</span>
+<img src="/images/child-workflows-icon.svg" alt="Eval-Backed Behavior Checks">
+<span>Eval-Backed Behavior Checks</span>
 </div>
-<p>Pattern selection guide for reducing Workflow latency, with a comparison of the round-trips each pattern removes and their combined effect.</p>
+<p>Regression checks on recorded sessions.</p>
 </a>
 </div>
-
+<div class="pattern-tile">
+<a href="observability-patterns">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="Observability & Operations Patterns">
+<span>Observability & Operations Patterns Overview</span>
+</div>
+<p>These patterns make agent behavior reconstructable from events, traces, and metrics.</p>
+</a>
+</div>
 </div>
 
-## Worker configuration patterns {.pattern-section-title}
+## Channel & Integration patterns {.pattern-section-title}
 
 <div class="pattern-grid">
 <div class="pattern-tile">
-<a href="worker-specific-taskqueue">
+<a href="http-channel-agent">
 <div class="pattern-tile-header">
-<img src="/images/worker-specific-taskqueue-icon.svg" alt="Worker-Specific Task Queues">
-<span>Worker-Specific Task Queues</span>
+<img src="/images/child-workflows-icon.svg" alt="HTTP Channel Agent">
+<span>HTTP Channel Agent</span>
 </div>
-<p>Routes Activities to specific Workers using unique Task Queues for Worker affinity and host-specific processing.</p>
+<p>Expose a session API over HTTP and SSE.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="activity-dependency-injection">
+<a href="messaging-channel-agent">
 <div class="pattern-tile-header">
-<img src="/images/activity-dependency-injection-icon.svg" alt="Activity Dependency Injection">
-<span>Activity Dependency Injection</span>
+<img src="/images/child-workflows-icon.svg" alt="Messaging Channel Agent">
+<span>Messaging Channel Agent</span>
 </div>
-<p>Injects external dependencies into Activities at Worker startup, keeping Workflow code deterministic and Activities testable.</p>
+<p>Map Slack or email into sessions.</p>
 </a>
 </div>
-
 <div class="pattern-tile">
-<a href="worker-configuration-patterns">
+<a href="mcp-openapi-tooling">
 <div class="pattern-tile-header">
-<img src="/images/worker-specific-taskqueue-icon.svg" alt="Worker Configuration Patterns Overview">
-<span>Worker Configuration Patterns Overview</span>
+<img src="/images/child-workflows-icon.svg" alt="MCP / OpenAPI Tooling">
+<span>MCP / OpenAPI Tooling</span>
 </div>
-<p>Pattern selection guide for configuring how Workers are set up, how work is routed, and how Activities access external dependencies.</p>
+<p>Compile external tools into Activity tools.</p>
 </a>
 </div>
-
+<div class="pattern-tile">
+<a href="channel-integration-patterns">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="Channel & Integration Patterns">
+<span>Channel & Integration Patterns Overview</span>
 </div>
+<p>These patterns bind agents to HTTP, messaging, and external tool catalogs.</p>
+</a>
+</div>
+</div>
+

@@ -2,128 +2,129 @@ import { defineConfig } from 'vitepress'
 import { withMermaid } from 'vitepress-plugin-mermaid'
 
 export default withMermaid(defineConfig({
-  title: 'Temporal Patterns',
-  description: 'Common catalog of reusable patterns for Temporal workflows',
-  base: process.env.VITEPRESS_BASE ?? '/temporal-design-patterns/',
+  title: 'Temporal Agentic Patterns',
+  description: 'Catalog of reusable design patterns for Temporal-native AI agents',
+  base: process.env.VITEPRESS_BASE ?? '/temporal-agentic-patterns/',
   head: [
     ['meta', { name: 'robots', content: 'noindex, follow' }],
-    // Google tag (gtag.js)
-    ['script', { async: '', src: 'https://www.googletagmanager.com/gtag/js?id=G-KCHNTGYY7N' }],
-    ['script', {}, `window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', 'G-KCHNTGYY7N');`]
   ],
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'GitHub', link: 'https://github.com/taonic/temporal-design-patterns' }
+      { text: 'GitHub', link: 'https://github.com/temporal-sa/temporal-agentic-patterns' }
     ],
     sidebar: [
       {
-        text: 'Task Orchestration Patterns',
-        link: '/task-orchestration-patterns',
+        text: 'Vernacular',
         items: [
-          { text: 'Child Workflows', link: '/child-workflows' },
-          { text: 'Parallel Execution', link: '/parallel-execution' },
-          { text: 'Pick First (Race)', link: '/pick-first' }
+          { text: 'Identity', link: '/identity' },
+          { text: 'Session, Turn, and Step', link: '/session-turn-step' },
+          { text: 'Event Stream', link: '/event-stream' },
+          { text: 'Tools and Operations', link: '/tools-and-operations' },
+          { text: 'Approvals', link: '/approvals-vernacular' },
+          { text: 'Sandbox and Code Mode', link: '/sandbox-vernacular' },
+          { text: 'HTTP and Client', link: '/http-and-client' },
+          { text: 'Filesystem Authoring', link: '/filesystem-authoring' },
         ]
       },
       {
-        text: 'Workflow Messaging Patterns',
-        link: '/workflow-messaging-patterns',
+        text: 'Agent & Session Patterns',
+        link: '/agent-session-patterns',
         items: [
-          { text: 'Signal with Start', link: '/signal-with-start' },
-          { text: 'Request-Response via Updates', link: '/request-response-via-updates' },
-          { text: 'Event Accumulator', link: '/event-accumulator' }
+          { text: 'Session Workflow', link: '/session-workflow' },
+          { text: 'Turn Workflow', link: '/turn-workflow' },
+          { text: 'Session with Signal-and-Start', link: '/session-signal-and-start' },
+          { text: 'Entity Agent', link: '/entity-agent' },
+          { text: 'Continue-As-New Session', link: '/continue-as-new-session' },
         ]
       },
       {
-        text: 'Entity & Lifecycle Patterns',
-        link: '/entity-lifecycle-patterns',
+        text: 'Tool & Model Call Patterns',
+        link: '/tool-model-call-patterns',
         items: [
-          { text: 'Entity Workflow', link: '/entity-workflow' },
-          { text: 'Continue-As-New', link: '/continue-as-new' },
-          { text: 'Updatable Timer', link: '/updatable-timer' }
+          { text: 'Activity Tool', link: '/activity-tool' },
+          { text: 'Workflow Tool', link: '/workflow-tool' },
+          { text: 'Callback Tool', link: '/callback-tool' },
+          { text: 'Durable Model Call', link: '/durable-model-call' },
+          { text: 'Tool Retry Profiles', link: '/tool-retry-profiles' },
         ]
       },
       {
-        text: 'External Interaction Patterns',
-        link: '/external-interaction-patterns',
+        text: 'Human-in-the-loop Patterns',
+        link: '/human-in-the-loop-patterns',
         items: [
-          { text: 'Polling External Services', link: '/polling' },
-          { text: 'Long Running Activity', link: '/long-running-activity' },
-          { text: 'Delayed Start', link: '/delayed-start' },
-          { text: 'Delayed Callback', link: '/delayed-callback' },
-          { text: 'Approval', link: '/approval' }
+          { text: 'Approval-Gated Tools', link: '/approval-gated-tools' },
+          { text: 'Session-Scoped Approvals', link: '/session-scoped-approvals' },
+          { text: 'Resumable Correction', link: '/resumable-correction' },
+          { text: 'Operator Slash Commands', link: '/operator-slash-commands' },
         ]
       },
       {
-        text: 'Distributed Transaction Patterns',
-        link: '/distributed-transaction-patterns',
+        text: 'Subagent & Multi-agent Patterns',
+        link: '/subagent-patterns',
         items: [
-          { text: 'Saga Pattern', link: '/saga-pattern' },
-          { text: 'Early Return', link: '/early-return' }
+          { text: 'Subagent Toolset', link: '/subagent-toolset' },
+          { text: 'Persistent Subagent Threads', link: '/persistent-subagent-threads' },
+          { text: 'Fan-Out Subagents', link: '/fanout-subagents' },
+          { text: 'Remote Subagent', link: '/remote-subagent' },
         ]
       },
       {
-        text: 'Error Handling & Retry Patterns',
-        link: '/error-handling-patterns',
+        text: 'Code Mode & Sandbox Patterns',
+        link: '/code-mode-patterns',
         items: [
-          { text: 'Fixed Count of Retries', link: '/fixed-count-retries' },
-          { text: 'Fixed Wall-Time Retries', link: '/fixed-wall-time-retries' },
-          { text: 'Non-Retryable Errors', link: '/non-retryable-errors' },
-          { text: 'Delayed Retry', link: '/delayed-retry' },
-          { text: 'Fast/Slow Retries', link: '/fast-slow-retries' },
-          { text: 'Retry Alerting via Metrics', link: '/retry-metrics' },
-          { text: 'Resumable Activity', link: '/resumable-activity' }
+          { text: 'Code Mode Orchestrator', link: '/code-mode-orchestrator' },
+          { text: 'Tools-Only Sandbox', link: '/tools-only-sandbox' },
+          { text: 'Type-Checked Scripts', link: '/type-checked-scripts' },
+          { text: 'Script Fan-Out', link: '/script-fan-out' },
         ]
       },
       {
-        text: 'Batch Processing Patterns',
-        link: '/batch-processing-patterns',
+        text: 'Safety & Security Patterns',
+        link: '/safety-security-patterns',
         items: [
-          { text: 'Fan-Out with Child Workflows', link: '/fanout-child-workflows' },
-          { text: 'Batch Iterator', link: '/batch-iterator' },
-          { text: 'Sliding Window', link: '/sliding-window' },
-          { text: 'MapReduce Tree', link: '/mapreduce-tree' }
+          { text: 'Safety-Profiled Tools', link: '/safety-profiled-tools' },
+          { text: 'Security Profiles per Agent', link: '/security-profiles-per-agent' },
+          { text: 'Network & Resource Sandboxing', link: '/network-resource-sandboxing' },
         ]
       },
       {
-        text: 'QoS & Throughput Patterns',
-        link: '/qos-throughput-patterns',
+        text: 'Memory & State Patterns',
+        link: '/memory-state-patterns',
         items: [
-          { text: 'Downstream Rate Limiting', link: '/downstream-rate-limiting' },
-          { text: 'Priority Task Queues', link: '/priority-task-queues' },
-          { text: 'Fairness', link: '/fairness' }
+          { text: 'Session Memory', link: '/session-memory' },
+          { text: 'Cross-Session Memory', link: '/cross-session-memory' },
+          { text: 'Externalized Memory', link: '/externalized-memory' },
         ]
       },
       {
-        text: 'Performance & Latency Patterns',
-        link: '/performance-latency-patterns',
+        text: 'Observability & Operations Patterns',
+        link: '/observability-patterns',
         items: [
-          { text: 'Local Activities', link: '/local-activities' },
-          { text: 'Early Return + Local Activities', link: '/early-return-local-activities' },
-          { text: 'Eager Workflow Start', link: '/eager-workflow-start' }
+          { text: 'Standardized Event Stream', link: '/standardized-event-stream' },
+          { text: 'Agent Tracing', link: '/agent-tracing' },
+          { text: 'Cost & Token Accounting', link: '/cost-token-accounting' },
+          { text: 'Eval-Backed Behavior Checks', link: '/eval-backed-behavior-checks' },
         ]
       },
       {
-        text: 'Worker Configuration Patterns',
-        link: '/worker-configuration-patterns',
+        text: 'Channel & Integration Patterns',
+        link: '/channel-integration-patterns',
         items: [
-          { text: 'Worker-Specific Task Queues', link: '/worker-specific-taskqueue' },
-          { text: 'Activity Dependency Injection', link: '/activity-dependency-injection' }
+          { text: 'HTTP Channel Agent', link: '/http-channel-agent' },
+          { text: 'Messaging Channel Agent', link: '/messaging-channel-agent' },
+          { text: 'MCP / OpenAPI Tooling', link: '/mcp-openapi-tooling' },
         ]
       },
     ],
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/taonic/temporal-design-patterns' }
+      { icon: 'github', link: 'https://github.com/temporal-sa/temporal-agentic-patterns' }
     ],
     search: {
       provider: 'local'
     },
     footer: {
-      message: 'Temporal Design Patterns Catalog'
+      message: 'Temporal Agentic Patterns Catalog'
     }
   },
   mermaid: {},

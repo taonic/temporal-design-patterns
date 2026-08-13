@@ -1,0 +1,12 @@
+{
+  "name": "approval-gated-tools",
+  "languages": {
+    "python": {
+      "label": "Python",
+      "files": ["activities.py", "workflows.py", "worker.py", "starter.py"],
+      "worker": "uv run python worker.py",
+      "starter": "uv run python starter.py",
+      "workerProcessPattern": "python worker.py"
+    }
+  }
+}

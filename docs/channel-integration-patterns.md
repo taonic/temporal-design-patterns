@@ -1,0 +1,47 @@
+<h1>Channel & Integration Patterns <img src="/images/child-workflows-icon.svg" alt="Channel & Integration Patterns" class="pattern-page-icon"></h1>
+
+These patterns bind agents to HTTP, messaging, and external tool catalogs.
+
+## Patterns in This Section
+
+<div class="pattern-grid">
+<div class="pattern-tile">
+<a href="http-channel-agent">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="HTTP Channel Agent">
+<span>HTTP Channel Agent</span>
+</div>
+<p>Expose a session API over HTTP and SSE.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="messaging-channel-agent">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="Messaging Channel Agent">
+<span>Messaging Channel Agent</span>
+</div>
+<p>Map Slack or email into sessions.</p>
+</a>
+</div>
+<div class="pattern-tile">
+<a href="mcp-openapi-tooling">
+<div class="pattern-tile-header">
+<img src="/images/child-workflows-icon.svg" alt="MCP / OpenAPI Tooling">
+<span>MCP / OpenAPI Tooling</span>
+</div>
+<p>Compile external tools into Activity tools.</p>
+</a>
+</div>
+</div>
+
+## Choosing a Pattern
+
+**You need http channel agent behavior:** Expose a session API over HTTP and SSE. Use [HTTP Channel Agent](/http-channel-agent).
+
+**You need messaging channel agent behavior:** Map Slack or email into sessions. Use [Messaging Channel Agent](/messaging-channel-agent).
+
+**You need mcp / openapi tooling behavior:** Compile external tools into Activity tools. Use [MCP / OpenAPI Tooling](/mcp-openapi-tooling).
+
+## Related Sections
+
+See Vernacular for Session, Turn, Step, and related terms used by these patterns.

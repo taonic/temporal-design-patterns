@@ -1,8 +1,0 @@
-[project]
-name = "fast-slow-retries-python"
-version = "0.1.0"
-description = "Fast/Slow Retries pattern demo (Python)"
-requires-python = ">=3.12"
-dependencies = [
-    "temporalio==1.9.0",
-]

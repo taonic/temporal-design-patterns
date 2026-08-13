@@ -1,4 +1,4 @@
-# Contributing to Temporal Design Patterns
+# Contributing to Temporal Agentic Patterns
 
 This guide covers how to add or improve patterns in this catalog.
 
@@ -13,120 +13,56 @@ npm install          # install dependencies
 npm run docs:dev     # start local dev server with hot reload
 ```
 
-Open `http://localhost:5173/temporal-design-patterns/` to preview the site. The server reloads automatically as you edit files.
+Open `http://localhost:5173/temporal-agentic-patterns/` to preview the site. The server reloads automatically as you edit files.
 
 ## Adding a New Pattern
 
 1. Create `docs/<pattern-name>.md` following the [pattern structure](#pattern-structure) below.
-2. Add an entry to the appropriate sidebar section in `docs/.vitepress/config.mts`:
-
-```ts
-{ text: 'Your Pattern Name', link: '/your-pattern-name' }
-```
+2. Add an entry to the appropriate sidebar section in `docs/.vitepress/config.mts`.
 
 ### Sidebar Categories
 
-| Category | Current Patterns |
-| :--- | :--- |
-| Distributed Transaction Patterns | Saga Pattern, Early Return, Idempotent Distributed Transactions |
-| Entity & Lifecycle Patterns | Entity Workflow, Continue-As-New, Updatable Timer |
-| Workflow Messaging Patterns | Signal with Start, Request-Response via Updates |
-| Task Orchestration Patterns | Child Workflows, Parallel Execution, Pick First (Race) |
-| External Interaction Patterns | Polling, Long Running Activity, Approval, Delayed Start |
-| Worker Configuration Patterns | Worker-Specific Task Queues, Activity Dependency Injection |
-| QoS & Throughput Patterns | Rate Limiting, Priority Task Queues, Fairness |
-
-If your pattern does not fit an existing category, propose a new one in your PR description.
+See `docs/.vitepress/config.mts` for Vernacular, Agent & Session, Tool & Model Call, Human-in-the-loop, Subagent, Code Mode, Safety, Memory, Observability, and Channel sections.
 
 ## Pattern Structure
 
-Every pattern file must include the following sections **in this order**:
+Use this section order on every pattern page:
 
-1. **Title** — H1 heading with the pattern name
-2. **Overview** — one or two sentences describing what the pattern does
-3. **Problem** — the specific problem this pattern solves
-4. **Solution** — how the pattern solves the problem, including at least one Mermaid diagram (see [Diagrams](#diagrams))
-5. **Implementation** — code examples across supported SDKs using a `:::code-group` tab block
-6. **When to use** — conditions under which this pattern is appropriate
-7. **Benefits and trade-offs** — what you gain and what you give up
-8. **Comparison with alternatives** — how this pattern differs from related approaches
-9. **Best practices** — recommendations for production use
-10. **Common pitfalls** — mistakes to avoid
-11. **Related patterns** — links to patterns that complement or contrast this one
-12. **Sample code** — links to runnable sample repositories
-
-## Writing Style
+1. Title with `pattern-page-icon`
+2. Overview
+3. Problem
+4. Solution (Mermaid + numbered walkthrough + Python)
+5. Implementation (optional `<DaytonaRunner pattern="..." />`)
+6. When to use
+7. Benefits and trade-offs
+8. Comparison with alternatives
+9. Best practices
+10. Common pitfalls
+11. Related patterns
+12. Sample code
+13. References
 
 ### Voice
 
-Use second person throughout: "you will configure…", "your workflow should…". Do not use first person ("I", "we", "let's").
+- Write in second person ("you configure…").
+- Avoid first person ("I", "we", "let's").
+- Avoid banned fluff: simple/simply, easy/easily, just, straightforward, obviously, trivial, "dive into", "leverage", utilize, powerful, robust, seamless.
+- Prefer agent vernacular (Session, Turn, Step, Tool, Approval); use Temporal terms when durability requires them.
+- Do not name third-party agent runtimes or protocol product brands in docs.
 
-### Banned Words
+### Diagrams
 
-The following words and phrases are not allowed anywhere in pattern content:
+Include at least one Mermaid diagram in Solution, followed by a numbered walkthrough.
 
-| Banned | Use instead |
-| :--- | :--- |
-| simple / simply | *(omit or rephrase)* |
-| easy / easily | *(omit or rephrase)* |
-| just | *(omit)* |
-| straightforward | *(omit or rephrase)* |
-| obviously | *(omit)* |
-| trivial | *(omit or rephrase)* |
-| "dive into" | "explore" or "review" |
-| leverage | use |
-| utilize | use |
-| powerful | describe the capability instead |
-| robust | describe the property instead |
-| seamless | *(omit or rephrase)* |
+## Live samples (optional)
 
-Avoid all assumptive or marketing language. Describe capabilities and trade-offs factually.
+1. Add `sandbox-runner/patterns/<pattern>/pattern.json` with a Python language block.
+2. Add sources under `sandbox-runner/patterns/<pattern>/python/`.
+3. Embed `<DaytonaRunner pattern="<pattern>" />` in Implementation.
 
-### Implementation Phases
+Prefer deterministic stubs so samples run without model API keys.
 
-Use descriptive headings for implementation phases — not numbered step format ("Step 1 — Doing X"). For example:
+## Pull Requests
 
-```markdown
-### Define the Workflow Interface
-### Configure the Activity Worker
-### Handle Compensation Logic
-```
-
-## Diagrams
-
-Every pattern must include at least one Mermaid diagram. Place the diagram inside a fenced code block with the `mermaid` language tag:
-
-````markdown
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Workflow
-    Client->>Workflow: Start
-    Workflow-->>Client: Result
-```
-````
-
-Follow every diagram with a numbered narrative walkthrough that explains each step in plain language.
-
-## Validating Your Pattern
-
-Use the `validated-pattern-writing` skill (via GitHub Copilot Chat) to check your draft against the full style guide before submitting:
-
-```
-/validated-pattern-writing
-```
-
-The skill checks structure, voice, banned words, Temporal terminology, and formatting, then groups findings as **Errors / Warnings / Suggestions**.
-
-To check word count:
-
-```bash
-skills/validated-pattern-writing/scripts/wordcount docs/<pattern-name>.md
-```
-
-## Submitting a Pull Request
-
-1. Fork the repository and create a branch from `main`.
-2. Add your pattern file and sidebar entry.
-3. Validate with the `validated-pattern-writing` skill and resolve all Errors.
-4. Open a pull request against `main` with a brief description of the pattern and which sidebar category it belongs to.
+- Keep changes focused on one pattern or a coherent set of related pages.
+- Do not push agentic-catalog work to the Workflow design-patterns publication branch unless maintainers request it.

@@ -1,7 +1,7 @@
 {
-  "name": "temporal-design-patterns-sandbox-runner",
+  "name": "temporal-agentic-patterns-sandbox-runner",
   "version": "0.1.0",
-  "description": "Daytona-backed launcher that runs the design-pattern code samples in a Temporal dev sandbox.",
+  "description": "Daytona-backed launcher that runs the agentic pattern code samples in a Temporal dev sandbox.",
   "private": true,
   "type": "module",
   "scripts": {

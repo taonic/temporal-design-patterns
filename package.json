@@ -1,7 +1,7 @@
 {
-  "name": "temporal-design-patterns",
+  "name": "temporal-agentic-patterns",
   "version": "1.0.0",
-  "description": "Common catalog of reusable patterns for Temporal workflows",
+  "description": "Catalog of reusable design patterns for Temporal-native AI agents",
   "scripts": {
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
@@ -16,9 +16,6 @@
     "vitepress-plugin-mermaid": "^2.0.16"
   },
   "dependencies": {
-    "@codemirror/lang-go": "^6.0.1",
-    "@codemirror/lang-java": "^6.0.2",
-    "@codemirror/lang-javascript": "^6.2.5",
     "@codemirror/lang-python": "^6.2.1",
     "@codemirror/state": "^6.6.0",
     "@codemirror/theme-one-dark": "^6.1.3",

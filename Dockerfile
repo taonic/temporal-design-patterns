@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 
 # Stage 1: build the VitePress static site at base "/" so it can be served
-# from the fly app's root (the GitHub Pages build uses "/temporal-design-patterns/").
+# from the fly app's root (the GitHub Pages build uses "/temporal-agentic-patterns/").
 FROM node:20-bookworm-slim AS docs-builder
 WORKDIR /repo
 COPY package.json package-lock.json ./

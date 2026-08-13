@@ -3,10 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { useData } from "vitepress";
 
 import { EditorView, basicSetup } from "codemirror";
-import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
-import { go } from "@codemirror/lang-go";
-import { java } from "@codemirror/lang-java";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { Compartment, type Extension } from "@codemirror/state";
 
@@ -26,7 +23,7 @@ const props = defineProps<{
   pattern?: string;
 }>();
 
-const patternId = computed(() => props.pattern ?? "continue-as-new");
+const patternId = computed(() => props.pattern ?? "session-workflow");
 
 const { isDark } = useData();
 
@@ -72,18 +69,8 @@ const runLabel = computed(() => {
 
 let currentEventSource: EventSource | null = null;
 
-function languageExtension(lang: string): Extension {
-  switch (lang) {
-    case "python":
-      return python();
-    case "go":
-      return go();
-    case "java":
-      return java();
-    case "typescript":
-    default:
-      return javascript({ typescript: true });
-  }
+function languageExtension(_lang: string): Extension {
+  return python();
 }
 
 function tabLabel(filePath: string): string {

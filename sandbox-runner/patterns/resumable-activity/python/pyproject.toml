@@ -1,8 +1,0 @@
-[project]
-name = "resumable-activity-python"
-version = "0.1.0"
-description = "Resumable Activity pattern demo (Python)"
-requires-python = ">=3.12"
-dependencies = [
-    "temporalio==1.9.0",
-]

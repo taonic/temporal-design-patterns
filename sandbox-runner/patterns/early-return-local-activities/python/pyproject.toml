@@ -1,8 +1,0 @@
-[project]
-name = "early-return-local-activities-python"
-version = "0.1.0"
-description = "Early Return + Local Activities latency optimization pattern demo (Python)"
-requires-python = ">=3.12"
-dependencies = [
-    "temporalio==1.9.0",
-]

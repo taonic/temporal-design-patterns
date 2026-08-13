@@ -1,8 +1,11 @@
 [project]
-name = "continue-as-new-python"
+name = "temporal-agentic-patterns-sandbox"
 version = "0.1.0"
-description = "Continue-As-New pattern demo (Python)"
+description = "Shared Python deps for agentic pattern samples"
 requires-python = ">=3.12"
 dependencies = [
     "temporalio==1.9.0",
 ]
+
+[tool.uv]
+package = false

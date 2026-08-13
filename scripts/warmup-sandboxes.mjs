@@ -103,11 +103,8 @@ for (const p of patterns) {
 }
 console.log(`Warming ${tasks.length} language(s) sequentially:`, tasks);
 
-// Sequential, not parallel: Daytona caps total live-sandbox memory at 10 GiB
-// per account. TS+Python+Go+Java in parallel = 2+2+2+3 = 9 GiB before any
-// snapshot-bake overhead, which pushes us over the cap. Running one at a time
-// keeps the peak at 3 GiB (Java) and frees memory between stages — at the
-// cost of wall-clock, which is fine inside the 40-minute job ceiling.
+// Sequential warmup keeps Daytona account memory under the live-sandbox cap.
+// This catalog is Python-only, so typically one language task runs.
 const failures = [];
 for (const t of tasks) {
   try {
