@@ -53,6 +53,7 @@ gtag('config', 'G-KCHNTGYY7N');`]
         items: [
           { text: 'Polling External Services', link: '/polling' },
           { text: 'Long Running Activity', link: '/long-running-activity' },
+          { text: 'Kafka Consumption', link: '/kafka-consumption' },
           { text: 'Delayed Start', link: '/delayed-start' },
           { text: 'Delayed Callback', link: '/delayed-callback' },
           { text: 'Approval', link: '/approval' }

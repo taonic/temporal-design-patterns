@@ -184,6 +184,16 @@ Having these patterns in your toolbox helps you solve recurring problems in a ba
 </div>
 
 <div class="pattern-tile">
+<a href="kafka-consumption">
+<div class="pattern-tile-header">
+<img src="/images/kafka-consumption-icon.svg" alt="Kafka Consumption">
+<span>Kafka Consumption</span>
+</div>
+<p>Starts one Workflow per message from a Kafka topic. Three consumer placements trading visibility against Action cost.</p>
+</a>
+</div>
+
+<div class="pattern-tile">
 <a href="external-interaction-patterns">
 <div class="pattern-tile-header">
 <img src="/images/polling-icon.svg" alt="External Interaction Patterns Overview">

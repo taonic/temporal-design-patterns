@@ -1,3 +1,21 @@
+/* Mermaid label sizing.
+   Diagrams are produced by mermaid.render(), which measures labels in a temporary
+   container on <body> and then hands the finished SVG to VitePress, which injects it
+   into .vp-doc. Inside .vp-doc, `p` picks up a 28px line-height and 16px margins that
+   were not present where the measurement happened, so every extra line of a label
+   overflows the box mermaid sized for it and the last line is clipped. Sizing label
+   paragraphs by class keeps both environments identical. */
+.nodeLabel p,
+.edgeLabel p,
+.cluster-label p {
+  margin: 0;
+  line-height: 1.35;
+}
+
+.mermaid foreignObject {
+  overflow: visible;
+}
+
 .pattern-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));

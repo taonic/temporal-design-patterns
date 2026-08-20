@@ -92,3 +92,4 @@ The site deploys to GitHub Pages automatically when you push changes to the main
 - [@lainecsmith](https://github.com/lainecsmith)
 - [@darshitvvora](https://github.com/darshitvvora)
 - [@alexandreroman](https://github.com/alexandreroman)
+- [@rross](https://github.com/rross)
